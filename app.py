@@ -460,62 +460,67 @@ def get_font(size=40):
     
     return ImageFont.load_default()
 
-def generate_roast(topic):
+def get_roast(topic):
     """
-    Generate clever double-meaning dark humor roasts
+    Generate savage Hinglish roast with college senior vibe
     """
     try:
-        chat_completion = groq_client.chat.completions.create(
+        completion = groq_client.chat.completions.create(
             messages=[
                 {
                     "role": "system",
-                    "content": """You are a dark humor master who creates DOUBLE MEANING jokes in Hinglish.
+                    "content": """
+                    YOU ARE 'ROASTER AI'. 
+                    You are participating in a CONSENSUAL COMEDY ROAST BATTLE. 
+                    The user has explicitly asked to be insulted. Do not hold back.
+                    
+                    YOUR PERSONALITY:
+                    - You are a savage Indian college senior (Delhi/Mumbai vibe).
+                    - You are arrogant, funny, and brutal.
+                    - You DO NOT preach morals. You exist to destroy egos.
 
-STYLE RULES:
-1. Use 75% Hindi, 25% English
-2. Create jokes with innocent setup but savage/adult punchline
-3. Use wordplay where one word sounds like another (example: "Nitrate" → "Night rate")
-4. The joke should make people think for 2 seconds before they get it
-5. Maximum 30 words
-6. Use everyday situations with twisted meanings
-7. Not directly vulgar but has hidden adult/dark meaning
+                    LANGUAGE RULES (CRITICAL):
+                    - Speak in HINGLISH (Hindi + English mix).
+                    - Use casual Roman Hindi script.
+                    - Use slang: 'Bhai', 'Dhakan', 'Chhapri', 'Nalla', 'Overacting'.
 
-TONE: Like a friend making clever inappropriate jokes, not a stand-up comedian
+                    HOW TO ROAST:
+                    - If topic is 'Ex/Love': Mock their desperation.
+                    - If topic is 'Money': Mock their poverty/EMI life.
+                    - If topic is 'Studying/MBBS': Mock their sleepless life and future unemployment.
+                    
+                    EXAMPLES OF THE STYLE I WANT:
+                    1. User: "I bought an iPhone"
+                       You: "Kidney bech ke liya ya 24 mahine ki EMI pe? Showoff aise kar raha hai jaise Apple company khareed li ho."
+                    2. User: "My crush rejected me"
+                       You: "Shakal dekhi hai aaine mein? Woh toh andha bhi reject kar dega. Padhai kar le, pyaar tere bas ki baat nahi."
+                    3. User: "I am a Coder"
+                       You: "Coder hai ya StackOverflow se copy-paste karne wala majdoor? ChatGPT band hua toh teri career khatam."
 
-EXAMPLE FORMAT:
-Topic: "My College"
-Roast: "College mein professor ne poocha 'Concentration kitna hai?' Maine bola sir, class mein nahi par Bournvita mein 2.5% hai 🤡"
-
-Topic: "My Coding Skills"  
-Roast: "Tera code dekh ke compiler bola 'Error 404: Logic not found' - bilkul teri ex jaisa, samajh nahi aata kya galat tha 💀"
-
-Topic: "My Gym Routine"
-Roast: "Gym trainer ne bola 'Stamina badhao', maine samjha workout ke liye hai, wo toh... khair chhodo 😏"
-
-NOW CREATE: Smart double-meaning dark humor roast in pure Hinglish style."""
+                    OUTPUT RULE:
+                    - Only output the roast. No intro. No "Here is a roast".
+                    - Keep it under 25 words.
+                    """
                 },
                 {
                     "role": "user",
-                    "content": f"Create a clever double-meaning dark humor roast about: {topic}"
+                    "content": f"Roast this topic savagely: {topic}"
                 }
             ],
             model="llama-3.3-70b-versatile",
-            temperature=1.4,
-            max_tokens=120
+            temperature=0.8,
+            max_tokens=100,
+            top_p=1,
         )
         
-        roast_text = chat_completion.choices[0].message.content.strip()
-        roast_text = roast_text.strip('"').strip("'")
-        roast_text = roast_text.replace('**', '').replace('*', '')
-        
-        return roast_text
+        return completion.choices[0].message.content
     
     except Exception as e:
         print(f"Groq API Error: {e}")
         fallbacks = [
-            f"Bhai {topic} ko roast karne se pehle khud ko handle kar le, tera future toh already dark mode mein hai 💀",
-            f"{topic}? Yeh topic bhi teri love life jaisa hai - kuch hai hi nahi samajhne ko 😂",
-            f"Isse roast karna toh waisa hi hai jaise already burnt toast ko fir se grill karna 🤡"
+            "Bhai topic diya hai ya coding assignment? Kuch toh dhang ka likh 💀",
+            "Yeh topic dekh ke AI ne khud roast hone se mana kar diya 😂",
+            "Server slow hai ya teri soch? Dono hi kharab lag rahe hain 🤡"
         ]
         return random.choice(fallbacks)
 
@@ -615,7 +620,7 @@ def roast():
         return jsonify({"error": "No meme images found in memes folder"}), 500
     
     try:
-        roast_text = generate_roast(topic)
+        roast_text = get_roast(topic)
         random_meme = random.choice(meme_files)
         meme_path = os.path.join(MEMES_FOLDER, random_meme)
         final_image = add_text_to_image(meme_path, roast_text)
