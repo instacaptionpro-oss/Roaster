@@ -1,8 +1,8 @@
 # Go to your project folder
-cd roast-ai
+cd Roaster
 
-# Create memes folder
-mkdir memes
+# Create memes folder (if not exists)
+mkdir -p memes
 
 # Download all meme templates
 curl -o memes/meme1.jpg https://i.imgflip.com/64sz4u.jpg
@@ -25,3 +25,8 @@ curl -o memes/meme17.jpg https://i.imgflip.com/9vct.jpg
 curl -o memes/meme18.jpg https://i.imgflip.com/1g8my4.jpg
 curl -o memes/meme19.jpg https://i.imgflip.com/28j0te.jpg
 curl -o memes/meme20.jpg https://i.imgflip.com/1bij.jpg
+
+# Upload to GitHub
+git add memes/
+git commit -m "Add meme template images"
+git push
