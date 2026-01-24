@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roast AI - Get Destroyed 🔥</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
+            border: 2px solid #ff4500;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 0 40px rgba(255, 69, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ff4500, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
+        }
+
+        .tagline {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 18px;
+            font-size: 1rem;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #ff4500;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.3);
+        }
+
+        input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #ff4500, #ff8c00);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 69, 0, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 69, 0, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top: 4px solid #ff4500;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #ff4500;
+            font-size: 1.1rem;
+            font-weight: 500;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .result img {
+            width: 100%;
+            border-radius: 15px;
+            border: 3px solid #ff4500;
+            box-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-share {
+            background: #25D366;
+            color: #fff;
+        }
+
+        .btn-share:hover {
+            background: #1ea952;
+            transform: translateY(-2px);
+        }
+
+        .btn-again {
+            background: #333;
+            color: #fff;
+        }
+
+        .btn-again:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+
+        .error {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            color: #ff6b6b;
+            text-align: center;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 ROAST AI 🔥</h1>
+        <p class="tagline">Savage Hinglish Roasts. No Mercy.</p>
+
+        <div class="input-group">
+            <input 
+                type="text" 
+                id="topicInput" 
+                placeholder="Enter Topic (e.g., My Ex, Anatomy Exams)"
+                maxlength="100"
+            >
+        </div>
+
+        <button class="btn" id="roastBtn" onclick="generateRoast()">
+            🔥 ROAST ME
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text" id="loadingText">Waking up the demon...</p>
+        </div>
+
+        <div class="result" id="result">
+            <img id="roastImage" alt="Roasted Meme">
+            <div class="action-buttons">
+                <button class="btn-share" onclick="shareOnWhatsApp()">
+                    📱 Share on WhatsApp
+                </button>
+                <button class="btn-again" onclick="reset()">
+                    🔄 Roast Again
+                </button>
+            </div>
+        </div>
+
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        // ===== CONFIGURATION =====
+        const API_BASE_URL = "https://roaster-vwgb.onrender.com";
+
+        // Loading messages that cycle every 3 seconds
+        const loadingMessages = [
+            "Waking up the demon...",
+            "Consulting with Satan...",
+            "Calculating emotional damage...",
+            "Brewing savage roast...",
+            "Loading insults from database...",
+            "Preparing maximum destruction...",
+            "AI is thinking of creative ways to hurt you..."
+        ];
+
+        let loadingInterval;
+        let currentTopic = "";
+
+        async function generateRoast() {
+            const topic = document.getElementById('topicInput').value.trim();
+            
+            if (!topic) {
+                showError('Bro, enter something to roast! 🤦‍♂️');
+                return;
+            }
+
+            currentTopic = topic;
+
+            // Hide previous results
+            document.getElementById('result').classList.remove('active');
+            document.getElementById('error').classList.remove('active');
+            
+            // Show loading
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('roastBtn').disabled = true;
+
+            // Start cycling loading messages
+            let messageIndex = 0;
+            document.getElementById('loadingText').textContent = loadingMessages[0];
+            
+            loadingInterval = setInterval(() => {
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+                document.getElementById('loadingText').textContent = loadingMessages[messageIndex];
+            }, 3000);
+
+            try {
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                const url = `${API_BASE_URL}/roast?topic=${encodeURIComponent(topic)}&t=${timestamp}`;
+                
+                // Fetch with 20-second timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+                const response = await fetch(url, {
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate roast');
+                }
+
+                // Convert blob to object URL
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                
+                // Display result
+                document.getElementById('roastImage').src = imageUrl;
+                document.getElementById('result').classList.add('active');
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    showError('Server is waking up from a nap. Please try again! 😴');
+                } else {
+                    showError('Oops! Something went wrong. Try again! 💀');
+                }
+                console.error(error);
+            } finally {
+                // Hide loading
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('roastBtn').disabled = false;
+                clearInterval(loadingInterval);
+            }
+        }
+
+        function shareOnWhatsApp() {
+            const currentUrl = window.location.href;
+            const message = `Check out this roast about "${currentTopic}" generated by AI! ${currentUrl}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        function reset() {
+            document.getElementById('topicInput').value = '';
+            document.getElementById('result').classList.remove('active');
+            document.getElementById('topicInput').focus();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('active');
+            }, 5000);
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('topicInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateRoast();
+            }
+        });
+
+        // Auto-focus input on load
+        window.addEventListener('load', () => {
+            document.getElementById('topicInput').focus();
+        });
+    </script>
+</body>
+  </html>
