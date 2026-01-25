@@ -33,7 +33,14 @@ else:
 
 MEMES_FOLDER = "memes"
 
-# ===== PREMIUM FRONTEND HTML =====
+# AI Model Configuration (Primary + Backups)
+AI_MODELS = [
+    "llama-3.3-70b-versatile",                          # Primary
+    "qwen/qwen-2.5-72b-instruct",                       # Backup 1
+    "meta-llama/llama-3.1-70b-versatile"                # Backup 2
+]
+
+# ===== PREMIUM FRONTEND HTML (with Ember Animation) =====
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -60,22 +67,15 @@ HTML_TEMPLATE = """
             position: relative;
         }
 
-        .bg-gradient {
+        #particleCanvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(255, 59, 48, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(255, 59, 48, 0.1) 0%, transparent 50%);
-            animation: gradientShift 15s ease infinite;
+            z-index: -1;
             pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.1); }
+            background: #050505;
         }
 
         .navbar {
@@ -435,11 +435,11 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
-    <div class="bg-gradient"></div>
+    <canvas id="particleCanvas"></canvas>
 
     <nav class="navbar">
         <div class="nav-brand">
-            <img src="/static/logo.png" alt="Roaster" class="brand-logo">
+            <img src="/static/logo.png" alt="Roaster" class="brand-logo" onerror="this.style.display='none'">
             ROASTER
         </div>
         <div class="system-status">
@@ -500,6 +500,90 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Ember {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 20;
+                this.size = Math.random() * 4 + 2;
+                this.speedY = Math.random() * 2 + 1;
+                this.speedX = (Math.random() - 0.5) * 1;
+                this.color = Math.random() > 0.6 ? '#FF4500' : '#FFD700';
+                this.maxLife = Math.random() * 200 + 150;
+                this.life = this.maxLife;
+                this.swaySpeed = Math.random() * 0.02 + 0.01;
+                this.swayAmount = Math.random() * 30 + 20;
+                this.swayOffset = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.x += Math.sin(this.life * this.swaySpeed + this.swayOffset) * 0.5;
+                this.x += this.speedX * 0.3;
+                this.life--;
+                
+                if (this.life <= 0 || this.y < -50) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                let opacity;
+                if (this.life > this.maxLife * 0.7) {
+                    opacity = (this.maxLife - this.life) / (this.maxLife * 0.3);
+                } else {
+                    opacity = this.life / this.maxLife;
+                }
+                
+                opacity = Math.max(0, Math.min(opacity * 0.8, 0.8));
+
+                ctx.save();
+                ctx.globalAlpha = opacity;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        const emberCount = window.innerWidth < 768 ? 40 : 70;
+        const embers = [];
+
+        for (let i = 0; i < emberCount; i++) {
+            embers.push(new Ember());
+            embers[i].y = canvas.height + Math.random() * canvas.height;
+        }
+
+        function animate() {
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            embers.forEach(ember => {
+                ember.update();
+                ember.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
         const API_URL = window.location.origin;
 
         let egoCount = 14203;
@@ -617,7 +701,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# ===== BACKEND FUNCTIONS (Same as before) =====
+# ===== BACKEND FUNCTIONS =====
 def get_font(size=40):
     font_paths = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -636,12 +720,10 @@ def get_font(size=40):
     return ImageFont.load_default()
 
 def get_roast(topic):
-    try:
-        completion = groq_client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": """
+    """
+    Generate roast with automatic fallback to backup models
+    """
+    system_prompt = """
 You are 'Roaster', India's most witty and unpredictable Stand-up Comedian.
 Your goal is to Roast the user based on the specific topic they provide.
 
@@ -674,33 +756,61 @@ Roast: "She treated you like a 'Free Trial' subscription. Use kiya, expire hua, 
 Generate a savage, unique, and context-specific roast for the user's topic.
 Max 25 words.
 NO introductory text. Just the roast.
-                    """
-                },
-                {
-                    "role": "user",
-                    "content": f"Roast this topic with intelligent humor: {topic}"
-                }
-            ],
-            model="llama-3.3-70b-versatile",
-            temperature=1.1,
-            max_tokens=120,
-            top_p=1,
-        )
-        
-        roast_text = completion.choices[0].message.content.strip()
-        roast_text = roast_text.strip('"').strip("'")
-        roast_text = roast_text.replace('**', '').replace('*', '')
-        
-        return roast_text
+    """
     
-    except Exception as e:
-        print(f"Groq API Error: {e}")
-        fallbacks = [
-            "AI bhi teri topic dekh ke confused hai. Kuch dhang ka likh bhai 💀",
-            "Server ne dekha aur bola 'Yeh roast nahi, therapy case hai' 😂",
-            "Teri WiFi jitni slow, teri soch bhi utni slow 🤡"
-        ]
-        return random.choice(fallbacks)
+    # Try each model in order
+    for model_index, model_name in enumerate(AI_MODELS):
+        try:
+            print(f"🤖 Trying model {model_index + 1}/{len(AI_MODELS)}: {model_name}")
+            
+            completion = groq_client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Roast this topic with intelligent humor: {topic}"
+                    }
+                ],
+                model=model_name,
+                temperature=1.1,
+                max_tokens=120,
+                top_p=1,
+            )
+            
+            roast_text = completion.choices[0].message.content.strip()
+            roast_text = roast_text.strip('"').strip("'")
+            roast_text = roast_text.replace('**', '').replace('*', '')
+            
+            print(f"✅ Success with {model_name}")
+            return roast_text
+        
+        except Exception as e:
+            error_msg = str(e).lower()
+            print(f"❌ Model {model_name} failed: {e}")
+            
+            # If rate limit or quota error, try next model
+            if "rate" in error_msg or "limit" in error_msg or "quota" in error_msg:
+                if model_index < len(AI_MODELS) - 1:
+                    print(f"⏭️ Switching to backup model...")
+                    continue
+                else:
+                    print("⚠️ All models exhausted")
+            else:
+                # For other errors, try next model
+                if model_index < len(AI_MODELS) - 1:
+                    continue
+    
+    # If all models fail, return fallback
+    print("💀 All AI models failed, using fallback roast")
+    fallbacks = [
+        f"Bhai {topic} ko roast karne se pehle khud ko sambhal le, tera future toh already dark mode mein hai 💀",
+        f"{topic}? Yeh topic bhi teri love life jaisa hai - kuch hai hi nahi samajhne ko 😂",
+        f"AI ne 3 baar try kiya aur haar maan li. {topic} roast-proof hai lagta hai 🤡"
+    ]
+    return random.choice(fallbacks)
 
 def wrap_text(text, font, max_width):
     lines = []
