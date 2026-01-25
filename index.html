@@ -23,26 +23,17 @@
             position: relative;
         }
 
-        /* Animated Background */
-        .bg-gradient {
+        /* Particle Canvas Background */
+        #particleCanvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(255, 59, 48, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(255, 59, 48, 0.1) 0%, transparent 50%);
-            animation: gradientShift 15s ease infinite;
+            z-index: -1;
             pointer-events: none;
-            z-index: 0;
         }
 
-        @keyframes gradientShift {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.1); }
-        }
-
-        /* Navbar */
         .navbar {
             position: relative;
             z-index: 100;
@@ -56,11 +47,27 @@
         }
 
         .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             font-size: 1.5rem;
             font-weight: 900;
             letter-spacing: -1px;
             color: #FF3B30;
             text-shadow: 0 0 20px rgba(255, 59, 48, 0.5);
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(255, 59, 48, 0.6));
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
         }
 
         .system-status {
@@ -85,7 +92,6 @@
             50% { opacity: 0.6; transform: scale(1.2); }
         }
 
-        /* Main Container */
         .container {
             position: relative;
             z-index: 10;
@@ -95,7 +101,6 @@
             text-align: center;
         }
 
-        /* Live Ticker */
         .live-ticker {
             display: inline-flex;
             align-items: center;
@@ -120,7 +125,6 @@
             50% { opacity: 0.5; }
         }
 
-        /* Hero Section */
         .hero-headline {
             font-size: clamp(3rem, 8vw, 5.5rem);
             font-weight: 900;
@@ -144,7 +148,6 @@
             margin-right: auto;
         }
 
-        /* Command Line Input */
         .input-engine {
             position: relative;
             max-width: 700px;
@@ -223,7 +226,6 @@
             fill: white;
         }
 
-        /* Loading State */
         .loading-container {
             display: none;
             padding: 80px 24px;
@@ -260,7 +262,6 @@
             50% { opacity: 0.5; }
         }
 
-        /* Result Card */
         .result-card {
             display: none;
             max-width: 700px;
@@ -334,7 +335,6 @@
             transform: translateY(-2px);
         }
 
-        /* Error State */
         .error-message {
             display: none;
             max-width: 500px;
@@ -358,7 +358,6 @@
             75% { transform: translateX(10px); }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .navbar {
                 padding: 20px 24px;
@@ -366,6 +365,11 @@
 
             .nav-brand {
                 font-size: 1.25rem;
+            }
+
+            .brand-logo {
+                width: 32px;
+                height: 32px;
             }
 
             .container {
@@ -387,11 +391,14 @@
     </style>
 </head>
 <body>
-    <div class="bg-gradient"></div>
+    <!-- Rising Embers Particle Canvas -->
+    <canvas id="particleCanvas"></canvas>
 
     <!-- Navbar -->
     <nav class="navbar">
-        <div class="nav-brand">🔥 ROASTER</div>
+        <div class="nav-brand">
+            🔥 ROASTER
+        </div>
         <div class="system-status">
             <div class="status-dot"></div>
             <span>System Online</span>
@@ -457,17 +464,107 @@
     </div>
 
     <script>
-        // ===== CONFIGURATION =====
-        const API_URL = "PLACEHOLDER"; // Replace with your Render URL
+        // ===== RISING EMBERS PARTICLE ANIMATION =====
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
 
-        // ===== LIVE COUNTER =====
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Particle class
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + 10;
+                this.size = Math.random() * 3 + 1;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.3;
+                this.color = Math.random() > 0.5 ? '#FF4500' : '#FFD700';
+                this.life = Math.random() * 100 + 100;
+                this.age = 0;
+                this.swayOffset = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                // Move upward
+                this.y -= this.speedY;
+                
+                // Natural fire sway (sine wave)
+                this.x += Math.sin(this.age * 0.05 + this.swayOffset) * this.speedX;
+                
+                this.age++;
+
+                // Fade out as particle rises
+                this.opacity = (1 - this.age / this.life) * 0.6;
+
+                // Reset if out of bounds or fully faded
+                if (this.y < -10 || this.opacity <= 0) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Create particles (mobile-friendly count)
+        const particleCount = window.innerWidth < 768 ? 30 : 50;
+        const particles = [];
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        // Animation loop
+        function animate() {
+            // Semi-transparent black to create trail effect
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw all particles
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start animation
+        animate();
+
+        // ===== MAIN APP LOGIC =====
+        const API_URL = "https://roaster-vwgb.onrender.com"; // ← Replace with your backend URL
+
+        // Live ego counter
         let egoCount = 14203;
         setInterval(() => {
             egoCount += Math.floor(Math.random() * 3);
             document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
         }, 5000);
 
-        // ===== LOADING MESSAGES =====
+        // Loading messages
         const loadingMessages = [
             "Consulting with Satan...",
             "Analyzing your bad life choices...",
@@ -480,7 +577,7 @@
         let loadingInterval;
         let currentTopic = "";
 
-        // ===== MAIN ROAST FUNCTION =====
+        // Execute roast function
         async function executeRoast() {
             const topic = document.getElementById('topicInput').value.trim();
             
@@ -491,11 +588,9 @@
 
             currentTopic = topic;
 
-            // Hide previous states
+            // Reset UI
             document.getElementById('resultCard').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
-            
-            // Show loading
             document.getElementById('loadingContainer').classList.add('active');
             document.getElementById('executeBtn').disabled = true;
 
@@ -512,6 +607,7 @@
                 const timestamp = Date.now();
                 const url = `${API_URL}/roast?topic=${encodeURIComponent(topic)}&t=${timestamp}`;
                 
+                // 25-second timeout
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 25000);
 
@@ -546,7 +642,7 @@
             }
         }
 
-        // ===== WHATSAPP SHARE =====
+        // WhatsApp share
         function shareToWhatsApp() {
             const url = window.location.href;
             const message = `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${url}`;
@@ -554,14 +650,14 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // ===== RESET =====
+        // Reset
         function reset() {
             document.getElementById('topicInput').value = '';
             document.getElementById('resultCard').classList.remove('active');
             document.getElementById('topicInput').focus();
         }
 
-        // ===== ERROR HANDLING =====
+        // Error handling
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
@@ -572,14 +668,14 @@
             }, 4000);
         }
 
-        // ===== ENTER KEY SUPPORT =====
+        // Enter key support
         document.getElementById('topicInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 executeRoast();
             }
         });
 
-        // ===== AUTO FOCUS =====
+        // Auto-focus
         window.addEventListener('load', () => {
             document.getElementById('topicInput').focus();
         });
