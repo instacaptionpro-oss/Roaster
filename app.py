@@ -2,10 +2,12 @@ import os
 import random
 import textwrap
 from io import BytesIO
+from datetime import datetime
 from flask import Flask, request, send_file, jsonify, render_template_string
 from groq import Groq
 from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
 load_dotenv()
 
@@ -13,9 +15,14 @@ app = Flask(__name__)
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
+# Supabase setup
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
+
 MEMES_FOLDER = "memes"
 
-# ===== FRONTEND HTML =====
+# ===== FRONTEND HTML (Same as before) =====
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -565,28 +572,22 @@ def add_text_to_image(image_path, text):
     
     img_width, img_height = img.size
     
-    # Larger, bolder font
     font_size = int(img_height * 0.07)
     font = get_font(font_size)
     
-    # Wrap text
     max_width = int(img_width * 0.88)
     lines = wrap_text(text, font, max_width)
     
-    # Calculate positioning
     line_height = font_size + 12
     total_text_height = len(lines) * line_height
     
-    # Position at bottom with padding
     y_position = img_height - total_text_height - 60
     
-    # Draw each line with yellow color
     for line in lines:
         bbox = font.getbbox(line)
         text_width = bbox[2] - bbox[0]
         x_position = (img_width - text_width) // 2
         
-        # Thicker black outline for better readability
         outline_range = 4
         for adj_x in range(-outline_range, outline_range + 1):
             for adj_y in range(-outline_range, outline_range + 1):
@@ -597,17 +598,53 @@ def add_text_to_image(image_path, text):
                     fill="black"
                 )
         
-        # Main text - YELLOW COLOR
         draw.text(
             (x_position, y_position),
             line,
             font=font,
-            fill="#FFD700"  # Gold/Yellow color
+            fill="#FFD700"
         )
         
         y_position += line_height
     
     return img
+
+def save_to_supabase(topic, roast_text, image_buffer):
+    """
+    Upload image to Supabase Storage and save roast data to database
+    """
+    try:
+        # Generate unique filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"roast_{timestamp}_{random.randint(1000, 9999)}.jpg"
+        
+        # Upload to Supabase Storage
+        image_buffer.seek(0)
+        response = supabase.storage.from_("memes").upload(
+            filename,
+            image_buffer.read(),
+            file_options={"content-type": "image/jpeg"}
+        )
+        
+        # Get public URL
+        public_url = supabase.storage.from_("memes").get_public_url(filename)
+        
+        # Insert into database
+        data = {
+            "topic": topic,
+            "roast_text": roast_text,
+            "image_url": public_url,
+            "created_at": datetime.now().isoformat()
+        }
+        
+        supabase.table("roasts").insert(data).execute()
+        
+        print(f"✅ Saved to Supabase: {filename}")
+        return public_url
+        
+    except Exception as e:
+        print(f"❌ Supabase Error: {e}")
+        return None
 
 # ===== ROUTES =====
 @app.route('/')
@@ -630,15 +667,27 @@ def roast():
         return jsonify({"error": "No meme images found in memes folder"}), 500
     
     try:
+        # Generate roast
         roast_text = get_roast(topic)
+        
+        # Pick random meme and add text
         random_meme = random.choice(meme_files)
         meme_path = os.path.join(MEMES_FOLDER, random_meme)
         final_image = add_text_to_image(meme_path, roast_text)
         
+        # Save to buffer
         img_io = BytesIO()
         final_image.save(img_io, 'JPEG', quality=95)
         img_io.seek(0)
         
+        # Upload to Supabase (non-blocking, errors won't break the app)
+        try:
+            save_to_supabase(topic, roast_text, BytesIO(img_io.getvalue()))
+        except Exception as e:
+            print(f"Supabase save failed (non-critical): {e}")
+        
+        # Return image
+        img_io.seek(0)
         return send_file(img_io, mimetype='image/jpeg')
     
     except Exception as e:
