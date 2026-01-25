@@ -15,14 +15,24 @@ app = Flask(__name__)
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# Supabase setup
+# Supabase setup (optional - won't crash if missing)
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(supabase_url, supabase_key)
+
+supabase = None
+if supabase_url and supabase_key:
+    try:
+        supabase: Client = create_client(supabase_url, supabase_key)
+        print("✅ Supabase connected successfully")
+    except Exception as e:
+        print(f"⚠️ Supabase connection failed (app will work without it): {e}")
+        supabase = None
+else:
+    print("⚠️ Supabase credentials not found - storage disabled")
 
 MEMES_FOLDER = "memes"
 
-# ===== FRONTEND HTML (Same as before) =====
+# ===== FRONTEND HTML =====
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -469,7 +479,7 @@ def get_font(size=40):
 
 def get_roast(topic):
     """
-    Generate ultra-relatable savage Hinglish roast
+    Generate creative, context-aware savage Hinglish roast
     """
     try:
         completion = groq_client.chat.completions.create(
@@ -477,52 +487,48 @@ def get_roast(topic):
                 {
                     "role": "system",
                     "content": """
-You are 'Roaster', the legendary Indian Roast Master.
-You are participating in a CONSENSUAL COMEDY ROAST. The user WANTS to be insulted.
-Your goal is to be funny, savage, and deeply relatable.
+You are 'Roaster', India's most witty and unpredictable Stand-up Comedian.
+Your goal is to Roast the user based on the specific topic they provide.
 
-### CORE PERSONALITY:
-- Tone: Arrogant, Witty, Desi, Unfiltered.
-- Language: HINGLISH (Casual Hindi + English).
-- Vibe: Like a college senior or a sarcastic best friend.
+### THE GOLDEN RULES:
+1. **CONTEXT IS KING:** Do not just use random slang. If the topic is "Coding", roast the bugs. If the topic is "Love", roast the heartbreak. If the topic is "Gym", roast the protein powder.
+2. **NO REPETITION:** Do not rely on "Udhaar", "Momos", or "Chhapri" unless it fits perfectly. Be creative. Use new metaphors every time.
+3. **OBSERVATIONAL HUMOR:** Be like a detective. Find the specific insecurity in the topic and attack it.
+4. **LANGUAGE:** Natural Hinglish. Speak like a college student talking to his friend.
 
-### RELATABILITY RULES (The "Simon Sinek" Logic):
-- Don't just call them "ugly". Call out their "Cheap Habits".
-- Target: Procrastination, Fake Richness, Relationship Failures, Corporate Slavery, Middle-Class Struggles.
-- Make them say: "Us Bhai Us" (This is so true).
+### TONE:
+- Sarcastic, Witty, Fast.
+- Less "Abusive", More "Intellectual Damage".
+- Use Pop Culture references (Bollywood, Cricketers, memes, Politicians) IF it fits.
 
-### VOCABULARY TO USE:
-- Words: Chhapri, Nalla, Berozgar, Dhakan, Nibba/Nibbi, Overacting, Sasta, Udhaar.
-- Topics: EMI, Momos, Goa Trip, Govt Job, Instagram Reels, Ex, Crush.
+### EXAMPLES OF CREATIVE RANGE:
 
-### EXAMPLES (Study these closely):
-1. Topic: "I want an iPhone."
-   Roast: "Kidney bech ke lega ya 24 mahine ki EMI? Showoff aise karega jaise Apple company khareed li ho."
-   
-2. Topic: "Engineering."
-   Roast: "4 saal assignment copy kiye, ab job ke liye LinkedIn pe 'Open to Work' ka rona ro raha hai."
-   
-3. Topic: "My Ex."
-   Roast: "Woh sarkari naukri wale ke saath bhaag gayi aur tu yahan AI se dil ka haal bata raha hai. Sudhar ja."
-   
-4. Topic: "General/Me."
-   Roast: "Teri shakal dekh ke lagta hai tu doston se 'Google Pay' maangta hai aur kabhi wapas nahi karta."
+Topic: "My Boss"
+Roast: "He acts like the CEO of Google but manages the team like a Whatsapp Group Admin." (Context: Management).
+
+Topic: "I go to the Gym"
+Roast: "Body banne se pehle Instagram stories bann gayi. Protein shake kam, photosyanthesis zyada chal raha hai." (Context: Showoff).
+
+Topic: "Python Coding"
+Roast: "Tere code mein itne errors hain ki IDE bhi suicide karne ka soch raha hai." (Context: Tech).
+
+Topic: "My Ex"
+Roast: "She treated you like a 'Free Trial' subscription. Use kiya, expire hua, aur naya account bana liya." (Context: Modern Tech Metaphor).
 
 ### INSTRUCTION:
-- Receive the User's Topic.
-- Generate ONE short, punchy roast (Max 25 words).
-- NO introductory text. NO "Here is the roast". Just the insult.
-- If the topic is inappropriate, make a joke about the user being creepy instead of refusing.
+Generate a savage, unique, and context-specific roast for the user's topic.
+Max 25 words.
+NO introductory text. Just the roast.
                     """
                 },
                 {
                     "role": "user",
-                    "content": f"Roast this topic savagely: {topic}"
+                    "content": f"Roast this topic with intelligent humor: {topic}"
                 }
             ],
             model="llama-3.3-70b-versatile",
-            temperature=0.9,
-            max_tokens=100,
+            temperature=1.1,
+            max_tokens=120,
             top_p=1,
         )
         
@@ -535,9 +541,9 @@ Your goal is to be funny, savage, and deeply relatable.
     except Exception as e:
         print(f"Groq API Error: {e}")
         fallbacks = [
-            "Bhai topic itna boring hai ki AI ne khud roast hone se mana kar diya 💀",
-            "Server bhi teri life dekh ke so gaya. Phir se try kar 😂",
-            "Tera WiFi bhi teri commitment jitna weak hai kya? 🤡"
+            "AI bhi teri topic dekh ke confused hai. Kuch dhang ka likh bhai 💀",
+            "Server ne dekha aur bola 'Yeh roast nahi, therapy case hai' 😂",
+            "Teri WiFi jitni slow, teri soch bhi utni slow 🤡"
         ]
         return random.choice(fallbacks)
 
@@ -613,12 +619,14 @@ def save_to_supabase(topic, roast_text, image_buffer):
     """
     Upload image to Supabase Storage and save roast data to database
     """
+    if supabase is None:
+        print("⚠️ Supabase not configured - skipping save")
+        return None
+    
     try:
-        # Generate unique filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"roast_{timestamp}_{random.randint(1000, 9999)}.jpg"
         
-        # Upload to Supabase Storage
         image_buffer.seek(0)
         response = supabase.storage.from_("memes").upload(
             filename,
@@ -626,10 +634,8 @@ def save_to_supabase(topic, roast_text, image_buffer):
             file_options={"content-type": "image/jpeg"}
         )
         
-        # Get public URL
         public_url = supabase.storage.from_("memes").get_public_url(filename)
         
-        # Insert into database
         data = {
             "topic": topic,
             "roast_text": roast_text,
@@ -667,26 +673,21 @@ def roast():
         return jsonify({"error": "No meme images found in memes folder"}), 500
     
     try:
-        # Generate roast
         roast_text = get_roast(topic)
         
-        # Pick random meme and add text
         random_meme = random.choice(meme_files)
         meme_path = os.path.join(MEMES_FOLDER, random_meme)
         final_image = add_text_to_image(meme_path, roast_text)
         
-        # Save to buffer
         img_io = BytesIO()
         final_image.save(img_io, 'JPEG', quality=95)
         img_io.seek(0)
         
-        # Upload to Supabase (non-blocking, errors won't break the app)
         try:
             save_to_supabase(topic, roast_text, BytesIO(img_io.getvalue()))
         except Exception as e:
             print(f"Supabase save failed (non-critical): {e}")
         
-        # Return image
         img_io.seek(0)
         return send_file(img_io, mimetype='image/jpeg')
     
