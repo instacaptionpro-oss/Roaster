@@ -11,11 +11,12 @@ from supabase import create_client, Client
 
 load_dotenv()
 
-app = Flask(__name__)
+# Enable static file serving
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# Supabase setup (optional - won't crash if missing)
+# Supabase setup
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 
@@ -25,24 +26,24 @@ if supabase_url and supabase_key:
         supabase: Client = create_client(supabase_url, supabase_key)
         print("✅ Supabase connected successfully")
     except Exception as e:
-        print(f"⚠️ Supabase connection failed (app will work without it): {e}")
+        print(f"⚠️ Supabase connection failed: {e}")
         supabase = None
 else:
-    print("⚠️ Supabase credentials not found - storage disabled")
+    print("⚠️ Supabase credentials not found")
 
 MEMES_FOLDER = "memes"
 
-# ===== FRONTEND HTML =====
+# ===== PREMIUM FRONTEND HTML =====
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roaster - The Social Network for Haters</title>
+    <title>Roaster AI - Silence Your Ego</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -51,127 +52,241 @@ HTML_TEMPLATE = """
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: #000000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #050505;
+            color: #ffffff;
             min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 59, 48, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 59, 48, 0.1) 0%, transparent 50%);
+            animation: gradientShift 15s ease infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .navbar {
+            position: relative;
+            z-index: 100;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            color: #fff;
+            padding: 24px 48px;
+            backdrop-filter: blur(12px);
+            background: rgba(5, 5, 5, 0.6);
+            border-bottom: 1px solid rgba(255, 59, 48, 0.1);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: #FF3B30;
+            text-shadow: 0 0 20px rgba(255, 59, 48, 0.5);
         }
 
-        .brand {
-            font-size: 4rem;
-            font-weight: 800;
-            letter-spacing: -2px;
-            background: linear-gradient(135deg, #FF3B30, #FF6B6B);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-            text-shadow: 0 0 80px rgba(255, 59, 48, 0.5);
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(255, 59, 48, 0.6));
+            animation: logoFloat 3s ease-in-out infinite;
         }
 
-        .tagline {
-            font-size: 1.2rem;
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
             color: #888;
-            font-weight: 400;
-            letter-spacing: 0.5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
         }
 
         .container {
-            background: #0a0a0a;
-            border: 1px solid #1a1a1a;
-            border-radius: 24px;
-            padding: 50px;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 20px 80px rgba(255, 59, 48, 0.15);
+            position: relative;
+            z-index: 10;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 24px;
+            text-align: center;
         }
 
-        .input-wrapper {
+        .live-ticker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #FF3B30;
+            margin-bottom: 32px;
+            backdrop-filter: blur(12px);
+        }
+
+        .ticker-icon {
+            animation: flicker 1.5s ease-in-out infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero-headline {
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 900;
+            letter-spacing: -3px;
+            line-height: 1.1;
             margin-bottom: 24px;
         }
 
-        input {
-            width: 100%;
-            padding: 20px 24px;
-            font-size: 1.1rem;
-            background: #000000;
-            border: 2px solid #1a1a1a;
-            border-radius: 16px;
-            color: #fff;
-            transition: all 0.3s;
-            outline: none;
-            font-family: 'Inter', sans-serif;
+        .hero-headline .accent {
+            color: #FF3B30;
+            text-shadow: 0 0 40px rgba(255, 59, 48, 0.6);
         }
 
-        input:focus {
+        .hero-subtext {
+            font-size: 1.25rem;
+            color: #888;
+            font-weight: 400;
+            margin-bottom: 64px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .input-engine {
+            position: relative;
+            max-width: 700px;
+            margin: 0 auto 48px;
+        }
+
+        .command-line {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 59, 48, 0.2);
+            border-radius: 16px;
+            padding: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .command-line:focus-within {
             border-color: #FF3B30;
             box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.1);
         }
 
-        input::placeholder {
-            color: #444;
-        }
-
-        .roast-btn {
-            width: 100%;
-            padding: 22px;
-            font-size: 1.3rem;
+        .command-prefix {
+            padding: 0 16px;
+            color: #FF3B30;
             font-weight: 700;
-            background: #FF3B30;
+            font-size: 1.1rem;
+        }
+
+        .command-input {
+            flex: 1;
+            background: transparent;
             border: none;
-            border-radius: 16px;
+            outline: none;
+            padding: 20px 8px;
+            font-size: 1.1rem;
             color: #fff;
+            font-family: 'Inter', monospace;
+        }
+
+        .command-input::placeholder {
+            color: #555;
+        }
+
+        .execute-btn {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #FF3B30, #ff6b5e);
+            border: none;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Inter', sans-serif;
-            letter-spacing: 0.5px;
-            box-shadow: 0 8px 32px rgba(255, 59, 48, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 59, 48, 0.4);
         }
 
-        .roast-btn:hover {
-            background: #FF5549;
+        .execute-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(255, 59, 48, 0.6);
+            box-shadow: 0 8px 30px rgba(255, 59, 48, 0.6);
         }
 
-        .roast-btn:active {
+        .execute-btn:active {
             transform: translateY(0);
         }
 
-        .roast-btn:disabled {
+        .execute-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
-        .loading {
+        .arrow-icon {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .loading-container {
             display: none;
-            text-align: center;
-            margin-top: 40px;
+            padding: 80px 24px;
         }
 
-        .loading.active {
+        .loading-container.active {
             display: block;
         }
 
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid #1a1a1a;
+        .loading-ring {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 59, 48, 0.1);
             border-top: 4px solid #FF3B30;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 24px;
+            margin: 0 auto 32px;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
@@ -180,38 +295,48 @@ HTML_TEMPLATE = """
         }
 
         .loading-text {
+            font-size: 1.2rem;
             color: #FF3B30;
-            font-size: 1.15rem;
             font-weight: 600;
-            animation: pulse 1.5s ease-in-out infinite;
+            animation: textPulse 2s ease-in-out infinite;
         }
 
-        @keyframes pulse {
+        @keyframes textPulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+            50% { opacity: 0.5; }
         }
 
-        .result {
+        .result-card {
             display: none;
-            margin-top: 40px;
-            animation: fadeIn 0.5s ease-in;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(12px);
+            border: 2px solid #FF3B30;
+            border-radius: 24px;
+            box-shadow: 0 0 60px rgba(255, 59, 48, 0.3);
+            animation: cardSlideIn 0.5s ease-out;
         }
 
-        .result.active {
+        .result-card.active {
             display: block;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes cardSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .result img {
+        .result-image {
             width: 100%;
-            border-radius: 20px;
-            border: 3px solid #FF3B30;
-            box-shadow: 0 0 60px rgba(255, 59, 48, 0.6),
-                        0 20px 60px rgba(0, 0, 0, 0.8);
+            border-radius: 16px;
             margin-bottom: 24px;
         }
 
@@ -220,55 +345,55 @@ HTML_TEMPLATE = """
             gap: 12px;
         }
 
-        .action-buttons button {
+        .whatsapp-btn, .retry-btn {
             flex: 1;
-            padding: 18px;
-            font-size: 1.05rem;
-            font-weight: 600;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 700;
             border: none;
-            border-radius: 14px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             font-family: 'Inter', sans-serif;
         }
 
-        .share-btn {
+        .whatsapp-btn {
             background: #25D366;
-            color: #fff;
+            color: white;
         }
 
-        .share-btn:hover {
+        .whatsapp-btn:hover {
             background: #1ea952;
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
         }
 
-        .again-btn {
-            background: #1a1a1a;
-            color: #fff;
-            border: 1px solid #333;
+        .retry-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .again-btn:hover {
-            background: #2a2a2a;
+        .retry-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
             transform: translateY(-2px);
         }
 
-        .error {
+        .error-message {
             display: none;
-            margin-top: 24px;
-            padding: 20px;
+            max-width: 500px;
+            margin: 24px auto;
+            padding: 16px 24px;
             background: rgba(255, 59, 48, 0.1);
-            border: 2px solid #FF3B30;
-            border-radius: 14px;
-            color: #FF6B6B;
-            text-align: center;
-            font-weight: 500;
+            border: 1px solid #FF3B30;
+            border-radius: 12px;
+            color: #ff6b5e;
+            font-weight: 600;
+            animation: shake 0.5s;
         }
 
-        .error.active {
+        .error-message.active {
             display: block;
-            animation: shake 0.5s;
         }
 
         @keyframes shake {
@@ -277,27 +402,30 @@ HTML_TEMPLATE = """
             75% { transform: translateX(10px); }
         }
 
-        @media (max-width: 600px) {
-            .brand {
-                font-size: 3rem;
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 20px 24px;
             }
 
-            .tagline {
-                font-size: 1rem;
+            .nav-brand {
+                font-size: 1.25rem;
+            }
+
+            .brand-logo {
+                width: 32px;
+                height: 32px;
             }
 
             .container {
-                padding: 30px 24px;
+                padding: 48px 20px;
             }
 
-            input {
-                padding: 18px 20px;
+            .hero-headline {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtext {
                 font-size: 1rem;
-            }
-
-            .roast-btn {
-                padding: 20px;
-                font-size: 1.15rem;
             }
 
             .action-buttons {
@@ -307,75 +435,105 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1 class="brand">Roaster</h1>
-        <p class="tagline">The Social Network for Haters</p>
-    </div>
+    <div class="bg-gradient"></div>
+
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="/static/logo.png" alt="Roaster" class="brand-logo">
+            ROASTER
+        </div>
+        <div class="system-status">
+            <div class="status-dot"></div>
+            <span>System Online</span>
+        </div>
+    </nav>
 
     <div class="container">
-        <div class="input-wrapper">
-            <input 
-                type="text" 
-                id="topicInput" 
-                placeholder="Who do you want to roast? (e.g. My Ex, My Boss)"
-                maxlength="100"
-            >
+        <div class="live-ticker">
+            <span class="ticker-icon">🔥</span>
+            <span id="egoCounter">14,203</span> Egos Destroyed Today
         </div>
 
-        <button class="roast-btn" id="roastBtn" onclick="roastThem()">
-            ROAST THEM 🔥
-        </button>
+        <h1 class="hero-headline">
+            Silence Your <span class="accent">Ego.</span>
+        </h1>
+        <p class="hero-subtext">
+            The AI that humbles you. No Filters. Just Reality.
+        </p>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p class="loading-text" id="loadingText">Waking up the demon...</p>
-        </div>
-
-        <div class="result" id="result">
-            <img id="roastImage" alt="Roasted">
-            <div class="action-buttons">
-                <button class="share-btn" onclick="shareOnWhatsApp()">
-                    Share on WhatsApp 🚀
-                </button>
-                <button class="again-btn" onclick="reset()">
-                    Roast Again
+        <div class="input-engine">
+            <div class="command-line">
+                <span class="command-prefix">></span>
+                <input 
+                    type="text" 
+                    class="command-input" 
+                    id="topicInput"
+                    placeholder="Roast my Ex / Boss / Life..."
+                    maxlength="100"
+                >
+                <button class="execute-btn" id="executeBtn" onclick="executeRoast()">
+                    <svg class="arrow-icon" viewBox="0 0 24 24">
+                        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    </svg>
                 </button>
             </div>
         </div>
 
-        <div class="error" id="error"></div>
+        <div class="loading-container" id="loadingContainer">
+            <div class="loading-ring"></div>
+            <div class="loading-text" id="loadingText">Consulting with Satan...</div>
+        </div>
+
+        <div class="result-card" id="resultCard">
+            <img src="" alt="Roasted" class="result-image" id="resultImage">
+            <div class="action-buttons">
+                <button class="whatsapp-btn" onclick="shareToWhatsApp()">
+                    📱 Share on WhatsApp
+                </button>
+                <button class="retry-btn" onclick="reset()">
+                    🔄 Roast Again
+                </button>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
     </div>
 
     <script>
-        const BACKEND_URL = window.location.origin;
+        const API_URL = window.location.origin;
+
+        let egoCount = 14203;
+        setInterval(() => {
+            egoCount += Math.floor(Math.random() * 3);
+            document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
+        }, 5000);
 
         const loadingMessages = [
-            "Waking up the demon...",
-            "Consulting with the devil...",
+            "Consulting with Satan...",
+            "Analyzing your bad life choices...",
+            "Finding the ugliest meme template...",
             "Calculating emotional damage...",
-            "Loading maximum destruction...",
-            "Preparing savage roast...",
-            "AI is warming up the insults...",
-            "Searching database of burns..."
+            "Waking up the demons...",
+            "Preparing maximum destruction..."
         ];
 
         let loadingInterval;
         let currentTopic = "";
 
-        async function roastThem() {
+        async function executeRoast() {
             const topic = document.getElementById('topicInput').value.trim();
             
             if (!topic) {
-                showError('Enter someone to roast! 😤');
+                showError('Enter something to roast! 😤');
                 return;
             }
 
             currentTopic = topic;
 
-            document.getElementById('result').classList.remove('active');
-            document.getElementById('error').classList.remove('active');
-            document.getElementById('loading').classList.add('active');
-            document.getElementById('roastBtn').disabled = true;
+            document.getElementById('resultCard').classList.remove('active');
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('loadingContainer').classList.add('active');
+            document.getElementById('executeBtn').disabled = true;
 
             let msgIndex = 0;
             document.getElementById('loadingText').textContent = loadingMessages[0];
@@ -383,14 +541,14 @@ HTML_TEMPLATE = """
             loadingInterval = setInterval(() => {
                 msgIndex = (msgIndex + 1) % loadingMessages.length;
                 document.getElementById('loadingText').textContent = loadingMessages[msgIndex];
-            }, 3000);
+            }, 2000);
 
             try {
                 const timestamp = Date.now();
-                const url = `${BACKEND_URL}/roast?topic=${encodeURIComponent(topic)}&t=${timestamp}`;
+                const url = `${API_URL}/roast?topic=${encodeURIComponent(topic)}&t=${timestamp}`;
                 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 20000);
+                const timeoutId = setTimeout(() => controller.abort(), 25000);
 
                 const response = await fetch(url, {
                     signal: controller.signal
@@ -405,38 +563,38 @@ HTML_TEMPLATE = """
                 const blob = await response.blob();
                 const imageUrl = URL.createObjectURL(blob);
                 
-                document.getElementById('roastImage').src = imageUrl;
-                document.getElementById('result').classList.add('active');
+                document.getElementById('resultImage').src = imageUrl;
+                document.getElementById('resultCard').classList.add('active');
                 
             } catch (error) {
                 if (error.name === 'AbortError') {
-                    showError('Server is waking up from a nap. Please try again! 😴');
+                    showError('Server is waking up. Please try again! 😴');
                 } else {
                     showError('Something went wrong. Try again! 💀');
                 }
                 console.error(error);
             } finally {
-                document.getElementById('loading').classList.remove('active');
-                document.getElementById('roastBtn').disabled = false;
+                document.getElementById('loadingContainer').classList.remove('active');
+                document.getElementById('executeBtn').disabled = false;
                 clearInterval(loadingInterval);
             }
         }
 
-        function shareOnWhatsApp() {
+        function shareToWhatsApp() {
             const url = window.location.href;
-            const message = `Check out this savage roast about "${currentTopic}" 🔥\\n\\nGenerated by Roaster - The Social Network for Haters\\n${url}`;
+            const message = `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${url}`;
             const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
 
         function reset() {
             document.getElementById('topicInput').value = '';
-            document.getElementById('result').classList.remove('active');
+            document.getElementById('resultCard').classList.remove('active');
             document.getElementById('topicInput').focus();
         }
 
         function showError(message) {
-            const errorDiv = document.getElementById('error');
+            const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.classList.add('active');
             
@@ -447,7 +605,7 @@ HTML_TEMPLATE = """
 
         document.getElementById('topicInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                roastThem();
+                executeRoast();
             }
         });
 
@@ -459,7 +617,7 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# ===== BACKEND FUNCTIONS =====
+# ===== BACKEND FUNCTIONS (Same as before) =====
 def get_font(size=40):
     font_paths = [
         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
@@ -478,9 +636,6 @@ def get_font(size=40):
     return ImageFont.load_default()
 
 def get_roast(topic):
-    """
-    Generate creative, context-aware savage Hinglish roast
-    """
     try:
         completion = groq_client.chat.completions.create(
             messages=[
@@ -570,9 +725,6 @@ def wrap_text(text, font, max_width):
     return lines
 
 def add_text_to_image(image_path, text):
-    """
-    Add yellow text with black outline to image
-    """
     img = Image.open(image_path)
     draw = ImageDraw.Draw(img)
     
@@ -616,11 +768,8 @@ def add_text_to_image(image_path, text):
     return img
 
 def save_to_supabase(topic, roast_text, image_buffer):
-    """
-    Upload image to Supabase Storage and save roast data to database
-    """
     if supabase is None:
-        print("⚠️ Supabase not configured - skipping save")
+        print("⚠️ Supabase not configured")
         return None
     
     try:
@@ -670,7 +819,7 @@ def roast():
     meme_files = [f for f in os.listdir(MEMES_FOLDER) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
     
     if not meme_files:
-        return jsonify({"error": "No meme images found in memes folder"}), 500
+        return jsonify({"error": "No meme images found"}), 500
     
     try:
         roast_text = get_roast(topic)
@@ -686,7 +835,7 @@ def roast():
         try:
             save_to_supabase(topic, roast_text, BytesIO(img_io.getvalue()))
         except Exception as e:
-            print(f"Supabase save failed (non-critical): {e}")
+            print(f"Supabase save failed: {e}")
         
         img_io.seek(0)
         return send_file(img_io, mimetype='image/jpeg')
