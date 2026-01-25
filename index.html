@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -23,16 +24,74 @@
             position: relative;
         }
 
-        /* Particle Canvas Background */
-        #particleCanvas {
+        /* 3D Canvas */
+        #bg-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: -1;
+            opacity: 0.7;
+        }
+
+        /* Smoke Container */
+        .smoke-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            background: #050505;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .smoke {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(ellipse at center, rgba(255,100,50,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(40px);
+            animation: smoke-rise 8s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes smoke-rise {
+            0% {
+                opacity: 0;
+                transform: translateY(100px) scale(0.5) rotate(0deg);
+            }
+            20% {
+                opacity: 0.6;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-600px) scale(2) rotate(180deg);
+            }
+        }
+
+        .ember {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ff6b35;
+            border-radius: 50%;
+            filter: blur(1px);
+            animation: ember-float 4s ease-out infinite;
+            box-shadow: 0 0 10px #ff6b35, 0 0 20px #ff4500;
+        }
+
+        @keyframes ember-float {
+            0% {
+                opacity: 1;
+                transform: translateY(0) translateX(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-400px) translateX(var(--drift));
+            }
         }
 
         .navbar {
@@ -392,8 +451,11 @@
     </style>
 </head>
 <body>
-    <!-- Rising Embers Particle Canvas -->
-    <canvas id="particleCanvas"></canvas>
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Smoke Effects -->
+    <div class="smoke-container" id="smokeContainer"></div>
 
     <!-- Navbar -->
     <nav class="navbar">
@@ -465,140 +527,167 @@
     </div>
 
     <script>
-        // ===== RISING EMBERS PARTICLE ANIMATION =====
-        const canvas = document.getElementById('particleCanvas');
-        const ctx = canvas.getContext('2d');
+        // ===== THREE.JS 3D BACKGROUND =====
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('bg-canvas'), 
+            alpha: true, 
+            antialias: true 
+        });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        // Set canvas size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
+        // Create smoke-like particles
+        const smokeParticles = [];
+        const smokeGeometry = new THREE.BufferGeometry();
+        const smokeCount = 500;
+        const positions = new Float32Array(smokeCount * 3);
 
-        window.addEventListener('resize', resizeCanvas);
-
-        // Particle class with proper ember behavior
-        class Ember {
-            constructor() {
-                this.reset();
-            }
-
-            reset() {
-                // Start from bottom
-                this.x = Math.random() * canvas.width;
-                this.y = canvas.height + 20;
-                
-                // Size variation
-                this.size = Math.random() * 4 + 2;
-                
-                // Upward speed
-                this.speedY = Math.random() * 2 + 1;
-                
-                // Horizontal drift
-                this.speedX = (Math.random() - 0.5) * 1;
-                
-                // Color (orange or gold)
-                this.color = Math.random() > 0.6 ? '#FF4500' : '#FFD700';
-                
-                // Lifespan
-                this.maxLife = Math.random() * 200 + 150;
-                this.life = this.maxLife;
-                
-                // Sway properties
-                this.swaySpeed = Math.random() * 0.02 + 0.01;
-                this.swayAmount = Math.random() * 30 + 20;
-                this.swayOffset = Math.random() * Math.PI * 2;
-            }
-
-            update() {
-                // Move upward
-                this.y -= this.speedY;
-                
-                // Natural fire sway (left-right oscillation)
-                this.x += Math.sin(this.life * this.swaySpeed + this.swayOffset) * 0.5;
-                
-                // Slight horizontal drift
-                this.x += this.speedX * 0.3;
-                
-                // Decrease life
-                this.life--;
-                
-                // Reset if dead or out of bounds
-                if (this.life <= 0 || this.y < -50) {
-                    this.reset();
+        for (let i = 0; i < smokeCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 20;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 10 - 5;
+            
+            smokeParticles.push({
+                velocity: {
+                    x: (Math.random() - 0.5) * 0.005,
+                    y: Math.random() * 0.01 + 0.005,
+                    z: (Math.random() - 0.5) * 0.002
                 }
-            }
-
-            draw() {
-                // Calculate opacity based on life (fade in and fade out)
-                let opacity;
-                if (this.life > this.maxLife * 0.7) {
-                    // Fade in
-                    opacity = (this.maxLife - this.life) / (this.maxLife * 0.3);
-                } else {
-                    // Fade out
-                    opacity = this.life / this.maxLife;
-                }
-                
-                opacity = Math.max(0, Math.min(opacity * 0.8, 0.8));
-
-                ctx.save();
-                ctx.globalAlpha = opacity;
-                
-                // Glow effect
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = this.color;
-                
-                // Draw ember
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.restore();
-            }
+            });
         }
 
-        // Create ember particles
-        const emberCount = window.innerWidth < 768 ? 40 : 70;
-        const embers = [];
+        smokeGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
-        for (let i = 0; i < emberCount; i++) {
-            embers.push(new Ember());
-            // Stagger initial positions
-            embers[i].y = canvas.height + Math.random() * canvas.height;
-        }
+        const smokeMaterial = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0xff6b35,
+            transparent: true,
+            opacity: 0.3,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const smokePoints = new THREE.Points(smokeGeometry, smokeMaterial);
+        scene.add(smokePoints);
+
+        // Add glowing orb
+        const orbGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+        const orbMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff6b35,
+            transparent: true,
+            opacity: 0.1
+        });
+        const orb = new THREE.Mesh(orbGeometry, orbMaterial);
+        orb.position.z = -5;
+        scene.add(orb);
+
+        const innerOrbGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+        const innerOrbMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff4500,
+            transparent: true,
+            opacity: 0.2
+        });
+        const innerOrb = new THREE.Mesh(innerOrbGeometry, innerOrbMaterial);
+        innerOrb.position.z = -5;
+        scene.add(innerOrb);
+
+        camera.position.z = 5;
+
+        // Mouse interaction
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
 
         // Animation loop
         function animate() {
-            // Clear canvas completely each frame (no trail effect)
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Update and draw all embers
-            embers.forEach(ember => {
-                ember.update();
-                ember.draw();
-            });
-
             requestAnimationFrame(animate);
+
+            const positions = smokeGeometry.attributes.position.array;
+            
+            for (let i = 0; i < smokeCount; i++) {
+                const i3 = i * 3;
+                
+                positions[i3] += smokeParticles[i].velocity.x;
+                positions[i3 + 1] += smokeParticles[i].velocity.y;
+                positions[i3 + 2] += smokeParticles[i].velocity.z;
+
+                if (positions[i3 + 1] > 10) {
+                    positions[i3 + 1] = -10;
+                    positions[i3] = (Math.random() - 0.5) * 20;
+                }
+            }
+            
+            smokeGeometry.attributes.position.needsUpdate = true;
+            smokePoints.rotation.y += 0.0005;
+
+            const pulse = Math.sin(Date.now() * 0.001) * 0.1 + 1;
+            orb.scale.set(pulse, pulse, pulse);
+            innerOrb.scale.set(pulse * 0.9, pulse * 0.9, pulse * 0.9);
+
+            camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
+            camera.position.y += (-mouseY * 0.5 - camera.position.y) * 0.02;
+            camera.lookAt(0, 0, -5);
+
+            renderer.render(scene, camera);
         }
 
-        // Start animation
         animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // HTML smoke elements
+        function createSmoke() {
+            const container = document.getElementById('smokeContainer');
+            
+            for (let i = 0; i < 8; i++) {
+                const smoke = document.createElement('div');
+                smoke.className = 'smoke';
+                smoke.style.left = Math.random() * 100 + '%';
+                smoke.style.bottom = '-150px';
+                smoke.style.animationDelay = Math.random() * 8 + 's';
+                smoke.style.animationDuration = (6 + Math.random() * 4) + 's';
+                container.appendChild(smoke);
+            }
+        }
+
+        createSmoke();
+
+        // Ember particles
+        function createEmber() {
+            const container = document.getElementById('smokeContainer');
+            const ember = document.createElement('div');
+            ember.className = 'ember';
+            ember.style.left = (30 + Math.random() * 40) + '%';
+            ember.style.bottom = '10%';
+            ember.style.setProperty('--drift', (Math.random() - 0.5) * 100 + 'px');
+            ember.style.animationDuration = (3 + Math.random() * 2) + 's';
+            container.appendChild(ember);
+            
+            setTimeout(() => ember.remove(), 5000);
+        }
+
+        setInterval(createEmber, 300);
 
         // ===== MAIN APP LOGIC =====
         const API_URL = "https://roaster-vwgb.onrender.com"; // ← Replace with your backend URL
 
-        // Live ego counter
         let egoCount = 14203;
         setInterval(() => {
             egoCount += Math.floor(Math.random() * 3);
             document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
         }, 5000);
 
-        // Loading messages
         const loadingMessages = [
             "Consulting with Satan...",
             "Analyzing your bad life choices...",
@@ -611,7 +700,6 @@
         let loadingInterval;
         let currentTopic = "";
 
-        // Execute roast function
         async function executeRoast() {
             const topic = document.getElementById('topicInput').value.trim();
             
@@ -622,13 +710,11 @@
 
             currentTopic = topic;
 
-            // Reset UI
             document.getElementById('resultCard').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
             document.getElementById('loadingContainer').classList.add('active');
             document.getElementById('executeBtn').disabled = true;
 
-            // Cycle loading messages
             let msgIndex = 0;
             document.getElementById('loadingText').textContent = loadingMessages[0];
             
@@ -641,7 +727,6 @@
                 const timestamp = Date.now();
                 const url = `${API_URL}/roast?topic=${encodeURIComponent(topic)}&t=${timestamp}`;
                 
-                // 25-second timeout
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 25000);
 
@@ -655,7 +740,6 @@
                     throw new Error('Server error');
                 }
 
-                // Handle blob response (image)
                 const blob = await response.blob();
                 const imageUrl = URL.createObjectURL(blob);
                 
@@ -676,7 +760,6 @@
             }
         }
 
-        // WhatsApp share
         function shareToWhatsApp() {
             const url = window.location.href;
             const message = `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${url}`;
@@ -684,14 +767,12 @@
             window.open(whatsappUrl, '_blank');
         }
 
-        // Reset
         function reset() {
             document.getElementById('topicInput').value = '';
             document.getElementById('resultCard').classList.remove('active');
             document.getElementById('topicInput').focus();
         }
 
-        // Error handling
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
@@ -702,17 +783,15 @@
             }, 4000);
         }
 
-        // Enter key support
         document.getElementById('topicInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 executeRoast();
             }
         });
 
-        // Auto-focus
         window.addEventListener('load', () => {
             document.getElementById('topicInput').focus();
         });
     </script>
 </body>
-</html>
+    </html>
