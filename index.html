@@ -32,6 +32,7 @@
             height: 100%;
             z-index: -1;
             pointer-events: none;
+            background: #050505;
         }
 
         .navbar {
@@ -469,31 +470,44 @@
         const ctx = canvas.getContext('2d');
 
         // Set canvas size
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        // Resize canvas on window resize
-        window.addEventListener('resize', () => {
+        function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-        });
+        }
+        resizeCanvas();
 
-        // Particle class
-        class Particle {
+        window.addEventListener('resize', resizeCanvas);
+
+        // Particle class with proper ember behavior
+        class Ember {
             constructor() {
                 this.reset();
             }
 
             reset() {
+                // Start from bottom
                 this.x = Math.random() * canvas.width;
-                this.y = canvas.height + 10;
-                this.size = Math.random() * 3 + 1;
-                this.speedY = Math.random() * 1.5 + 0.5;
-                this.speedX = (Math.random() - 0.5) * 0.5;
-                this.opacity = Math.random() * 0.5 + 0.3;
-                this.color = Math.random() > 0.5 ? '#FF4500' : '#FFD700';
-                this.life = Math.random() * 100 + 100;
-                this.age = 0;
+                this.y = canvas.height + 20;
+                
+                // Size variation
+                this.size = Math.random() * 4 + 2;
+                
+                // Upward speed
+                this.speedY = Math.random() * 2 + 1;
+                
+                // Horizontal drift
+                this.speedX = (Math.random() - 0.5) * 1;
+                
+                // Color (orange or gold)
+                this.color = Math.random() > 0.6 ? '#FF4500' : '#FFD700';
+                
+                // Lifespan
+                this.maxLife = Math.random() * 200 + 150;
+                this.life = this.maxLife;
+                
+                // Sway properties
+                this.swaySpeed = Math.random() * 0.02 + 0.01;
+                this.swayAmount = Math.random() * 30 + 20;
                 this.swayOffset = Math.random() * Math.PI * 2;
             }
 
@@ -501,51 +515,71 @@
                 // Move upward
                 this.y -= this.speedY;
                 
-                // Natural fire sway (sine wave)
-                this.x += Math.sin(this.age * 0.05 + this.swayOffset) * this.speedX;
+                // Natural fire sway (left-right oscillation)
+                this.x += Math.sin(this.life * this.swaySpeed + this.swayOffset) * 0.5;
                 
-                this.age++;
-
-                // Fade out as particle rises
-                this.opacity = (1 - this.age / this.life) * 0.6;
-
-                // Reset if out of bounds or fully faded
-                if (this.y < -10 || this.opacity <= 0) {
+                // Slight horizontal drift
+                this.x += this.speedX * 0.3;
+                
+                // Decrease life
+                this.life--;
+                
+                // Reset if dead or out of bounds
+                if (this.life <= 0 || this.y < -50) {
                     this.reset();
                 }
             }
 
             draw() {
+                // Calculate opacity based on life (fade in and fade out)
+                let opacity;
+                if (this.life > this.maxLife * 0.7) {
+                    // Fade in
+                    opacity = (this.maxLife - this.life) / (this.maxLife * 0.3);
+                } else {
+                    // Fade out
+                    opacity = this.life / this.maxLife;
+                }
+                
+                opacity = Math.max(0, Math.min(opacity * 0.8, 0.8));
+
                 ctx.save();
-                ctx.globalAlpha = this.opacity;
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 15;
+                ctx.globalAlpha = opacity;
+                
+                // Glow effect
+                ctx.shadowBlur = 20;
                 ctx.shadowColor = this.color;
+                
+                // Draw ember
+                ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
+                
                 ctx.restore();
             }
         }
 
-        // Create particles (mobile-friendly count)
-        const particleCount = window.innerWidth < 768 ? 30 : 50;
-        const particles = [];
+        // Create ember particles
+        const emberCount = window.innerWidth < 768 ? 40 : 70;
+        const embers = [];
 
-        for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
+        for (let i = 0; i < emberCount; i++) {
+            embers.push(new Ember());
+            // Stagger initial positions
+            embers[i].y = canvas.height + Math.random() * canvas.height;
         }
 
         // Animation loop
         function animate() {
-            // Semi-transparent black to create trail effect
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
+            // Clear canvas completely each frame (no trail effect)
+            ctx.fillStyle = '#050505';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Update and draw all particles
-            particles.forEach(particle => {
-                particle.update();
-                particle.draw();
+            // Update and draw all embers
+            embers.forEach(ember => {
+                ember.update();
+                ember.draw();
             });
 
             requestAnimationFrame(animate);
