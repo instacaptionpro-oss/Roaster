@@ -16,62 +16,28 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #000000;
-            color: #ffffff;
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
-        }
-
-        /* Breathing Background Image */
-        .background-image {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
+            
+            /* YOUR IMAGE AS BACKGROUND */
             background-image: url('https://i.postimg.cc/R0g9tGYB/Mr.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            animation: breathe 15s ease-in-out infinite;
+            background-attachment: fixed;
         }
 
-        @keyframes breathe {
-            0%, 100% {
-                transform: scale(1.0);
-            }
-            50% {
-                transform: scale(1.1);
-            }
-        }
-
-        /* Dark gradient overlay for text readability */
-        .background-overlay {
+        /* Dark overlay so text is readable */
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            background: linear-gradient(
-                to bottom,
-                rgba(0, 0, 0, 0.4) 0%,
-                rgba(0, 0, 0, 0.6) 50%,
-                rgba(0, 0, 0, 0.8) 100%
-            );
-        }
-
-        /* Fire Particles Canvas */
-        #fireCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
             z-index: 0;
-            pointer-events: none;
         }
 
         .navbar {
@@ -102,7 +68,7 @@
             align-items: center;
             gap: 8px;
             font-size: 0.85rem;
-            color: #888;
+            color: #fff;
         }
 
         .status-dot {
@@ -133,7 +99,7 @@
             align-items: center;
             gap: 8px;
             padding: 8px 20px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 69, 0, 0.3);
             border-radius: 50px;
@@ -158,23 +124,24 @@
             letter-spacing: -3px;
             line-height: 1.1;
             margin-bottom: 24px;
-            text-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
         }
 
         .hero-headline .accent {
             color: #FF4500;
-            text-shadow: 0 0 40px rgba(255, 69, 0, 0.6);
+            text-shadow: 0 0 40px rgba(255, 69, 0, 0.8);
         }
 
         .hero-subtext {
             font-size: 1.25rem;
-            color: #ddd;
+            color: #fff;
             font-weight: 400;
             margin-bottom: 64px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.9);
         }
 
         .input-engine {
@@ -186,7 +153,7 @@
         .command-line {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 69, 0, 0.3);
             border-radius: 16px;
@@ -196,7 +163,7 @@
 
         .command-line:focus-within {
             border-color: #FF4500;
-            box-shadow: 0 0 0 4px rgba(255, 69, 0, 0.1);
+            box-shadow: 0 0 0 4px rgba(255, 69, 0, 0.2);
         }
 
         .command-prefix {
@@ -284,7 +251,7 @@
             color: #FF4500;
             font-weight: 600;
             animation: textPulse 2s ease-in-out infinite;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
         }
 
         @keyframes textPulse {
@@ -297,7 +264,7 @@
             max-width: 700px;
             margin: 0 auto;
             padding: 24px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 69, 0, 0.3);
             border-radius: 24px;
@@ -370,11 +337,11 @@
             max-width: 500px;
             margin: 24px auto;
             padding: 16px 24px;
-            background: rgba(255, 69, 0, 0.1);
+            background: rgba(255, 69, 0, 0.2);
             backdrop-filter: blur(12px);
             border: 1px solid #FF4500;
             border-radius: 12px;
-            color: #ff6b5e;
+            color: #fff;
             font-weight: 600;
             animation: shake 0.5s;
         }
@@ -417,15 +384,6 @@
     </style>
 </head>
 <body>
-    <!-- Breathing Background Image -->
-    <div class="background-image"></div>
-    
-    <!-- Dark Overlay for Text Readability -->
-    <div class="background-overlay"></div>
-
-    <!-- Fire Particles Canvas -->
-    <canvas id="fireCanvas"></canvas>
-
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-brand">
@@ -496,121 +454,6 @@
     </div>
 
     <script>
-        // ===== RISING EMBERS PARTICLE SYSTEM =====
-        const canvas = document.getElementById('fireCanvas');
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        class Ember {
-            constructor() {
-                this.reset();
-            }
-
-            reset() {
-                // Spawn from bottom center area
-                this.x = canvas.width / 2 + (Math.random() - 0.5) * canvas.width * 0.4;
-                this.y = canvas.height + 20;
-                
-                // Size
-                this.size = Math.random() * 3 + 1;
-                
-                // Upward velocity
-                this.speedY = Math.random() * 2 + 1;
-                
-                // Horizontal drift
-                this.speedX = (Math.random() - 0.5) * 1;
-                
-                // Color - fire colors
-                const colors = ['#FF4500', '#FFD700', '#FFA500', '#FF6347'];
-                this.color = colors[Math.floor(Math.random() * colors.length)];
-                
-                // Life
-                this.maxLife = Math.random() * 150 + 100;
-                this.life = this.maxLife;
-                
-                // Sway
-                this.swaySpeed = Math.random() * 0.02 + 0.01;
-                this.swayOffset = Math.random() * Math.PI * 2;
-            }
-
-            update() {
-                // Move upward
-                this.y -= this.speedY;
-                
-                // Sway left/right
-                this.x += Math.sin(this.life * this.swaySpeed + this.swayOffset) * 0.5;
-                this.x += this.speedX * 0.2;
-                
-                // Decrease life
-                this.life--;
-                
-                // Reset if dead or out of bounds
-                if (this.life <= 0 || this.y < -50) {
-                    this.reset();
-                }
-            }
-
-            draw() {
-                // Opacity based on life
-                let opacity;
-                if (this.life > this.maxLife * 0.7) {
-                    opacity = (this.maxLife - this.life) / (this.maxLife * 0.3);
-                } else {
-                    opacity = this.life / this.maxLife;
-                }
-                
-                opacity = Math.max(0, Math.min(opacity * 0.7, 0.7));
-
-                ctx.save();
-                ctx.globalAlpha = opacity;
-                
-                // Glow
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = this.color;
-                
-                // Draw ember
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.restore();
-            }
-        }
-
-        // Create embers (medium density)
-        const emberCount = window.innerWidth < 768 ? 50 : 100;
-        const embers = [];
-
-        for (let i = 0; i < emberCount; i++) {
-            embers.push(new Ember());
-            // Stagger initial positions
-            embers[i].y = canvas.height + Math.random() * canvas.height;
-        }
-
-        // Animation loop
-        function animate() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Update and draw embers
-            embers.forEach(ember => {
-                ember.update();
-                ember.draw();
-            });
-
-            requestAnimationFrame(animate);
-        }
-
-        animate();
-
         // ===== MAIN APP LOGIC =====
         const API_URL = "https://roaster-vwgb.onrender.com";
 
@@ -726,4 +569,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
