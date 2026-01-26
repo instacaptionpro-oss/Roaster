@@ -2,444 +2,571 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROASTER - Silence Your Ego</title>
-    
-    <!-- Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roaster AI - Silence Your Ego</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #FF4500; /* Fire Orange from the Image */
-            --glow: rgba(255, 69, 0, 0.6);
-            --glass-bg: rgba(0, 0, 0, 0.7);
-            --glass-border: rgba(255, 69, 0, 0.3);
-            --text-main: #ffffff;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
         body {
-            background-color: #000;
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* --- 1. THE BREATHING BACKGROUND IMAGE --- */
-        .bg-image {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            background-image: url('https://i.postimg.cc/R0g9tGYB/Mr.jpg'); 
+            overflow-x: hidden;
+            position: relative;
+            
+            /* YOUR IMAGE AS BACKGROUND */
+            background-image: url('https://i.postimg.cc/R0g9tGYB/Mr.jpg');
             background-size: cover;
             background-position: center;
-            animation: breathe 15s ease-in-out infinite;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
 
-        @keyframes breathe {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        /* --- 2. THE DARK OVERLAY (Gradient) --- */
-        .bg-overlay {
+        /* Dark overlay so text is readable */
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            /* Transparent at top (show fire head), Black at bottom (read text) */
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 60%, #000000 100%);
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 0;
         }
 
-        /* --- 3. FIRE PARTICLES CANVAS --- */
-        #fireCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0; /* Behind text, in front of image */
-            pointer-events: none;
-        }
-
-        /* --- NAVBAR --- */
-        nav {
-            padding: 20px;
+        .navbar {
+            position: relative;
+            z-index: 100;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 100;
-            position: relative;
-        }
-        .logo {
-            font-weight: 800;
-            font-size: 1.5rem;
-            letter-spacing: -1px;
-            text-shadow: 0 0 20px var(--primary);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .status-pill {
-            font-size: 0.7rem;
-            background: rgba(0, 0, 0, 0.8);
-            color: #00ff00;
-            padding: 5px 12px;
-            border-radius: 20px;
-            border: 1px solid rgba(0, 255, 0, 0.3);
-            backdrop-filter: blur(5px);
+            padding: 24px 48px;
+            backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 1px solid rgba(255, 69, 0, 0.3);
         }
 
-        /* --- HERO SECTION --- */
-        .container {
-            width: 90%;
-            max-width: 600px;
-            margin: 0 auto;
-            text-align: center;
-            flex: 1;
+        .nav-brand {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding-top: 100px; /* Push down so we see the Fire Head */
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: #FF4500;
+            text-shadow: 0 0 20px rgba(255, 69, 0, 0.5);
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .container {
             position: relative;
             z-index: 10;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 24px;
+            text-align: center;
         }
 
-        h1 {
-            font-size: 3.2rem;
-            line-height: 1;
-            font-weight: 800;
-            margin-bottom: 15px;
-            text-shadow: 0 10px 40px rgba(0,0,0,0.9);
-        }
-        .highlight {
-            color: var(--primary);
-            text-shadow: 0 0 30px var(--glow);
-        }
-        p.subtitle {
-            color: #ddd;
-            font-size: 1.1rem;
-            margin-bottom: 50px;
-            line-height: 1.5;
-            font-weight: 500;
-            text-shadow: 0 2px 10px #000;
-        }
-
-        /* --- SMOKED GLASS INPUT --- */
-        .roast-engine {
-            margin-bottom: 30px;
-        }
-        .input-wrapper {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
+        .live-ticker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 69, 0, 0.3);
             border-radius: 50px;
-            padding: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #FF4500;
+            margin-bottom: 32px;
+        }
+
+        .ticker-icon {
+            animation: flicker 1.5s ease-in-out infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero-headline {
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 900;
+            letter-spacing: -3px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+        }
+
+        .hero-headline .accent {
+            color: #FF4500;
+            text-shadow: 0 0 40px rgba(255, 69, 0, 0.8);
+        }
+
+        .hero-subtext {
+            font-size: 1.25rem;
+            color: #fff;
+            font-weight: 400;
+            margin-bottom: 64px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.9);
+        }
+
+        .input-engine {
+            position: relative;
+            max-width: 700px;
+            margin: 0 auto 48px;
+        }
+
+        .command-line {
             display: flex;
             align-items: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 69, 0, 0.3);
+            border-radius: 16px;
+            padding: 4px;
+            transition: all 0.3s ease;
         }
 
-        .input-wrapper:focus-within {
-            border-color: var(--primary);
-            box-shadow: 0 0 30px rgba(255, 69, 0, 0.4);
-            background: #000;
+        .command-line:focus-within {
+            border-color: #FF4500;
+            box-shadow: 0 0 0 4px rgba(255, 69, 0, 0.2);
         }
 
-        input {
+        .command-prefix {
+            padding: 0 16px;
+            color: #FF4500;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .command-input {
             flex: 1;
             background: transparent;
             border: none;
-            color: white;
-            font-size: 1.1rem;
-            padding: 15px 20px;
             outline: none;
+            padding: 20px 8px;
+            font-size: 1.1rem;
+            color: #fff;
+            font-family: 'Inter', monospace;
         }
-        input::placeholder { color: #aaa; }
 
-        .btn-go {
-            background: var(--primary);
-            color: white;
+        .command-input::placeholder {
+            color: #888;
+        }
+
+        .execute-btn {
+            width: 56px;
+            height: 56px;
+            background: #FF4500;
             border: none;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 1.5rem;
-            transition: 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 15px var(--primary);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
         }
-        .btn-go:hover { transform: scale(1.05); }
 
-        /* --- LOADER --- */
-        #loader {
+        .execute-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 69, 0, 0.6);
+        }
+
+        .execute-btn:active {
+            transform: translateY(0);
+        }
+
+        .execute-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .arrow-icon {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .loading-container {
             display: none;
-            margin-top: 30px;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 15px;
-            box-shadow: 0 0 20px var(--glow);
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .loading-text { 
-            font-size: 0.9rem; 
-            color: #fff; 
-            font-style: italic; 
-            text-shadow: 0 2px 5px black;
+            padding: 80px 24px;
         }
 
-        /* --- RESULT --- */
-        #result-area {
-            display: none;
-            margin-top: 30px;
-            animation: slideUp 0.5s ease;
-        }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .meme-card {
-            background: #000;
-            border-radius: 15px;
-            overflow: hidden;
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 50px rgba(255, 69, 0, 0.3);
-        }
-        
-        .meme-img { width: 100%; display: block; }
-
-        .share-btn {
-            background: #25D366;
-            color: black;
-            font-weight: 800;
-            text-decoration: none;
+        .loading-container.active {
             display: block;
-            padding: 18px;
-            margin-top: 20px;
-            border-radius: 15px;
-            text-transform: uppercase;
-            font-size: 1rem;
-            letter-spacing: 1px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
         }
 
-        footer {
-            padding: 30px;
-            text-align: center;
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: auto;
-            text-shadow: 0 2px 5px black;
-            position: relative;
-            z-index: 10;
+        .loading-ring {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 69, 0, 0.1);
+            border-top: 4px solid #FF4500;
+            border-radius: 50%;
+            margin: 0 auto 32px;
+            animation: spin 1s linear infinite;
         }
-        
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: #FF4500;
+            font-weight: 600;
+            animation: textPulse 2s ease-in-out infinite;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+        }
+
+        @keyframes textPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .result-card {
+            display: none;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 24px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 69, 0, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 0 60px rgba(255, 69, 0, 0.3);
+            animation: cardSlideIn 0.5s ease-out;
+        }
+
+        .result-card.active {
+            display: block;
+        }
+
+        @keyframes cardSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-image {
+            width: 100%;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .whatsapp-btn, .retry-btn {
+            flex: 1;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+        }
+
+        .whatsapp-btn:hover {
+            background: #1ea952;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
+        }
+
+        .retry-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 69, 0, 0.3);
+        }
+
+        .retry-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            display: none;
+            max-width: 500px;
+            margin: 24px auto;
+            padding: 16px 24px;
+            background: rgba(255, 69, 0, 0.2);
+            backdrop-filter: blur(12px);
+            border: 1px solid #FF4500;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            animation: shake 0.5s;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 20px 24px;
+            }
+
+            .nav-brand {
+                font-size: 1.25rem;
+            }
+
+            .container {
+                padding: 48px 20px;
+            }
+
+            .hero-headline {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtext {
+                font-size: 1rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-
-    <!-- 1. The Breathing Image -->
-    <div class="bg-image"></div>
-    <!-- 2. The Dark Overlay -->
-    <div class="bg-overlay"></div>
-    <!-- 3. The Fire Particles -->
-    <canvas id="fireCanvas"></canvas>
-
-    <nav>
-        <!-- Replace 'logo.png' if you have it uploaded -->
-        <div class="logo">🔥 ROASTER</div>
-        <div class="status-pill">● System Online</div>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            🔥 ROASTER
+        </div>
+        <div class="system-status">
+            <div class="status-dot"></div>
+            <span>System Online</span>
+        </div>
     </nav>
 
+    <!-- Main Container -->
     <div class="container">
-        
-        <h1>Silence Your <br><span class="highlight">EGO.</span></h1>
-        <p class="subtitle">The only AI brave enough to tell you the truth.<br>No Filters. Just Reality.</p>
+        <!-- Live Ticker -->
+        <div class="live-ticker">
+            <span class="ticker-icon">🔥</span>
+            <span id="egoCounter">14,203</span> Egos Destroyed Today
+        </div>
 
-        <!-- INPUT SECTION -->
-        <div class="roast-engine">
-            <div class="input-wrapper">
-                <input type="text" id="topicInput" placeholder="Roast my Ex / Boss / Life..." autocomplete="off">
-                <button class="btn-go" onclick="generateRoast()">🔥</button>
+        <!-- Hero Section -->
+        <h1 class="hero-headline">
+            Silence Your <span class="accent">Ego.</span>
+        </h1>
+        <p class="hero-subtext">
+            The AI that humbles you. No Filters. Just Reality.
+        </p>
+
+        <!-- Input Engine -->
+        <div class="input-engine">
+            <div class="command-line">
+                <span class="command-prefix">></span>
+                <input 
+                    type="text" 
+                    class="command-input" 
+                    id="topicInput"
+                    placeholder="Roast my Ex / Boss / Life..."
+                    maxlength="100"
+                >
+                <button class="execute-btn" id="executeBtn" onclick="executeRoast()">
+                    <svg class="arrow-icon" viewBox="0 0 24 24">
+                        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
-        <!-- LOADER -->
-        <div id="loader">
-            <div class="spinner"></div>
-            <p class="loading-text" id="loadingText">Contacting the Dark Web...</p>
+        <!-- Loading State -->
+        <div class="loading-container" id="loadingContainer">
+            <div class="loading-ring"></div>
+            <div class="loading-text" id="loadingText">Consulting with Satan...</div>
         </div>
 
-        <!-- RESULT -->
-        <div id="result-area">
-            <div class="meme-card">
-                <img id="memeImage" class="meme-img" src="" alt="Roast Meme">
+        <!-- Result Card -->
+        <div class="result-card" id="resultCard">
+            <img src="" alt="Roasted" class="result-image" id="resultImage">
+            <div class="action-buttons">
+                <button class="whatsapp-btn" onclick="shareToWhatsApp()">
+                    📱 Share on WhatsApp
+                </button>
+                <button class="retry-btn" onclick="reset()">
+                    🔄 Roast Again
+                </button>
             </div>
-            <a id="whatsappBtn" class="share-btn" href="#" target="_blank">
-                Share on WhatsApp 🚀
-            </a>
-            <button onclick="reset()" style="background:transparent; border:none; color:#aaa; margin-top:20px; text-decoration:underline; cursor:pointer; font-size: 0.9rem;">Hurt me again</button>
         </div>
 
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
     </div>
 
-    <footer>
-        <p>ROASTER MANIFESTO: STAY TOXIC. STAY REAL.<br>© 2024 Roaster AI</p>
-    </footer>
-
     <script>
-        // 🔴🔴 PASTE YOUR RENDER URL HERE (No slash at the end) 🔴🔴
-        const API_BASE_URL = "https://your-render-app-name.onrender.com";
+        // ===== MAIN APP LOGIC =====
+        const API_URL = "https://roaster-vwgb.onrender.com";
 
-        // --- FIRE PARTICLE SYSTEM ---
-        const canvas = document.getElementById('fireCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        let egoCount = 14203;
+        setInterval(() => {
+            egoCount += Math.floor(Math.random() * 3);
+            document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
+        }, 5000);
 
-        const particles = [];
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = canvas.height + Math.random() * 100; // Start below screen
-                this.size = Math.random() * 3 + 1; // Random size
-                this.speedY = Math.random() * 2 + 1; // Upward speed
-                this.speedX = (Math.random() - 0.5) * 1; // Slight drift
-                this.color = Math.random() > 0.5 ? '#FF4500' : '#FFD700'; // Orange or Gold
-                this.alpha = 1;
-            }
-            update() {
-                this.y -= this.speedY;
-                this.x += this.speedX;
-                this.alpha -= 0.005; // Fade out
-                if (this.alpha <= 0) this.reset();
-            }
-            reset() {
-                this.y = canvas.height + Math.random() * 100;
-                this.x = Math.random() * canvas.width;
-                this.alpha = 1;
-            }
-            draw() {
-                ctx.globalAlpha = this.alpha;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        function initParticles() {
-            for (let i = 0; i < 50; i++) { // 50 particles is enough for mobile
-                particles.push(new Particle());
-            }
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-            requestAnimationFrame(animateParticles);
-        }
-
-        initParticles();
-        animateParticles();
-
-        // --- ROAST LOGIC ---
-        const loadingPhrases = [
+        const loadingMessages = [
             "Consulting with Satan...",
-            "Analyzing your bad decisions...",
-            "Finding the ugliest template...",
-            "Asking ChatGPT to be toxic...",
-            "Loading reality check..."
+            "Analyzing your bad life choices...",
+            "Finding the ugliest meme template...",
+            "Calculating emotional damage...",
+            "Waking up the demons...",
+            "Preparing maximum destruction..."
         ];
 
-        async function generateRoast() {
-            const topic = document.getElementById('topicInput').value;
+        let loadingInterval;
+        let currentTopic = "";
+
+        async function executeRoast() {
+            const topic = document.getElementById('topicInput').value.trim();
+            
             if (!topic) {
-                const wrapper = document.querySelector('.input-wrapper');
-                wrapper.style.transform = 'translateX(10px)';
-                setTimeout(() => wrapper.style.transform = 'translateX(0)', 100);
+                showError('Enter something to roast! 😤');
                 return;
             }
 
-            // UI Changes
-            const loader = document.getElementById('loader');
-            const resultArea = document.getElementById('result-area');
-            const loadingText = document.getElementById('loadingText');
-            
-            resultArea.style.display = 'none';
-            loader.style.display = 'block';
-            document.querySelector('.input-wrapper').style.opacity = '0';
-            document.querySelector('.subtitle').style.opacity = '0';
+            currentTopic = topic;
 
-            let phraseIndex = 0;
-            const textInterval = setInterval(() => {
-                loadingText.innerText = loadingPhrases[phraseIndex];
-                phraseIndex = (phraseIndex + 1) % loadingPhrases.length;
-            }, 1500);
+            document.getElementById('resultCard').classList.remove('active');
+            document.getElementById('errorMessage').classList.remove('active');
+            document.getElementById('loadingContainer').classList.add('active');
+            document.getElementById('executeBtn').disabled = true;
+
+            let msgIndex = 0;
+            document.getElementById('loadingText').textContent = loadingMessages[0];
+            
+            loadingInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                document.getElementById('loadingText').textContent = loadingMessages[msgIndex];
+            }, 2000);
 
             try {
-                const response = await fetch(`${API_BASE_URL}/roast?topic=${encodeURIComponent(topic)}`);
-                const data = await response.json(); 
+                const timestamp = Date.now();
+                const url = `${API_URL}/roast?topic=${encodeURIComponent(topic)}&t=${timestamp}`;
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-                clearInterval(textInterval);
+                const response = await fetch(url, {
+                    signal: controller.signal
+                });
 
-                const finalImageUrl = data.image_url || data.url; 
-                const img = document.getElementById('memeImage');
-                img.src = finalImageUrl;
+                clearTimeout(timeoutId);
 
-                const whatsappBtn = document.getElementById('whatsappBtn');
-                const shareText = `My ego just got destroyed by AI 💀.\n\nSee what it said about "${topic}":\n${finalImageUrl}\n\nOnly legends can handle this app. Try it: ${window.location.href}`;
-                whatsappBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+                if (!response.ok) {
+                    throw new Error('Server error');
+                }
 
-                loader.style.display = 'none';
-                resultArea.style.display = 'block';
-
+                const blob = await response.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                
+                document.getElementById('resultImage').src = imageUrl;
+                document.getElementById('resultCard').classList.add('active');
+                
             } catch (error) {
-                clearInterval(textInterval);
+                if (error.name === 'AbortError') {
+                    showError('Server is waking up. Please try again! 😴');
+                } else {
+                    showError('Something went wrong. Try again! 💀');
+                }
                 console.error(error);
-                alert("Server Error (Free Tier Sleep). Try clicking again!");
-                loader.style.display = 'none';
-                document.querySelector('.input-wrapper').style.opacity = '1';
-                document.querySelector('.subtitle').style.opacity = '1';
+            } finally {
+                document.getElementById('loadingContainer').classList.remove('active');
+                document.getElementById('executeBtn').disabled = false;
+                clearInterval(loadingInterval);
             }
         }
 
-        function reset() {
-            document.getElementById('result-area').style.display = 'none';
-            document.querySelector('.input-wrapper').style.opacity = '1';
-            document.querySelector('.subtitle').style.opacity = '1';
-            document.getElementById('topicInput').value = '';
+        function shareToWhatsApp() {
+            const url = window.location.href;
+            const message = `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${url}`;
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
         }
 
-        // Resize canvas on rotate
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        function reset() {
+            document.getElementById('topicInput').value = '';
+            document.getElementById('resultCard').classList.remove('active');
+            document.getElementById('topicInput').focus();
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('active');
+            }, 4000);
+        }
+
+        document.getElementById('topicInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                executeRoast();
+            }
         });
 
+        window.addEventListener('load', () => {
+            document.getElementById('topicInput').focus();
+        });
     </script>
 </body>
 </html>
