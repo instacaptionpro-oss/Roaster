@@ -35,12 +35,12 @@ MEMES_FOLDER = "memes"
 
 # AI Model Configuration (Primary + Backups)
 AI_MODELS = [
-    "llama-3.3-70b-versatile",                          # Primary
-    "qwen/qwen-2.5-72b-instruct",                       # Backup 1
-    "meta-llama/llama-3.1-70b-versatile"                # Backup 2
+    "llama-3.3-70b-versatile",
+    "qwen/qwen-2.5-72b-instruct",
+    "meta-llama/llama-3.1-70b-versatile"
 ]
 
-# ===== PREMIUM FRONTEND HTML (with Ember Animation) =====
+# ===== FRONTEND HTML WITH BACKGROUND IMAGE =====
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -60,22 +60,28 @@ HTML_TEMPLATE = """
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #050505;
-            color: #ffffff;
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            
+            /* BACKGROUND IMAGE */
+            background-image: url('https://i.postimg.cc/R0g9tGYB/Mr.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
 
-        #particleCanvas {
+        /* Dark overlay for text readability */
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            pointer-events: none;
-            background: #050505;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 0;
         }
 
         .navbar {
@@ -86,8 +92,8 @@ HTML_TEMPLATE = """
             align-items: center;
             padding: 24px 48px;
             backdrop-filter: blur(12px);
-            background: rgba(5, 5, 5, 0.6);
-            border-bottom: 1px solid rgba(255, 59, 48, 0.1);
+            background: rgba(0, 0, 0, 0.6);
+            border-bottom: 1px solid rgba(255, 69, 0, 0.3);
         }
 
         .nav-brand {
@@ -97,21 +103,8 @@ HTML_TEMPLATE = """
             font-size: 1.5rem;
             font-weight: 900;
             letter-spacing: -1px;
-            color: #FF3B30;
-            text-shadow: 0 0 20px rgba(255, 59, 48, 0.5);
-        }
-
-        .brand-logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            filter: drop-shadow(0 0 15px rgba(255, 59, 48, 0.6));
-            animation: logoFloat 3s ease-in-out infinite;
-        }
-
-        @keyframes logoFloat {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
+            color: #FF4500;
+            text-shadow: 0 0 20px rgba(255, 69, 0, 0.5);
         }
 
         .system-status {
@@ -119,7 +112,7 @@ HTML_TEMPLATE = """
             align-items: center;
             gap: 8px;
             font-size: 0.85rem;
-            color: #888;
+            color: #fff;
         }
 
         .status-dot {
@@ -150,14 +143,14 @@ HTML_TEMPLATE = """
             align-items: center;
             gap: 8px;
             padding: 8px 20px;
-            background: rgba(255, 59, 48, 0.1);
-            border: 1px solid rgba(255, 59, 48, 0.3);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 69, 0, 0.3);
             border-radius: 50px;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #FF3B30;
+            color: #FF4500;
             margin-bottom: 32px;
-            backdrop-filter: blur(12px);
         }
 
         .ticker-icon {
@@ -175,21 +168,24 @@ HTML_TEMPLATE = """
             letter-spacing: -3px;
             line-height: 1.1;
             margin-bottom: 24px;
+            color: #fff;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
         }
 
         .hero-headline .accent {
-            color: #FF3B30;
-            text-shadow: 0 0 40px rgba(255, 59, 48, 0.6);
+            color: #FF4500;
+            text-shadow: 0 0 40px rgba(255, 69, 0, 0.8);
         }
 
         .hero-subtext {
             font-size: 1.25rem;
-            color: #888;
+            color: #fff;
             font-weight: 400;
             margin-bottom: 64px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.9);
         }
 
         .input-engine {
@@ -201,22 +197,22 @@ HTML_TEMPLATE = """
         .command-line {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(12px);
-            border: 2px solid rgba(255, 59, 48, 0.2);
+            border: 1px solid rgba(255, 69, 0, 0.3);
             border-radius: 16px;
             padding: 4px;
             transition: all 0.3s ease;
         }
 
         .command-line:focus-within {
-            border-color: #FF3B30;
-            box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.1);
+            border-color: #FF4500;
+            box-shadow: 0 0 0 4px rgba(255, 69, 0, 0.2);
         }
 
         .command-prefix {
             padding: 0 16px;
-            color: #FF3B30;
+            color: #FF4500;
             font-weight: 700;
             font-size: 1.1rem;
         }
@@ -233,13 +229,13 @@ HTML_TEMPLATE = """
         }
 
         .command-input::placeholder {
-            color: #555;
+            color: #888;
         }
 
         .execute-btn {
             width: 56px;
             height: 56px;
-            background: linear-gradient(135deg, #FF3B30, #ff6b5e);
+            background: #FF4500;
             border: none;
             border-radius: 12px;
             cursor: pointer;
@@ -247,12 +243,12 @@ HTML_TEMPLATE = """
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(255, 59, 48, 0.4);
+            box-shadow: 0 4px 20px rgba(255, 69, 0, 0.4);
         }
 
         .execute-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(255, 59, 48, 0.6);
+            box-shadow: 0 8px 30px rgba(255, 69, 0, 0.6);
         }
 
         .execute-btn:active {
@@ -282,8 +278,8 @@ HTML_TEMPLATE = """
         .loading-ring {
             width: 80px;
             height: 80px;
-            border: 4px solid rgba(255, 59, 48, 0.1);
-            border-top: 4px solid #FF3B30;
+            border: 4px solid rgba(255, 69, 0, 0.1);
+            border-top: 4px solid #FF4500;
             border-radius: 50%;
             margin: 0 auto 32px;
             animation: spin 1s linear infinite;
@@ -296,9 +292,10 @@ HTML_TEMPLATE = """
 
         .loading-text {
             font-size: 1.2rem;
-            color: #FF3B30;
+            color: #FF4500;
             font-weight: 600;
             animation: textPulse 2s ease-in-out infinite;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
         }
 
         @keyframes textPulse {
@@ -311,11 +308,11 @@ HTML_TEMPLATE = """
             max-width: 700px;
             margin: 0 auto;
             padding: 24px;
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(12px);
-            border: 2px solid #FF3B30;
+            border: 1px solid rgba(255, 69, 0, 0.3);
             border-radius: 24px;
-            box-shadow: 0 0 60px rgba(255, 59, 48, 0.3);
+            box-shadow: 0 0 60px rgba(255, 69, 0, 0.3);
             animation: cardSlideIn 0.5s ease-out;
         }
 
@@ -369,13 +366,13 @@ HTML_TEMPLATE = """
         }
 
         .retry-btn {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.1);
             color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 69, 0, 0.3);
         }
 
         .retry-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             transform: translateY(-2px);
         }
 
@@ -384,10 +381,11 @@ HTML_TEMPLATE = """
             max-width: 500px;
             margin: 24px auto;
             padding: 16px 24px;
-            background: rgba(255, 59, 48, 0.1);
-            border: 1px solid #FF3B30;
+            background: rgba(255, 69, 0, 0.2);
+            backdrop-filter: blur(12px);
+            border: 1px solid #FF4500;
             border-radius: 12px;
-            color: #ff6b5e;
+            color: #fff;
             font-weight: 600;
             animation: shake 0.5s;
         }
@@ -411,11 +409,6 @@ HTML_TEMPLATE = """
                 font-size: 1.25rem;
             }
 
-            .brand-logo {
-                width: 32px;
-                height: 32px;
-            }
-
             .container {
                 padding: 48px 20px;
             }
@@ -435,12 +428,9 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
-    <canvas id="particleCanvas"></canvas>
-
     <nav class="navbar">
         <div class="nav-brand">
-            <img src="/static/logo.png" alt="Roaster" class="brand-logo" onerror="this.style.display='none'">
-            ROASTER
+            🔥 ROASTER
         </div>
         <div class="system-status">
             <div class="status-dot"></div>
@@ -500,90 +490,6 @@ HTML_TEMPLATE = """
     </div>
 
     <script>
-        const canvas = document.getElementById('particleCanvas');
-        const ctx = canvas.getContext('2d');
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        class Ember {
-            constructor() {
-                this.reset();
-            }
-
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = canvas.height + 20;
-                this.size = Math.random() * 4 + 2;
-                this.speedY = Math.random() * 2 + 1;
-                this.speedX = (Math.random() - 0.5) * 1;
-                this.color = Math.random() > 0.6 ? '#FF4500' : '#FFD700';
-                this.maxLife = Math.random() * 200 + 150;
-                this.life = this.maxLife;
-                this.swaySpeed = Math.random() * 0.02 + 0.01;
-                this.swayAmount = Math.random() * 30 + 20;
-                this.swayOffset = Math.random() * Math.PI * 2;
-            }
-
-            update() {
-                this.y -= this.speedY;
-                this.x += Math.sin(this.life * this.swaySpeed + this.swayOffset) * 0.5;
-                this.x += this.speedX * 0.3;
-                this.life--;
-                
-                if (this.life <= 0 || this.y < -50) {
-                    this.reset();
-                }
-            }
-
-            draw() {
-                let opacity;
-                if (this.life > this.maxLife * 0.7) {
-                    opacity = (this.maxLife - this.life) / (this.maxLife * 0.3);
-                } else {
-                    opacity = this.life / this.maxLife;
-                }
-                
-                opacity = Math.max(0, Math.min(opacity * 0.8, 0.8));
-
-                ctx.save();
-                ctx.globalAlpha = opacity;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        const emberCount = window.innerWidth < 768 ? 40 : 70;
-        const embers = [];
-
-        for (let i = 0; i < emberCount; i++) {
-            embers.push(new Ember());
-            embers[i].y = canvas.height + Math.random() * canvas.height;
-        }
-
-        function animate() {
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            embers.forEach(ember => {
-                ember.update();
-                ember.draw();
-            });
-
-            requestAnimationFrame(animate);
-        }
-
-        animate();
-
         const API_URL = window.location.origin;
 
         let egoCount = 14203;
@@ -758,7 +664,6 @@ Max 25 words.
 NO introductory text. Just the roast.
     """
     
-    # Try each model in order
     for model_index, model_name in enumerate(AI_MODELS):
         try:
             print(f"🤖 Trying model {model_index + 1}/{len(AI_MODELS)}: {model_name}")
@@ -791,7 +696,6 @@ NO introductory text. Just the roast.
             error_msg = str(e).lower()
             print(f"❌ Model {model_name} failed: {e}")
             
-            # If rate limit or quota error, try next model
             if "rate" in error_msg or "limit" in error_msg or "quota" in error_msg:
                 if model_index < len(AI_MODELS) - 1:
                     print(f"⏭️ Switching to backup model...")
@@ -799,11 +703,9 @@ NO introductory text. Just the roast.
                 else:
                     print("⚠️ All models exhausted")
             else:
-                # For other errors, try next model
                 if model_index < len(AI_MODELS) - 1:
                     continue
     
-    # If all models fail, return fallback
     print("💀 All AI models failed, using fallback roast")
     fallbacks = [
         f"Bhai {topic} ko roast karne se pehle khud ko sambhal le, tera future toh already dark mode mein hai 💀",
