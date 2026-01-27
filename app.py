@@ -41,10 +41,16 @@ AI_MODELS = [
 ]
 
 # ===== FRONTEND HTML WITH BACKGROUND IMAGE =====
-HTML_TEMPLATE = """
-<!DOCTYPE html>
+HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- (paste the full HTML content from the Index.html file provided above here) -->
+</head>
+<body>
+    <!-- (rest of the HTML) -->
+</body>
+</html>
+"""
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roaster AI - Silence Your Ego</title>
