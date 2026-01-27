@@ -177,11 +177,60 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             font-size: 1.25rem;
             color: #fff;
             font-weight: 400;
-            margin-bottom: 64px;
+            margin-bottom: 40px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
             text-shadow: 0 2px 15px rgba(0, 0, 0, 0.9);
+        }
+
+        /* ===== EXAMPLE CHIPS SECTION ===== */
+        .examples-section {
+            margin-bottom: 40px;
+        }
+
+        .examples-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .example-chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .example-chip {
+            padding: 10px 18px;
+            background: rgba(255, 69, 0, 0.15);
+            border: 1px solid rgba(255, 69, 0, 0.4);
+            border-radius: 50px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .example-chip:hover {
+            background: rgba(255, 69, 0, 0.3);
+            border-color: #FF4500;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        }
+
+        .example-chip:active {
+            transform: translateY(0);
+        }
+
+        .example-chip .chip-emoji {
+            margin-right: 6px;
         }
 
         .input-engine {
@@ -455,6 +504,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 font-size: 1rem;
             }
 
+            .example-chips {
+                gap: 8px;
+            }
+
+            .example-chip {
+                padding: 8px 14px;
+                font-size: 0.8rem;
+            }
+
             .action-buttons {
                 flex-direction: column;
             }
@@ -485,6 +543,49 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             The AI that humbles you. No Filters. Just Reality.
         </p>
 
+        <!-- ===== EXAMPLE CHIPS ===== -->
+        <div class="examples-section">
+            <p class="examples-label">🎯 Try these savage examples:</p>
+            <div class="example-chips">
+                <button class="example-chip" onclick="useExample('My Ex who cheated on me')">
+                    <span class="chip-emoji">💔</span>My Ex
+                </button>
+                <button class="example-chip" onclick="useExample('Engineers who mass apply on LinkedIn')">
+                    <span class="chip-emoji">💻</span>LinkedIn Engineers
+                </button>
+                <button class="example-chip" onclick="useExample('Gym bros who skip leg day')">
+                    <span class="chip-emoji">💪</span>Gym Bros
+                </button>
+                <button class="example-chip" onclick="useExample('Indian parents expectations')">
+                    <span class="chip-emoji">👨‍👩‍👦</span>Indian Parents
+                </button>
+                <button class="example-chip" onclick="useExample('Bhai jaldi ameer banega crypto se')">
+                    <span class="chip-emoji">📉</span>Crypto Bros
+                </button>
+                <button class="example-chip" onclick="useExample('Students one night before exam')">
+                    <span class="chip-emoji">📚</span>Last Night Study
+                </button>
+                <button class="example-chip" onclick="useExample('Friend who never returns money')">
+                    <span class="chip-emoji">💸</span>Udhaar Friend
+                </button>
+                <button class="example-chip" onclick="useExample('Influencers with 500 followers')">
+                    <span class="chip-emoji">📱</span>Influencers
+                </button>
+                <button class="example-chip" onclick="useExample('Relatives at family functions')">
+                    <span class="chip-emoji">👴</span>Relatives
+                </button>
+                <button class="example-chip" onclick="useExample('Startup founders with no funding')">
+                    <span class="chip-emoji">🚀</span>Startup Bros
+                </button>
+                <button class="example-chip" onclick="useExample('Tinder bio says looking for something serious')">
+                    <span class="chip-emoji">🔥</span>Tinder Profiles
+                </button>
+                <button class="example-chip" onclick="useExample('Monday morning alarm')">
+                    <span class="chip-emoji">😴</span>Monday Morning
+                </button>
+            </div>
+        </div>
+
         <div class="input-engine">
             <div class="command-line">
                 <span class="command-prefix">></span>
@@ -512,16 +613,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <img src="" alt="Roasted" class="result-image" id="resultImage">
             <div class="action-buttons">
                 <button class="whatsapp-btn" id="whatsappBtn" onclick="shareToWhatsApp()">
-                    📱 Share on WhatsApp
+                    📱 WhatsApp
                 </button>
                 <button class="instagram-btn" id="instagramBtn" onclick="shareToInstagram()">
-                    📸 Share to Instagram
+                    📸 Instagram
                 </button>
                 <button class="download-btn" id="downloadBtn" onclick="downloadResult()">
                     ⬇️ Download
                 </button>
                 <button class="retry-btn" onclick="reset()">
-                    🔄 Roast Again
+                    🔄 Again
                 </button>
             </div>
         </div>
@@ -540,7 +641,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             "Preparing maximum cringe...",
             "Summoning roast demons...",
             "Calculating your failures...",
-            "Brewing savage content..."
+            "Brewing savage content...",
+            "Downloading your L's...",
+            "Finding your weak spots...",
+            "AI is judging you..."
         ];
 
         // Animate ego counter
@@ -553,6 +657,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }, 3000);
         }
         animateCounter();
+
+        // Use example chip
+        function useExample(topic) {
+            document.getElementById('topicInput').value = topic;
+            document.getElementById('topicInput').focus();
+            
+            // Add a little animation feedback
+            const input = document.getElementById('topicInput');
+            input.style.background = 'rgba(255, 69, 0, 0.2)';
+            setTimeout(() => {
+                input.style.background = 'transparent';
+            }, 300);
+        }
 
         // Enter key support
         document.getElementById('topicInput').addEventListener('keypress', function(e) {
@@ -619,13 +736,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         function shareToWhatsApp() {
-            const text = encodeURIComponent('I just got roasted by AI! 🔥 Topic: ' + currentTopic + ' - Try it yourself!');
+            const text = encodeURIComponent('Bhai mera roast dekh 🔥 Topic: ' + currentTopic + ' - Tu bhi try kar: ' + window.location.href);
             window.open('https://wa.me/?text=' + text, '_blank');
         }
 
         function shareToInstagram() {
             downloadResult();
-            alert('Image downloaded! Open Instagram and share it to your story.');
+            alert('Image downloaded! 📸 Open Instagram and share it to your story.');
         }
 
         function downloadResult() {
