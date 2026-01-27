@@ -41,16 +41,10 @@ AI_MODELS = [
 ]
 
 # ===== FRONTEND HTML WITH BACKGROUND IMAGE =====
-HTML_TEMPLATE = """<!DOCTYPE html>
+HTML_TEMPLATE = """
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- (paste the full HTML content from the Index.html file provided above here) -->
-</head>
-<body>
-    <!-- (rest of the HTML) -->
-</body>
-</html>
-"""
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roaster AI - Silence Your Ego</title>
@@ -63,6 +57,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             padding: 0;
             box-sizing: border-box;
         }
+        /* ... Rest of your CSS ... */
+    </style>
+</head>
+<body>
+    <!-- ... Rest of your Body ... -->
+</body>
+</html>
+""" 
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
