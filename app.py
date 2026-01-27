@@ -365,6 +365,25 @@ HTML_TEMPLATE = """
             box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
         }
 
+        .instagram-btn {
+            background: linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+            color: white;
+            flex: 1;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .instagram-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(204, 35, 136, 0.35);
+        }
+
         .retry-btn {
             background: rgba(255, 255, 255, 0.1);
             color: white;
@@ -374,6 +393,25 @@ HTML_TEMPLATE = """
         .retry-btn:hover {
             background: rgba(255, 255, 255, 0.15);
             transform: translateY(-2px);
+        }
+
+        .download-btn {
+            background: #1e90ff;
+            color: white;
+            flex: 1;
+            padding: 16px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(30, 144, 255, 0.25);
         }
 
         .error-message {
@@ -477,8 +515,14 @@ HTML_TEMPLATE = """
         <div class="result-card" id="resultCard">
             <img src="" alt="Roasted" class="result-image" id="resultImage">
             <div class="action-buttons">
-                <button class="whatsapp-btn" onclick="shareToWhatsApp()">
+                <button class="whatsapp-btn" id="whatsappBtn" onclick="shareToWhatsApp()">
                     📱 Share on WhatsApp
+                </button>
+                <button class="instagram-btn" id="instagramBtn" onclick="shareToInstagram()">
+                    📸 Share to Instagram
+                </button>
+                <button class="download-btn" id="downloadBtn" onclick="downloadResult()">
+                    ⬇️ Download
                 </button>
                 <button class="retry-btn" onclick="reset()">
                     🔄 Roast Again
@@ -509,6 +553,8 @@ HTML_TEMPLATE = """
 
         let loadingInterval;
         let currentTopic = "";
+        let lastImageBlob = null;
+        let lastImageBlobUrl = null;
 
         async function executeRoast() {
             const topic = document.getElementById('topicInput').value.trim();
@@ -551,8 +597,11 @@ HTML_TEMPLATE = """
                 }
 
                 const blob = await response.blob();
+                // store blob for sharing/downloading
+                lastImageBlob = blob;
                 const imageUrl = URL.createObjectURL(blob);
-                
+                lastImageBlobUrl = imageUrl;
+
                 document.getElementById('resultImage').src = imageUrl;
                 document.getElementById('resultCard').classList.add('active');
                 
@@ -570,17 +619,81 @@ HTML_TEMPLATE = """
             }
         }
 
-        function shareToWhatsApp() {
-            const url = window.location.href;
-            const message = `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${url}`;
-            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
+        async function shareToWhatsApp() {
+            try {
+                if (navigator.share && lastImageBlob) {
+                    // Use Web Share API with file (mobile browsers)
+                    const file = new File([lastImageBlob], `roast-${Date.now()}.jpg`, { type: lastImageBlob.type || 'image/jpeg' });
+                    await navigator.share({
+                        files: [file],
+                        text: `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${window.location.href}`
+                    });
+                } else {
+                    // Fallback to wa.me text share
+                    const message = `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${window.location.href}`;
+                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                }
+            } catch (err) {
+                console.error('WhatsApp share failed', err);
+                showError('Sharing failed. Try downloading and sharing manually.');
+            }
+        }
+
+        async function shareToInstagram() {
+            try {
+                if (navigator.share && lastImageBlob) {
+                    // Attempt Web Share API with file (best on mobile)
+                    const file = new File([lastImageBlob], `roast-${Date.now()}.jpg`, { type: lastImageBlob.type || 'image/jpeg' });
+                    await navigator.share({
+                        files: [file],
+                        text: `Roast: ${currentTopic}`
+                    });
+                } else {
+                    // Instagram doesn't support prefilled image uploads via web reliably.
+                    showError('Direct Instagram sharing not supported in this browser. Download and upload to Instagram.');
+                    // Open Instagram website as a convenience
+                    window.open('https://www.instagram.com/', '_blank');
+                }
+            } catch (err) {
+                console.error('Instagram share failed', err);
+                showError('Sharing failed. Try downloading and uploading manually.');
+            }
+        }
+
+        function downloadResult() {
+            if (!lastImageBlobUrl) {
+                showError('No image available to download.');
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = lastImageBlobUrl;
+            a.download = `roast-${Date.now()}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            // Optional: revoke object URL after a short delay
+            setTimeout(() => {
+                try {
+                    URL.revokeObjectURL(lastImageBlobUrl);
+                } catch (e) {}
+            }, 10000);
         }
 
         function reset() {
             document.getElementById('topicInput').value = '';
             document.getElementById('resultCard').classList.remove('active');
             document.getElementById('topicInput').focus();
+            // revoke previous blob URL if any
+            if (lastImageBlobUrl) {
+                try {
+                    URL.revokeObjectURL(lastImageBlobUrl);
+                } catch (e) {}
+                lastImageBlobUrl = null;
+                lastImageBlob = null;
+            }
         }
 
         function showError(message) {
