@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roaster AI - Silence Your Ego</title>
-
-    <!-- Optional: set this meta to point to an external API host.
-         If absent the frontend will call the same origin at the relative path /roast -->
-    <meta name="api-base" content="">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com"/>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
@@ -26,75 +26,238 @@
             color: #fff;
         }
 
-        .navbar { display:flex; justify-content:space-between; align-items:center; padding:26px 48px;}
-        .nav-brand { font-size:1.5rem; font-weight:800; letter-spacing:1px; }
-        .system-status { display:flex; align-items:center; gap:8px; opacity:0.95; }
-        .status-dot { width:10px; height:10px; border-radius:50%; background:#4ade80; box-shadow:0 0 8px rgba(74,222,128,0.2); }
-
-        .container { max-width:980px; margin:40px auto; padding:56px; }
-        .live-ticker { display:inline-flex; align-items:center; gap:8px; background:rgba(0,0,0,0.45); padding:8px 12px; border-radius:999px; margin-bottom:18px; font-weight:700; }
-
-        .hero-headline { font-size:3.5rem; margin-bottom:12px; line-height:1.02; }
-        .accent { color:#ff4500; }
-        .hero-subtext { margin-bottom:28px; color:#f3f3f3; opacity:0.95; }
-
-        .input-engine { margin-bottom:20px; }
-        .command-line { display:flex; gap:12px; align-items:center; background:rgba(0,0,0,0.6); border-radius:12px; padding:14px; }
-        .command-prefix { font-weight:700; color:#ffb37a; }
-        .command-input { flex:1; background:transparent; border:none; color:#fff; font-size:1rem; outline:none; }
-        .execute-btn { background:linear-gradient(90deg,#ff7a18,#ff4500); border:none; padding:10px 14px; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
-
-        .loading-container { display:none; margin-top:20px; }
-        .result-card { display:none; margin-top:20px; background:rgba(0,0,0,0.7); padding:20px; border-radius:16px; }
-        .result-card.active { display:block; }
-        .error-message { display:none; margin-top:16px; background:#ff4d4f; padding:12px; border-radius:12px; color:#fff; font-weight:700; animation:shake .5s; }
-        .error-message.active { display:block; }
-        @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-10px);} 75%{transform:translateX(10px);} }
-
-        /* EXAMPLES GRID */
-        .examples-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:18px; }
-        .example-card { background:rgba(255,255,255,0.06); border-radius:12px; padding:12px; cursor:pointer; transition:transform .12s ease, box-shadow .12s ease; border:1px solid rgba(255,255,255,0.04); }
-        .example-card:hover { transform:translateY(-6px); box-shadow:0 10px 30px rgba(0,0,0,0.45); }
-        .example-card h3 { font-size:1.05rem; color:#fff; margin-bottom:6px; }
-        .example-card p { font-size:.92rem; color:#ddd; opacity:.95; }
-
-        @media (max-width:768px) {
-            .container { padding:28px 16px; }
-            .hero-headline { font-size:2.4rem; }
-            .examples-grid { grid-template-columns:1fr; }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 26px 48px;
         }
 
-        .result-image { width:100%; border-radius:16px; margin-bottom:12px; display:block; }
-        .action-buttons { display:flex; gap:12px; }
-        .whatsapp-btn, .retry-btn { flex:1; padding:12px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:700; }
-        .whatsapp-btn { background:#25D366; color:#fff; }
-        .retry-btn { background:rgba(255,255,255,0.08); color:#fff; }
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            opacity: 0.95;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 8px rgba(74, 222, 128, 0.2);
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 40px auto;
+            padding: 56px;
+        }
+
+        .live-ticker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.45);
+            padding: 8px 12px;
+            border-radius: 999px;
+            margin-bottom: 18px;
+            font-weight: 700;
+        }
+
+        .hero-headline {
+            font-size: 3.5rem;
+            margin-bottom: 12px;
+            line-height: 1.02;
+        }
+
+        .accent {
+            color: #ff4500;
+        }
+
+        .hero-subtext {
+            margin-bottom: 28px;
+            color: #f3f3f3;
+            opacity: 0.95;
+        }
+
+        .input-engine {
+            margin-bottom: 20px;
+        }
+
+        .command-line {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(0,0,0,0.6);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .command-prefix {
+            font-weight: 700;
+            color: #ffb37a;
+        }
+
+        .command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .execute-btn {
+            background: linear-gradient(90deg,#ff7a18,#ff4500);
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            display: none;
+            margin-top: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        .result-card.active {
+            display: block;
+        }
+
+        .error-message {
+            display: none;
+            margin-top: 16px;
+            background: #ff4d4f;
+            padding: 12px;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 700;
+            animation: shake 0.5s;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* EXAMPLES GRID */
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .example-card {
+            background: rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 12px;
+            cursor: pointer;
+            transition: transform .12s ease, box-shadow .12s ease;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+        .example-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+        }
+        .example-card h3 {
+            font-size: 1.05rem;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .example-card p {
+            font-size: 0.92rem;
+            color: #ddd;
+            opacity: 0.95;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 28px 16px;
+            }
+
+            .hero-headline {
+                font-size: 2.4rem;
+            }
+
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Navbar -->
     <nav class="navbar">
-        <div class="nav-brand">🔥 ROASTER</div>
+        <div class="nav-brand">
+            🔥 ROASTER
+        </div>
         <div class="system-status">
             <div class="status-dot"></div>
             <span>System Online</span>
         </div>
     </nav>
 
+    <!-- Main Container -->
     <div class="container">
+        <!-- Live Ticker -->
         <div class="live-ticker">
             <span class="ticker-icon">🔥</span>
             <span id="egoCounter">14,203</span> Egos Destroyed Today
         </div>
 
-        <h1 class="hero-headline">Silence Your <span class="accent">Ego.</span></h1>
-        <p class="hero-subtext">The AI that humbles you. No Filters. Just Reality.</p>
+        <!-- Hero Section -->
+        <h1 class="hero-headline">
+            Silence Your <span class="accent">Ego.</span>
+        </h1>
+        <p class="hero-subtext">
+            The AI that humbles you. No Filters. Just Reality.
+        </p>
 
+        <!-- Input Engine -->
         <div class="input-engine">
             <div class="command-line">
-                <span class="command-prefix">&gt;</span>
-                <input type="text" class="command-input" id="topicInput" placeholder="Roast my Ex / Boss / Life..." maxlength="100">
-                <button class="execute-btn" id="executeBtn" aria-label="Roast" title="Roast" onclick="executeRoast()">
-                    <svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round"/></svg>
+                <span class="command-prefix">></span>
+                <input 
+                    type="text" 
+                    class="command-input" 
+                    id="topicInput"
+                    placeholder="Roast my Ex / Boss / Life..."
+                    maxlength="100"
+                >
+                <button class="execute-btn" id="executeBtn" onclick="executeRoast()">
+                    <svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    </svg>
                 </button>
             </div>
 
@@ -102,7 +265,7 @@
             <div class="examples-grid" id="examplesGrid">
                 <div class="example-card" onclick="setTopicAndRoast('My Best Friend')">
                     <h3>My Best Friend</h3>
-                    <p>A warm snapshot of a friendship — small adventures and inside jokes.</p>
+                    <p>A warm snapshot of a lifelong friendship — small adventures and inside jokes.</p>
                 </div>
 
                 <div class="example-card" onclick="setTopicAndRoast('Engineering')">
@@ -122,38 +285,37 @@
             </div>
         </div>
 
+        <!-- Loading State -->
         <div class="loading-container" id="loadingContainer">
+            <div class="loading-ring"></div>
             <div class="loading-text" id="loadingText">Consulting with Satan...</div>
         </div>
 
-        <div class="result-card" id="resultCard" role="region" aria-live="polite">
-            <img src="" alt="Roasted result" class="result-image" id="resultImage">
+        <!-- Result Card -->
+        <div class="result-card" id="resultCard">
+            <img src="" alt="Roasted" class="result-image" id="resultImage">
             <div class="action-buttons">
-                <button class="whatsapp-btn" onclick="shareToWhatsApp()">📱 Share on WhatsApp</button>
-                <button class="retry-btn" onclick="reset()">🔄 Roast Again</button>
+                <button class="whatsapp-btn" onclick="shareToWhatsApp()">
+                    📱 Share on WhatsApp
+                </button>
+                <button class="retry-btn" onclick="reset()">
+                    🔄 Roast Again
+                </button>
             </div>
         </div>
 
-        <div class="error-message" id="errorMessage" role="alert"></div>
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
     </div>
 
     <script>
-        // Determine API base:
-        // 1) If <meta name="api-base" content="https://example.com"> is set, use it.
-        // 2) Otherwise default to same-origin relative path (so frontend is independent of any server templating).
-        const apiMeta = document.querySelector('meta[name="api-base"]')?.content || '';
-        const API_BASE = apiMeta && apiMeta.trim().length ? apiMeta.trim() : '/';
-        const API_URL = new URL('/roast', API_BASE).href;
+        // ===== MAIN APP LOGIC =====
+        const API_URL = "https://roaster-vwgb.onrender.com";
 
-        // Optional: if you need to point to an external backend you can set <meta name="api-base" content="https://api.example.com">
-        // Example: <meta name="api-base" content="https://roaster-vwgb.onrender.com">
-
-        // Small UX: live ego counter
         let egoCount = 14203;
         setInterval(() => {
-            egoCount += Math.floor(Math.random()*3);
-            const el = document.getElementById('egoCounter');
-            if (el) el.textContent = egoCount.toLocaleString();
+            egoCount += Math.floor(Math.random() * 3);
+            document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
         }, 5000);
 
         const loadingMessages = [
@@ -165,8 +327,7 @@
             "Preparing maximum destruction..."
         ];
 
-        let lastImageBlob = null;
-        let lastImageBlobUrl = null;
+        let loadingInterval;
         let currentTopic = "";
 
         async function executeRoast() {
@@ -177,60 +338,53 @@
                 return;
             }
 
-            // UI state
             document.getElementById('loadingContainer').style.display = 'block';
             document.getElementById('loadingText').textContent = loadingMessages[Math.floor(Math.random()*loadingMessages.length)];
             document.getElementById('resultCard').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
 
             try {
-                // Use relative or configured API_URL. The backend must expose a GET /roast?topic=... returning an image blob (same as current app).
-                const resp = await fetch(`${API_URL}?topic=${encodeURIComponent(topic)}`, { method: 'GET' });
-
+                // Call your roast endpoint; adapt if your backend expects a different path or method
+                const resp = await fetch(`${API_URL}/roast?topic=${encodeURIComponent(topic)}`);
                 if (!resp.ok) {
-                    let errText = 'Roast failed';
-                    try {
-                        const j = await resp.json();
-                        errText = j.error || errText;
-                    } catch (_) {
-                        errText = await resp.text().catch(()=>'Roast failed');
-                    }
-                    throw new Error(errText);
+                    const err = await resp.json().catch(()=>({error: 'unknown'}));
+                    throw new Error(err.error || 'Roast failed');
                 }
-
                 const blob = await resp.blob();
-                // revoke previous URL if exists
-                if (lastImageBlobUrl) {
-                    try { URL.revokeObjectURL(lastImageBlobUrl); } catch (e) {}
-                    lastImageBlobUrl = null;
-                    lastImageBlob = null;
-                }
-
                 const url = URL.createObjectURL(blob);
+
                 const img = document.getElementById('resultImage');
                 img.src = url;
 
-                lastImageBlob = blob;
-                lastImageBlobUrl = url;
-
                 document.getElementById('resultCard').classList.add('active');
                 document.getElementById('loadingContainer').style.display = 'none';
+
+                // Save last blob for sharing (if needed)
+                lastImageBlob = blob;
+                lastImageBlobUrl = url;
             } catch (e) {
                 document.getElementById('loadingContainer').style.display = 'none';
                 showError(e.message || 'Failed to roast. Try again.');
             }
         }
 
+        // Helper used by the example cards
         function setTopicAndRoast(text) {
             document.getElementById('topicInput').value = text;
             executeRoast();
         }
 
+        // Minimal helpers used above; keep in sync with the app behaviour in the repo
+        let lastImageBlob = null;
+        let lastImageBlobUrl = null;
+
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.classList.add('active');
-            setTimeout(() => { errorDiv.classList.remove('active'); }, 4000);
+            setTimeout(() => {
+                errorDiv.classList.remove('active');
+            }, 4000);
         }
 
         function reset() {
@@ -252,8 +406,8 @@
             document.getElementById('topicInput').focus();
         });
 
-        // Sharing helper (simple wa.me text share)
-        function shareToWhatsApp() {
+        // Sharing helpers (stubs; keep your existing implementations if present)
+        async function shareToWhatsApp() {
             if (!lastImageBlobUrl) {
                 showError('No image available to share.');
                 return;
