@@ -57,14 +57,6 @@ HTML_TEMPLATE = """
             padding: 0;
             box-sizing: border-box;
         }
-        /* ... Rest of your CSS ... */
-    </style>
-</head>
-<body>
-    <!-- ... Rest of your Body ... -->
-</body>
-</html>
-""" 
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -98,11 +90,17 @@ HTML_TEMPLATE = """
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 24px 48px;
-            backdrop-filter: blur(12px);
-            background: rgba(0, 0, 0, 0.6);
-            border-bottom: 1px solid rgba(255, 69, 0, 0.3);
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
+    </style>
+</head>
+<body>
+    <!-- Your body content here -->
+</body>
+</html>
+"""
 
         .nav-brand {
             display: flex;
