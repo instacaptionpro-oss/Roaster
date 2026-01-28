@@ -483,6 +483,21 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             75% { transform: translateX(10px); }
         }
 
+        /* Warning Badge */
+        .warning-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+        }
+
         @media (max-width: 768px) {
             .navbar {
                 padding: 20px 24px;
@@ -526,62 +541,75 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
         <div class="system-status">
             <div class="status-dot"></div>
-            <span>System Online</span>
+            <span>Gali Mode: ON</span>
         </div>
     </nav>
 
     <div class="container">
+        <div class="warning-badge">
+            ⚠️ 18+ Content | Gaaliyon ka Guarantee
+        </div>
+
         <div class="live-ticker">
             <span class="ticker-icon">🔥</span>
-            <span id="egoCounter">14,203</span> Egos Destroyed Today
+            <span id="egoCounter">14,203</span> Bezati Hui Aaj
         </div>
 
         <h1 class="hero-headline">
-            Silence Your <span class="accent">Ego.</span>
+            Teri <span class="accent">Bezati</span> Free Mein
         </h1>
         <p class="hero-subtext">
-            The AI that humbles you. No Filters. Just Reality.
+            Itna roast karega ki teri aatma bhi cringe karegi. Maa kasam no filter! 🤡
         </p>
 
         <!-- ===== EXAMPLE CHIPS ===== -->
         <div class="examples-section">
-            <p class="examples-label">🎯 Try these savage examples:</p>
+            <p class="examples-label">🎯 Seedha Bezati Shuru Kar:</p>
             <div class="example-chips">
-                <button class="example-chip" onclick="useExample('My Ex who cheated on me')">
-                    <span class="chip-emoji">💔</span>My Ex
+                <button class="example-chip" onclick="useExample('Meri ex jo mujhe chod ke mere dost ke saath bhaag gayi')">
+                    <span class="chip-emoji">💔</span>Randi Ex
                 </button>
-                <button class="example-chip" onclick="useExample('Engineers who mass apply on LinkedIn')">
-                    <span class="chip-emoji">💻</span>LinkedIn Engineers
+                <button class="example-chip" onclick="useExample('Mera dost jo hamesha mera paisa khaata hai')">
+                    <span class="chip-emoji">💸</span>Chor Dost
                 </button>
-                <button class="example-chip" onclick="useExample('Gym bros who skip leg day')">
-                    <span class="chip-emoji">💪</span>Gym Bros
+                <button class="example-chip" onclick="useExample('LinkedIn pe rozgar dhundhne wale engineers')">
+                    <span class="chip-emoji">💻</span>Berozgar Engineers
                 </button>
-                <button class="example-chip" onclick="useExample('Indian parents expectations')">
-                    <span class="chip-emoji">👨‍👩‍👦</span>Indian Parents
+                <button class="example-chip" onclick="useExample('Gym jaake sirf selfie leta hai')">
+                    <span class="chip-emoji">💪</span>Nakli Gym Bro
                 </button>
-                <button class="example-chip" onclick="useExample('Bhai jaldi ameer banega crypto se')">
-                    <span class="chip-emoji">📉</span>Crypto Bros
+                <button class="example-chip" onclick="useExample('Mummy Papa ki expectations')">
+                    <span class="chip-emoji">👨‍👩‍👦</span>Sharma Ji Ka Beta
                 </button>
-                <button class="example-chip" onclick="useExample('Students one night before exam')">
-                    <span class="chip-emoji">📚</span>Last Night Study
+                <button class="example-chip" onclick="useExample('Crypto mein paisa doobaya')">
+                    <span class="chip-emoji">📉</span>Gawar Crypto Bro
                 </button>
-                <button class="example-chip" onclick="useExample('Friend who never returns money')">
-                    <span class="chip-emoji">💸</span>Udhaar Friend
+                <button class="example-chip" onclick="useExample('Exam ke ek raat pehle padhne wale')">
+                    <span class="chip-emoji">📚</span>Nalayak Student
                 </button>
-                <button class="example-chip" onclick="useExample('Influencers with 500 followers')">
-                    <span class="chip-emoji">📱</span>Influencers
+                <button class="example-chip" onclick="useExample('500 followers wala influencer')">
+                    <span class="chip-emoji">📱</span>Chapri Influencer
                 </button>
-                <button class="example-chip" onclick="useExample('Relatives at family functions')">
-                    <span class="chip-emoji">👴</span>Relatives
+                <button class="example-chip" onclick="useExample('Shaadi mein rishtedar')">
+                    <span class="chip-emoji">👴</span>Gandu Rishtedaar
                 </button>
-                <button class="example-chip" onclick="useExample('Startup founders with no funding')">
-                    <span class="chip-emoji">🚀</span>Startup Bros
+                <button class="example-chip" onclick="useExample('Startup founder bina funding ke')">
+                    <span class="chip-emoji">🚀</span>Fattu Startup Bro
                 </button>
-                <button class="example-chip" onclick="useExample('Tinder bio says looking for something serious')">
-                    <span class="chip-emoji">🔥</span>Tinder Profiles
+                <button class="example-chip" onclick="useExample('Tinder pe serious relationship dhundh raha')">
+                    <span class="chip-emoji">🔥</span>Tharki Tinder User
                 </button>
-                <button class="example-chip" onclick="useExample('Monday morning alarm')">
-                    <span class="chip-emoji">😴</span>Monday Morning
+                <button class="example-chip" onclick="useExample('Monday subah ka alarm')">
+                    <span class="chip-emoji">😴</span>Monday Ki M**
+                </button>
+                <button class="example-chip" onclick="useExample('Mera boss jo khud kuch nahi karta')">
+                    <span class="chip-emoji">🤡</span>Chutiya Boss
+                </button>
+                <button class="example-chip" onclick="useExample('Wo ladka jo har ladki ko bhabhi bolta hai')">
+                    <span class="chip-emoji">🙏</span>Bhabhi Simp
+                </button>
+                <button class="example-chip" onclick="useExample('PUBG khel ke pro player samjhta hai')">
+                    <span class="chip-emoji">🎮</span>Noob Gamer
                 </button>
             </div>
         </div>
@@ -593,7 +621,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     type="text" 
                     class="command-input" 
                     id="topicInput"
-                    placeholder="Roast my Ex / Boss / Life..."
+                    placeholder="Kisko gaali deni hai? Bol na bsdk..."
                     maxlength="100"
                 >
                 <button class="execute-btn" id="executeBtn" onclick="executeRoast()">
@@ -606,7 +634,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         <div class="loading-container" id="loadingContainer">
             <div class="loading-ring"></div>
-            <div class="loading-text" id="loadingText">Consulting with Satan...</div>
+            <div class="loading-text" id="loadingText">Gaaliyan load ho rahi hain...</div>
         </div>
 
         <div class="result-card" id="resultCard">
@@ -622,7 +650,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     ⬇️ Download
                 </button>
                 <button class="retry-btn" onclick="reset()">
-                    🔄 Again
+                    🔄 Aur Gaali
                 </button>
             </div>
         </div>
@@ -635,16 +663,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         let currentTopic = '';
         
         const loadingMessages = [
-            "Consulting with Satan...",
-            "Gathering your insecurities...",
-            "Loading emotional damage...",
-            "Preparing maximum cringe...",
-            "Summoning roast demons...",
-            "Calculating your failures...",
-            "Brewing savage content...",
-            "Downloading your L's...",
-            "Finding your weak spots...",
-            "AI is judging you..."
+            "Gaaliyan load ho rahi hain...",
+            "Teri izzat ki kabar khod raha hoon...",
+            "Satan se teri report maang raha hoon...",
+            "Tera janam kundali dekh raha hoon...",
+            "Teri aukat calculate ho rahi hai...",
+            "Teri L lag rahi hai wait kar...",
+            "Teri mummy ko call laga raha hoon...",
+            "Bohot bura hone wala hai tere saath...",
+            "Emotional damage loading...",
+            "Teri bezati ka script likh raha hoon...",
+            "Sharma ji ke bete se comparison ho raha...",
+            "Tera future dekh ke AI bhi ro diya...",
+            "Tere failures count ho rahe hain..."
         ];
 
         // Animate ego counter
@@ -652,9 +683,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const counter = document.getElementById('egoCounter');
             let count = 14203;
             setInterval(() => {
-                count += Math.floor(Math.random() * 3);
+                count += Math.floor(Math.random() * 5);
                 counter.textContent = count.toLocaleString();
-            }, 3000);
+            }, 2000);
         }
         animateCounter();
 
@@ -682,7 +713,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const topic = document.getElementById('topicInput').value.trim();
             
             if (!topic) {
-                showError('Type something to get roasted!');
+                showError('Abe kuch toh likh! Khaali mein kya roast karun? 🤡');
                 return;
             }
 
@@ -701,7 +732,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const loadingInterval = setInterval(() => {
                 msgIndex = (msgIndex + 1) % loadingMessages.length;
                 document.getElementById('loadingText').textContent = loadingMessages[msgIndex];
-            }, 1500);
+            }, 1200);
 
             try {
                 const response = await fetch('/roast?topic=' + encodeURIComponent(topic));
@@ -723,7 +754,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             } catch (error) {
                 clearInterval(loadingInterval);
                 document.getElementById('loadingContainer').classList.remove('active');
-                showError(error.message || 'Something went wrong. Try again!');
+                showError('Kuch toh gadbad hai! Dobara try kar bsdk! 😤');
             } finally {
                 document.getElementById('executeBtn').disabled = false;
             }
@@ -736,20 +767,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         function shareToWhatsApp() {
-            const text = encodeURIComponent('Bhai mera roast dekh 🔥 Topic: ' + currentTopic + ' - Tu bhi try kar: ' + window.location.href);
+            const text = encodeURIComponent('Bhai dekh meri kaise bezati hui 🔥😂 Topic: ' + currentTopic + ' - Tu bhi apni karwa: ' + window.location.href);
             window.open('https://wa.me/?text=' + text, '_blank');
         }
 
         function shareToInstagram() {
             downloadResult();
-            alert('Image downloaded! 📸 Open Instagram and share it to your story.');
+            alert('Image download ho gaya! 📸 Ab Instagram pe daal ke sabki jala 🔥');
         }
 
         function downloadResult() {
             if (currentImageUrl) {
                 const a = document.createElement('a');
                 a.href = currentImageUrl;
-                a.download = 'roast_' + Date.now() + '.jpg';
+                a.download = 'bezati_' + Date.now() + '.jpg';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -789,38 +820,43 @@ def get_font(size=40):
 
 def get_roast(topic):
     system_prompt = """
-You are 'Roaster', India's most witty and unpredictable Stand-up Comedian.
-Your goal is to Roast the user based on the specific topic they provide.
+Tu hai 'Roaster Bhai' - India ka sabse gandu aur savage roaster. Tujhe user ko uski aukat dikhani hai.
 
-### THE GOLDEN RULES:
-1. **CONTEXT IS KING:** Do not just use random slang. If the topic is "Coding", roast the bugs. If the topic is "Love", roast the heartbreak. If the topic is "Gym", roast the protein powder.
-2. **NO REPETITION:** Do not rely on "Udhaar", "Momos", or "Chhapri" unless it fits perfectly. Be creative. Use new metaphors every time.
-3. **OBSERVATIONAL HUMOR:** Be like a detective. Find the specific insecurity in the topic and attack it.
-4. **LANGUAGE:** Natural Hinglish. Speak like a college student talking to his friend.
+### RULES (Dhyan se padh sale):
 
-### TONE:
-- Sarcastic, Witty, Fast.
-- Less "Abusive", More "Intellectual Damage".
-- Use Pop Culture references (Bollywood, Cricketers, memes, Politicians) IF it fits.
+1. **GAALIYAN ALLOWED HAI** - Use words like: bhosdike, bsdk, chutiya, madarchod, behenchod, gandu, lawde, jhatu, tatti, harami, randi, kamina, nalayak, bevkoof, gadha, ullu, bakchod, etc.
 
-### EXAMPLES OF CREATIVE RANGE:
+2. **HINGLISH MEIN BOL** - Hindi + English mix kar. Jaise college ka launda baat karta hai.
 
-Topic: "My Boss"
-Roast: "He acts like the CEO of Google but manages the team like a Whatsapp Group Admin."
+3. **TOPIC PE FOCUS** - Jo topic hai uski specific bezati kar. Generic mat ho.
 
-Topic: "I go to the Gym"
-Roast: "Body banne se pehle Instagram stories bann gayi. Protein shake kam, photosynthesis zyada chal raha hai."
+4. **SAVAGE BUT FUNNY** - Gaali deni hai but hasna bhi chahiye. Comedy + Roast = Perfect.
 
-Topic: "Python Coding"
-Roast: "Tere code mein itne errors hain ki IDE bhi suicide karne ka soch raha hai."
+5. **POP CULTURE USE KAR** - Bollywood, cricketers, memes, politicians ka reference de if it fits.
 
-Topic: "My Ex"
-Roast: "She treated you like a 'Free Trial' subscription. Use kiya, expire hua, aur naya account bana liya."
+6. **MAX 30 WORDS** - Zyada mat bol. Short and tight roast.
+
+### EXAMPLES:
+
+Topic: "Meri Ex"
+Roast: "Teri ex ne tujhe choda? Bhai uski choice mein improvement aaya hai, tu khud toh apne haath ki bhi first choice nahi hai, madarchod 💀"
+
+Topic: "Engineering Student"
+Roast: "4 saal engineering ki aur ab Zomato pe delivery kar raha hai. Tera degree tissue paper se bhi bekaar hai bhosdike 🎓🗑️"
+
+Topic: "Gym Bro"
+Roast: "Beta protein shake zyada pi, body nahi bani teri lekin brain zaroor shrink ho gaya hai. Biceps nahi hai tere, tatte hain haathon mein chutiye 💪"
+
+Topic: "LinkedIn Influencer"
+Roast: "Agreed? Thoughts? - Lavde yeh post daalne se job nahi milti. Tera LinkedIn bio dekh ke HR bhi block kar deta hai gandu 😂"
+
+Topic: "Crypto Investor"
+Roast: "Bhai tere portfolio mein itne red candles hain ki Diwali ho gayi. Bitcoin hodl karte karte khud bik jayega tu harami 📉"
 
 ### INSTRUCTION:
-Generate a savage, unique, and context-specific roast for the user's topic.
-Max 25 words.
-NO introductory text. Just the roast.
+Is topic pe savage Hinglish roast de WITH gaaliyan. Funny bhi hona chahiye aur bezati bhi.
+Sirf roast likh, koi introduction mat de.
+Topic: 
     """
     
     for model_index, model_name in enumerate(AI_MODELS):
@@ -830,11 +866,11 @@ NO introductory text. Just the roast.
             completion = groq_client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Roast this topic with intelligent humor: {topic}"}
+                    {"role": "user", "content": f"{topic}"}
                 ],
                 model=model_name,
-                temperature=1.1,
-                max_tokens=120,
+                temperature=1.2,
+                max_tokens=150,
                 top_p=1,
             )
             
@@ -859,9 +895,11 @@ NO introductory text. Just the roast.
     
     print("All AI models failed, using fallback roast")
     fallbacks = [
-        f"Bhai {topic} ko roast karne se pehle khud ko sambhal le, tera future toh already dark mode mein hai",
-        f"{topic}? Yeh topic bhi teri love life jaisa hai - kuch hai hi nahi samajhne ko",
-        f"AI ne 3 baar try kiya aur haar maan li. {topic} roast-proof hai lagta hai"
+        f"Bhai {topic}? Teri life itni sad hai ki AI bhi tujhpe roast likhne se mana kar diya. Khud hi itna bada joke hai tu chutiye 💀",
+        f"{topic} ke baare mein kya bolun? Tera existence hi sabse bada roast hai bhosdike 😂",
+        f"AI ne 3 baar try kiya {topic} roast karne ka par haar gaya. Tu roast-proof nahi hai, tu itna bekar hai ki roast karne layak bhi nahi hai gandu 🤡",
+        f"Bhai {topic}? Sharma ji ka beta bhi tujhse better hai. Ja jaake chai bana nalayak 🍵",
+        f"{topic} ko roast karne gaya tha, teri puri life history dekh ke AI depression mein chala gaya madarchod 😭"
     ]
     return random.choice(fallbacks)
 
@@ -979,7 +1017,7 @@ def roast():
     topic = request.args.get('topic', '').strip()
     
     if not topic:
-        return jsonify({"error": "Please provide a 'topic' parameter"}), 400
+        return jsonify({"error": "Kuch toh likh pehle!"}), 400
     
     if not os.path.exists(MEMES_FOLDER):
         return jsonify({"error": "Memes folder not found"}), 500
