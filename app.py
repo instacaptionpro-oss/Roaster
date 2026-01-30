@@ -40,13 +40,13 @@ AI_MODELS = [
     "meta-llama/llama-3.1-70b-versatile"
 ]
 
-# ===== FRONTEND HTML WITH BACKGROUND IMAGE =====
+# ===== FRONTEND HTML =====
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roaster AI - Silence Your Ego</title>
+    <title>Roaster AI - Teri Bezati Free Mein</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -130,7 +130,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             z-index: 10;
             max-width: 900px;
             margin: 0 auto;
-            padding: 80px 24px;
+            padding: 60px 24px;
             text-align: center;
         }
 
@@ -159,11 +159,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .hero-headline {
-            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
             font-weight: 900;
             letter-spacing: -3px;
             line-height: 1.1;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             color: #fff;
             text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
         }
@@ -174,7 +174,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .hero-subtext {
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             color: #fff;
             font-weight: 400;
             margin-bottom: 40px;
@@ -184,59 +184,50 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             text-shadow: 0 2px 15px rgba(0, 0, 0, 0.9);
         }
 
-        /* ===== EXAMPLE CHIPS SECTION ===== */
-        .examples-section {
-            margin-bottom: 40px;
-        }
-
-        .examples-label {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 16px;
-            font-weight: 500;
-        }
-
-        .example-chips {
+        /* ===== LANGUAGE TOGGLE ===== */
+        .language-toggle {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
-            max-width: 700px;
-            margin: 0 auto;
+            gap: 0;
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 50px;
+            padding: 4px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid rgba(255, 69, 0, 0.3);
         }
 
-        .example-chip {
-            padding: 10px 18px;
-            background: rgba(255, 69, 0, 0.15);
-            border: 1px solid rgba(255, 69, 0, 0.4);
+        .lang-btn {
+            padding: 12px 28px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border: none;
             border-radius: 50px;
-            color: #fff;
-            font-size: 0.9rem;
-            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             font-family: 'Inter', sans-serif;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
         }
 
-        .example-chip:hover {
-            background: rgba(255, 69, 0, 0.3);
-            border-color: #FF4500;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        .lang-btn.active {
+            background: #FF4500;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
         }
 
-        .example-chip:active {
-            transform: translateY(0);
+        .lang-btn:hover:not(.active) {
+            color: #fff;
+            background: rgba(255, 69, 0, 0.2);
         }
 
-        .example-chip .chip-emoji {
-            margin-right: 6px;
-        }
-
+        /* ===== INPUT ENGINE ===== */
         .input-engine {
             position: relative;
             max-width: 700px;
-            margin: 0 auto 48px;
+            margin: 0 auto 32px;
         }
 
         .command-line {
@@ -311,6 +302,87 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             fill: white;
         }
 
+        /* ===== EXAMPLE CHIPS SECTION ===== */
+        .examples-section {
+            margin-bottom: 40px;
+        }
+
+        .examples-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+
+        .example-chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .example-chip {
+            padding: 10px 18px;
+            background: rgba(255, 69, 0, 0.15);
+            border: 1px solid rgba(255, 69, 0, 0.4);
+            border-radius: 50px;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .example-chip:hover {
+            background: rgba(255, 69, 0, 0.3);
+            border-color: #FF4500;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+        }
+
+        .example-chip:active {
+            transform: translateY(0);
+        }
+
+        .example-chip .chip-emoji {
+            margin-right: 6px;
+        }
+
+        .example-chip.hidden {
+            display: none;
+        }
+
+        /* More Options Button */
+        .more-options-btn {
+            padding: 10px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 50px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            margin-top: 10px;
+        }
+
+        .more-options-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #FF4500;
+            color: #fff;
+        }
+
+        .more-options-btn.expanded {
+            background: rgba(255, 69, 0, 0.2);
+            border: 1px solid #FF4500;
+            color: #FF4500;
+        }
+
+        /* ===== LOADING ===== */
         .loading-container {
             display: none;
             padding: 80px 24px;
@@ -348,6 +420,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             50% { opacity: 0.5; }
         }
 
+        /* ===== RESULT CARD ===== */
         .result-card {
             display: none;
             max-width: 700px;
@@ -508,15 +581,26 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }
 
             .container {
-                padding: 48px 20px;
+                padding: 40px 16px;
             }
 
             .hero-headline {
-                font-size: 2.5rem;
+                font-size: 2rem;
+                letter-spacing: -1px;
             }
 
             .hero-subtext {
-                font-size: 1rem;
+                font-size: 0.95rem;
+            }
+
+            .language-toggle {
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .lang-btn {
+                padding: 10px 20px;
+                font-size: 0.85rem;
             }
 
             .example-chips {
@@ -531,6 +615,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             .action-buttons {
                 flex-direction: column;
             }
+
+            .command-input {
+                font-size: 0.95rem;
+                padding: 16px 8px;
+            }
         }
     </style>
 </head>
@@ -541,79 +630,38 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
         <div class="system-status">
             <div class="status-dot"></div>
-            <span>Gali Mode: ON</span>
+            <span id="statusText">Savage Mode: ON</span>
         </div>
     </nav>
 
     <div class="container">
         <div class="warning-badge">
-            ⚠️ 18+ Content | Gaaliyon ka Guarantee
+            ⚠️ 18+ Content | No Mercy Guaranteed
         </div>
 
         <div class="live-ticker">
             <span class="ticker-icon">🔥</span>
-            <span id="egoCounter">14,203</span> Bezati Hui Aaj
+            <span id="egoCounter">14,203</span> <span id="tickerText">Egos Destroyed Today</span>
         </div>
 
         <h1 class="hero-headline">
-            Teri <span class="accent">Bezati</span> Free Mein
+            <span id="headlineText">Get <span class="accent">Roasted</span> Free</span>
         </h1>
-        <p class="hero-subtext">
-            Itna roast karega ki teri aatma bhi cringe karegi. Maa kasam no filter! 🤡
+        <p class="hero-subtext" id="subtextText">
+            AI that destroys your ego. No filters. Pure savage mode! 🤡
         </p>
 
-        <!-- ===== EXAMPLE CHIPS ===== -->
-        <div class="examples-section">
-            <p class="examples-label">🎯 Seedha Bezati Shuru Kar:</p>
-            <div class="example-chips">
-                <button class="example-chip" onclick="useExample('Meri ex jo mujhe chod ke mere dost ke saath bhaag gayi')">
-                    <span class="chip-emoji">💔</span>Randi Ex
-                </button>
-                <button class="example-chip" onclick="useExample('Mera dost jo hamesha mera paisa khaata hai')">
-                    <span class="chip-emoji">💸</span>Chor Dost
-                </button>
-                <button class="example-chip" onclick="useExample('LinkedIn pe rozgar dhundhne wale engineers')">
-                    <span class="chip-emoji">💻</span>Berozgar Engineers
-                </button>
-                <button class="example-chip" onclick="useExample('Gym jaake sirf selfie leta hai')">
-                    <span class="chip-emoji">💪</span>Nakli Gym Bro
-                </button>
-                <button class="example-chip" onclick="useExample('Mummy Papa ki expectations')">
-                    <span class="chip-emoji">👨‍👩‍👦</span>Sharma Ji Ka Beta
-                </button>
-                <button class="example-chip" onclick="useExample('Crypto mein paisa doobaya')">
-                    <span class="chip-emoji">📉</span>Gawar Crypto Bro
-                </button>
-                <button class="example-chip" onclick="useExample('Exam ke ek raat pehle padhne wale')">
-                    <span class="chip-emoji">📚</span>Nalayak Student
-                </button>
-                <button class="example-chip" onclick="useExample('500 followers wala influencer')">
-                    <span class="chip-emoji">📱</span>Chapri Influencer
-                </button>
-                <button class="example-chip" onclick="useExample('Shaadi mein rishtedar')">
-                    <span class="chip-emoji">👴</span>Gandu Rishtedaar
-                </button>
-                <button class="example-chip" onclick="useExample('Startup founder bina funding ke')">
-                    <span class="chip-emoji">🚀</span>Fattu Startup Bro
-                </button>
-                <button class="example-chip" onclick="useExample('Tinder pe serious relationship dhundh raha')">
-                    <span class="chip-emoji">🔥</span>Tharki Tinder User
-                </button>
-                <button class="example-chip" onclick="useExample('Monday subah ka alarm')">
-                    <span class="chip-emoji">😴</span>Monday Ki M**
-                </button>
-                <button class="example-chip" onclick="useExample('Mera boss jo khud kuch nahi karta')">
-                    <span class="chip-emoji">🤡</span>Chutiya Boss
-                </button>
-                <button class="example-chip" onclick="useExample('Wo ladka jo har ladki ko bhabhi bolta hai')">
-                    <span class="chip-emoji">🙏</span>Bhabhi Simp
-                </button>
-                <button class="example-chip" onclick="useExample('PUBG khel ke pro player samjhta hai')">
-                    <span class="chip-emoji">🎮</span>Noob Gamer
-                </button>
-            </div>
+        <!-- ===== LANGUAGE TOGGLE ===== -->
+        <div class="language-toggle">
+            <button class="lang-btn active" id="hindiBtn" onclick="setLanguage('hindi')">
+                🇮🇳 Hindi
+            </button>
+            <button class="lang-btn" id="englishBtn" onclick="setLanguage('english')">
+                🇺🇸 English
+            </button>
         </div>
 
+        <!-- ===== INPUT ENGINE ===== -->
         <div class="input-engine">
             <div class="command-line">
                 <span class="command-prefix">></span>
@@ -621,7 +669,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     type="text" 
                     class="command-input" 
                     id="topicInput"
-                    placeholder="Kisko gaali deni hai? Bol na bsdk..."
+                    placeholder="Kisko roast karna hai? Bol na..."
                     maxlength="100"
                 >
                 <button class="execute-btn" id="executeBtn" onclick="executeRoast()">
@@ -632,9 +680,104 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
         </div>
 
+        <!-- ===== EXAMPLE CHIPS ===== -->
+        <div class="examples-section">
+            <p class="examples-label" id="examplesLabel">🎯 Popular Roasts:</p>
+            
+            <!-- HINDI CHIPS -->
+            <div class="example-chips" id="hindiChips">
+                <!-- Top 4 Hindi (Always Visible) -->
+                <button class="example-chip" onclick="useExample('Meri Ex girlfriend')">
+                    <span class="chip-emoji">💔</span>Meri Ex
+                </button>
+                <button class="example-chip" onclick="useExample('Mera Chutiya Boss')">
+                    <span class="chip-emoji">🤡</span>Mera Boss
+                </button>
+                <button class="example-chip" onclick="useExample('Engineering Students')">
+                    <span class="chip-emoji">💻</span>Engineers
+                </button>
+                <button class="example-chip" onclick="useExample('Indian Parents ki expectations')">
+                    <span class="chip-emoji">👨‍👩‍👦</span>Parents
+                </button>
+                
+                <!-- Hidden Hindi (Show on More) -->
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Gym jaake sirf selfie leta hai')">
+                    <span class="chip-emoji">💪</span>Gym Bros
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Crypto mein paisa doobaya')">
+                    <span class="chip-emoji">📉</span>Crypto Investors
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Sharma ji ka beta')">
+                    <span class="chip-emoji">🏆</span>Sharma Ji Ka Beta
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Friend jo kabhi paisa nahi lauta')">
+                    <span class="chip-emoji">💸</span>Udhaar Friend
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('500 followers wala influencer')">
+                    <span class="chip-emoji">📱</span>Chapri Influencer
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Monday subah ka alarm')">
+                    <span class="chip-emoji">😴</span>Monday Morning
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Rishtedar shaadi mein')">
+                    <span class="chip-emoji">👴</span>Rishtedaar
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('PUBG khel ke pro samjhta hai')">
+                    <span class="chip-emoji">🎮</span>PUBG Noobs
+                </button>
+            </div>
+            
+            <!-- ENGLISH CHIPS -->
+            <div class="example-chips" id="englishChips" style="display: none;">
+                <!-- Top 4 English (Always Visible) -->
+                <button class="example-chip" onclick="useExample('My Cheating Ex')">
+                    <span class="chip-emoji">💔</span>My Ex
+                </button>
+                <button class="example-chip" onclick="useExample('My Toxic Boss')">
+                    <span class="chip-emoji">🤡</span>My Boss
+                </button>
+                <button class="example-chip" onclick="useExample('Software Engineers')">
+                    <span class="chip-emoji">💻</span>Engineers
+                </button>
+                <button class="example-chip" onclick="useExample('Helicopter Parents')">
+                    <span class="chip-emoji">👨‍👩‍👦</span>Parents
+                </button>
+                
+                <!-- Hidden English (Show on More) -->
+                <button class="example-chip hidden english-extra" onclick="useExample('Gym bros who skip leg day')">
+                    <span class="chip-emoji">💪</span>Gym Bros
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Crypto bros who lost everything')">
+                    <span class="chip-emoji">📉</span>Crypto Bros
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('LinkedIn motivational posters')">
+                    <span class="chip-emoji">💼</span>LinkedIn Gurus
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Friend who never pays back')">
+                    <span class="chip-emoji">💸</span>Broke Friend
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Instagram influencers with 500 followers')">
+                    <span class="chip-emoji">📱</span>Fake Influencers
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Monday morning meetings')">
+                    <span class="chip-emoji">😴</span>Monday Mornings
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Relatives at family gatherings')">
+                    <span class="chip-emoji">👴</span>Nosy Relatives
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Gamers who rage quit')">
+                    <span class="chip-emoji">🎮</span>Rage Gamers
+                </button>
+            </div>
+            
+            <button class="more-options-btn" id="moreOptionsBtn" onclick="toggleMoreOptions()">
+                + More Options
+            </button>
+        </div>
+
         <div class="loading-container" id="loadingContainer">
             <div class="loading-ring"></div>
-            <div class="loading-text" id="loadingText">Gaaliyan load ho rahi hain...</div>
+            <div class="loading-text" id="loadingText">Loading roast...</div>
         </div>
 
         <div class="result-card" id="resultCard">
@@ -650,7 +793,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     ⬇️ Download
                 </button>
                 <button class="retry-btn" onclick="reset()">
-                    🔄 Aur Gaali
+                    🔄 Again
                 </button>
             </div>
         </div>
@@ -661,21 +804,34 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <script>
         let currentImageUrl = '';
         let currentTopic = '';
+        let currentLanguage = 'hindi';
+        let moreOptionsExpanded = false;
         
-        const loadingMessages = [
+        // Loading messages for each language
+        const loadingMessagesHindi = [
             "Gaaliyan load ho rahi hain...",
-            "Teri izzat ki kabar khod raha hoon...",
-            "Satan se teri report maang raha hoon...",
-            "Tera janam kundali dekh raha hoon...",
+            "Teri izzat ki waat laga raha hoon...",
+            "Satan se consult kar raha hoon...",
             "Teri aukat calculate ho rahi hai...",
-            "Teri L lag rahi hai wait kar...",
-            "Teri mummy ko call laga raha hoon...",
-            "Bohot bura hone wala hai tere saath...",
-            "Emotional damage loading...",
             "Teri bezati ka script likh raha hoon...",
-            "Sharma ji ke bete se comparison ho raha...",
-            "Tera future dekh ke AI bhi ro diya...",
+            "Sharma ji ke bete se compare ho raha...",
+            "Emotional damage loading...",
+            "Teri L lag rahi hai wait kar...",
+            "Tera janamkundali check ho raha hai...",
             "Tere failures count ho rahe hain..."
+        ];
+        
+        const loadingMessagesEnglish = [
+            "Consulting with Satan...",
+            "Loading your insecurities...",
+            "Calculating your failures...",
+            "Preparing emotional damage...",
+            "Finding your weak spots...",
+            "Downloading your L's...",
+            "AI is judging you hard...",
+            "Brewing savage content...",
+            "Your roast is being crafted...",
+            "Maximum cringe loading..."
         ];
 
         // Animate ego counter
@@ -689,12 +845,77 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
         animateCounter();
 
+        // Set Language
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update toggle buttons
+            document.getElementById('hindiBtn').classList.toggle('active', lang === 'hindi');
+            document.getElementById('englishBtn').classList.toggle('active', lang === 'english');
+            
+            // Show/hide chip sections
+            document.getElementById('hindiChips').style.display = lang === 'hindi' ? 'flex' : 'none';
+            document.getElementById('englishChips').style.display = lang === 'english' ? 'flex' : 'none';
+            
+            // Update placeholder
+            const input = document.getElementById('topicInput');
+            if (lang === 'hindi') {
+                input.placeholder = "Kisko roast karna hai? Bol na bsdk...";
+                document.getElementById('examplesLabel').textContent = "🎯 Sabse Popular Bezati:";
+                document.getElementById('statusText').textContent = "Gali Mode: ON";
+                document.getElementById('tickerText').textContent = "Bezati Hui Aaj";
+                document.getElementById('headlineText').innerHTML = 'Teri <span class="accent">Bezati</span> Free Mein';
+                document.getElementById('subtextText').textContent = "Itna roast karega ki teri aatma bhi cringe karegi. 🤡";
+            } else {
+                input.placeholder = "Who do you want to roast?";
+                document.getElementById('examplesLabel').textContent = "🎯 Most Popular Roasts:";
+                document.getElementById('statusText').textContent = "Savage Mode: ON";
+                document.getElementById('tickerText').textContent = "Egos Destroyed Today";
+                document.getElementById('headlineText').innerHTML = 'Get <span class="accent">Roasted</span> Free';
+                document.getElementById('subtextText').textContent = "AI that destroys your ego. No filters. Pure savage mode! 🤡";
+            }
+            
+            // Reset more options
+            moreOptionsExpanded = false;
+            document.getElementById('moreOptionsBtn').textContent = '+ More Options';
+            document.getElementById('moreOptionsBtn').classList.remove('expanded');
+            hideExtraChips();
+        }
+
+        // Toggle More Options
+        function toggleMoreOptions() {
+            moreOptionsExpanded = !moreOptionsExpanded;
+            const btn = document.getElementById('moreOptionsBtn');
+            
+            if (moreOptionsExpanded) {
+                btn.textContent = '− Less Options';
+                btn.classList.add('expanded');
+                showExtraChips();
+            } else {
+                btn.textContent = '+ More Options';
+                btn.classList.remove('expanded');
+                hideExtraChips();
+            }
+        }
+
+        function showExtraChips() {
+            const extraClass = currentLanguage === 'hindi' ? 'hindi-extra' : 'english-extra';
+            document.querySelectorAll('.' + extraClass).forEach(chip => {
+                chip.classList.remove('hidden');
+            });
+        }
+
+        function hideExtraChips() {
+            document.querySelectorAll('.hindi-extra, .english-extra').forEach(chip => {
+                chip.classList.add('hidden');
+            });
+        }
+
         // Use example chip
         function useExample(topic) {
             document.getElementById('topicInput').value = topic;
             document.getElementById('topicInput').focus();
             
-            // Add a little animation feedback
             const input = document.getElementById('topicInput');
             input.style.background = 'rgba(255, 69, 0, 0.2)';
             setTimeout(() => {
@@ -713,29 +934,30 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const topic = document.getElementById('topicInput').value.trim();
             
             if (!topic) {
-                showError('Abe kuch toh likh! Khaali mein kya roast karun? 🤡');
+                const errorMsg = currentLanguage === 'hindi' 
+                    ? 'Abe kuch toh likh! Khaali mein kya roast karun? 🤡' 
+                    : 'Type something first! Cannot roast empty air 🤡';
+                showError(errorMsg);
                 return;
             }
 
             currentTopic = topic;
             
-            // Hide previous results and errors
             document.getElementById('resultCard').classList.remove('active');
             document.getElementById('errorMessage').classList.remove('active');
-            
-            // Show loading
             document.getElementById('loadingContainer').classList.add('active');
             document.getElementById('executeBtn').disabled = true;
 
-            // Cycle loading messages
+            // Cycle loading messages based on language
+            const messages = currentLanguage === 'hindi' ? loadingMessagesHindi : loadingMessagesEnglish;
             let msgIndex = 0;
             const loadingInterval = setInterval(() => {
-                msgIndex = (msgIndex + 1) % loadingMessages.length;
-                document.getElementById('loadingText').textContent = loadingMessages[msgIndex];
+                msgIndex = (msgIndex + 1) % messages.length;
+                document.getElementById('loadingText').textContent = messages[msgIndex];
             }, 1200);
 
             try {
-                const response = await fetch('/roast?topic=' + encodeURIComponent(topic));
+                const response = await fetch('/roast?topic=' + encodeURIComponent(topic) + '&lang=' + currentLanguage);
                 
                 clearInterval(loadingInterval);
                 
@@ -754,7 +976,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             } catch (error) {
                 clearInterval(loadingInterval);
                 document.getElementById('loadingContainer').classList.remove('active');
-                showError('Kuch toh gadbad hai! Dobara try kar bsdk! 😤');
+                const errorMsg = currentLanguage === 'hindi' 
+                    ? 'Kuch gadbad ho gayi! Dobara try kar! 😤' 
+                    : 'Something went wrong! Try again! 😤';
+                showError(errorMsg);
             } finally {
                 document.getElementById('executeBtn').disabled = false;
             }
@@ -767,20 +992,25 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         function shareToWhatsApp() {
-            const text = encodeURIComponent('Bhai dekh meri kaise bezati hui 🔥😂 Topic: ' + currentTopic + ' - Tu bhi apni karwa: ' + window.location.href);
+            const text = currentLanguage === 'hindi'
+                ? encodeURIComponent('Dekh meri kaise bezati hui 🔥😂 Topic: ' + currentTopic + ' - Tu bhi try kar: ' + window.location.href)
+                : encodeURIComponent('Check out my savage roast 🔥😂 Topic: ' + currentTopic + ' - Try it yourself: ' + window.location.href);
             window.open('https://wa.me/?text=' + text, '_blank');
         }
 
         function shareToInstagram() {
             downloadResult();
-            alert('Image download ho gaya! 📸 Ab Instagram pe daal ke sabki jala 🔥');
+            const msg = currentLanguage === 'hindi' 
+                ? 'Image download ho gaya! 📸 Ab Instagram pe daal ke sabki jala 🔥' 
+                : 'Image downloaded! 📸 Now share it on Instagram 🔥';
+            alert(msg);
         }
 
         function downloadResult() {
             if (currentImageUrl) {
                 const a = document.createElement('a');
                 a.href = currentImageUrl;
-                a.download = 'bezati_' + Date.now() + '.jpg';
+                a.download = 'roast_' + Date.now() + '.jpg';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -794,6 +1024,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             currentImageUrl = '';
             currentTopic = '';
         }
+
+        // Initialize with Hindi
+        setLanguage('hindi');
     </script>
 </body>
 </html>"""
@@ -818,11 +1051,14 @@ def get_font(size=40):
     return ImageFont.load_default()
 
 
-def get_roast(topic):
-    system_prompt = """
+def get_roast(topic, language='hindi'):
+    """Generate roast based on language selection"""
+    
+    if language == 'hindi':
+        system_prompt = """
 Tu hai 'Roaster Bhai' - India ka sabse gandu aur savage roaster. Tujhe user ko uski aukat dikhani hai.
 
-### RULES (Dhyan se padh sale):
+### RULES:
 
 1. **GAALIYAN ALLOWED HAI** - Use words like: bhosdike, bsdk, chutiya, madarchod, behenchod, gandu, lawde, jhatu, tatti, harami, randi, kamina, nalayak, bevkoof, gadha, ullu, bakchod, etc.
 
@@ -834,7 +1070,7 @@ Tu hai 'Roaster Bhai' - India ka sabse gandu aur savage roaster. Tujhe user ko u
 
 5. **POP CULTURE USE KAR** - Bollywood, cricketers, memes, politicians ka reference de if it fits.
 
-6. **MAX 30 WORDS** - Zyada mat bol. Short and tight roast.
+6. **MAX 30 WORDS** - Short and tight roast.
 
 ### EXAMPLES:
 
@@ -842,23 +1078,49 @@ Topic: "Meri Ex"
 Roast: "Teri ex ne tujhe choda? Bhai uski choice mein improvement aaya hai, tu khud toh apne haath ki bhi first choice nahi hai, madarchod 💀"
 
 Topic: "Engineering Student"
-Roast: "4 saal engineering ki aur ab Zomato pe delivery kar raha hai. Tera degree tissue paper se bhi bekaar hai bhosdike 🎓🗑️"
+Roast: "4 saal engineering ki aur ab Zomato pe delivery kar raha hai. Tera degree tissue paper se bhi bekaar hai bhosdike 🎓"
 
 Topic: "Gym Bro"
-Roast: "Beta protein shake zyada pi, body nahi bani teri lekin brain zaroor shrink ho gaya hai. Biceps nahi hai tere, tatte hain haathon mein chutiye 💪"
-
-Topic: "LinkedIn Influencer"
-Roast: "Agreed? Thoughts? - Lavde yeh post daalne se job nahi milti. Tera LinkedIn bio dekh ke HR bhi block kar deta hai gandu 😂"
-
-Topic: "Crypto Investor"
-Roast: "Bhai tere portfolio mein itne red candles hain ki Diwali ho gayi. Bitcoin hodl karte karte khud bik jayega tu harami 📉"
+Roast: "Beta protein shake zyada pi, body nahi bani teri lekin brain zaroor shrink ho gaya hai chutiye 💪"
 
 ### INSTRUCTION:
 Is topic pe savage Hinglish roast de WITH gaaliyan. Funny bhi hona chahiye aur bezati bhi.
 Sirf roast likh, koi introduction mat de.
-Topic: 
-    """
-    
+"""
+    else:
+        system_prompt = """
+You are 'Roast Master' - the most savage and brutal roast comedian on the internet.
+
+### RULES:
+
+1. **PROFANITY ALLOWED** - Use words like: dumbass, moron, idiot, jackass, dipshit, loser, clown, pathetic, trash, etc. Keep it edgy but not too extreme.
+
+2. **PURE ENGLISH** - Speak like a savage American/British comedian.
+
+3. **TOPIC SPECIFIC** - Roast the specific topic given. Don't be generic.
+
+4. **SAVAGE BUT FUNNY** - Be brutal but make it hilarious. Comedy + Roast = Perfect.
+
+5. **POP CULTURE REFERENCES** - Use memes, celebrities, movies, internet culture if it fits.
+
+6. **MAX 30 WORDS** - Short, punchy, devastating.
+
+### EXAMPLES:
+
+Topic: "My Ex"
+Roast: "Your ex didn't ghost you, they just realized being alone is better than being with you. Even your therapist needs therapy after your sessions 💀"
+
+Topic: "Software Engineers"
+Roast: "You mass apply on LinkedIn with 'Open to Work' badge like it's a personality trait. Your code has more bugs than your dating life has red flags 🐛"
+
+Topic: "Gym Bros"
+Roast: "You've been 'bulking' for 3 years straight. The only thing getting bigger is your ego and your credit card debt from protein powder, clown 🤡"
+
+### INSTRUCTION:
+Give a savage English roast for this topic. Make it brutal, funny, and memorable.
+Just write the roast, no introduction.
+"""
+
     for model_index, model_name in enumerate(AI_MODELS):
         try:
             print(f"Trying model {model_index + 1}/{len(AI_MODELS)}: {model_name}")
@@ -866,7 +1128,7 @@ Topic:
             completion = groq_client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"{topic}"}
+                    {"role": "user", "content": f"Roast this: {topic}"}
                 ],
                 model=model_name,
                 temperature=1.2,
@@ -885,22 +1147,25 @@ Topic:
             error_msg = str(e).lower()
             print(f"Model {model_name} failed: {e}")
             
-            if "rate" in error_msg or "limit" in error_msg or "quota" in error_msg:
-                if model_index < len(AI_MODELS) - 1:
-                    print("Switching to backup model...")
-                    continue
-            else:
-                if model_index < len(AI_MODELS) - 1:
-                    continue
+            if model_index < len(AI_MODELS) - 1:
+                print("Switching to backup model...")
+                continue
     
     print("All AI models failed, using fallback roast")
-    fallbacks = [
-        f"Bhai {topic}? Teri life itni sad hai ki AI bhi tujhpe roast likhne se mana kar diya. Khud hi itna bada joke hai tu chutiye 💀",
-        f"{topic} ke baare mein kya bolun? Tera existence hi sabse bada roast hai bhosdike 😂",
-        f"AI ne 3 baar try kiya {topic} roast karne ka par haar gaya. Tu roast-proof nahi hai, tu itna bekar hai ki roast karne layak bhi nahi hai gandu 🤡",
-        f"Bhai {topic}? Sharma ji ka beta bhi tujhse better hai. Ja jaake chai bana nalayak 🍵",
-        f"{topic} ko roast karne gaya tha, teri puri life history dekh ke AI depression mein chala gaya madarchod 😭"
-    ]
+    
+    if language == 'hindi':
+        fallbacks = [
+            f"Bhai {topic}? Teri life itni sad hai ki AI bhi tujhpe roast likhne se mana kar diya. Khud hi itna bada joke hai tu chutiye 💀",
+            f"{topic} ke baare mein kya bolun? Tera existence hi sabse bada roast hai bhosdike 😂",
+            f"AI ne 3 baar try kiya {topic} roast karne ka par haar gaya. Tu itna bekar hai ki roast karne layak bhi nahi hai gandu 🤡",
+        ]
+    else:
+        fallbacks = [
+            f"Even AI gave up trying to roast '{topic}'. You're so boring that artificial intelligence got bored. That's the real roast here 💀",
+            f"I tried to roast '{topic}' but honestly, your existence is already the biggest joke. No roast needed 😂",
+            f"The AI crashed trying to process '{topic}'. You're so pathetic that even machines can't handle you 🤡",
+        ]
+    
     return random.choice(fallbacks)
 
 
@@ -971,7 +1236,7 @@ def add_text_to_image(image_path, text):
     return img
 
 
-def save_to_supabase(topic, roast_text, image_buffer):
+def save_to_supabase(topic, roast_text, image_buffer, language='hindi'):
     if supabase is None:
         print("Supabase not configured")
         return None
@@ -993,6 +1258,7 @@ def save_to_supabase(topic, roast_text, image_buffer):
             "topic": topic,
             "roast_text": roast_text,
             "image_url": public_url,
+            "language": language,
             "created_at": datetime.now().isoformat()
         }
         
@@ -1015,6 +1281,7 @@ def home():
 @app.route('/roast', methods=['GET'])
 def roast():
     topic = request.args.get('topic', '').strip()
+    language = request.args.get('lang', 'hindi').strip()
     
     if not topic:
         return jsonify({"error": "Kuch toh likh pehle!"}), 400
@@ -1028,7 +1295,7 @@ def roast():
         return jsonify({"error": "No meme images found"}), 500
     
     try:
-        roast_text = get_roast(topic)
+        roast_text = get_roast(topic, language)
         
         random_meme = random.choice(meme_files)
         meme_path = os.path.join(MEMES_FOLDER, random_meme)
@@ -1039,7 +1306,7 @@ def roast():
         img_io.seek(0)
         
         try:
-            save_to_supabase(topic, roast_text, BytesIO(img_io.getvalue()))
+            save_to_supabase(topic, roast_text, BytesIO(img_io.getvalue()), language)
         except Exception as e:
             print(f"Supabase save failed: {e}")
         
