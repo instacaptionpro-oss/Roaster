@@ -8,6 +8,8 @@ from groq import Groq
 from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
 from supabase import create_client, Client
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
@@ -16,7 +18,56 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# Supabase setup
+# ===== POSTGRESQL DATABASE SETUP =====
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://roast_db_c13t_user:9PO09Y3SpZ6z5r0eYszLsYGHg0bcYtXx@dpg-d5ubdo24d50c73d1bmdg-a/roast_db_c13t")
+
+def get_db_connection():
+    """Create a database connection"""
+    try:
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        return conn
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        return None
+
+def init_database():
+    """Initialize database tables"""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS roasts (
+                    id SERIAL PRIMARY KEY,
+                    topic VARCHAR(255) NOT NULL,
+                    roast_text TEXT NOT NULL,
+                    language VARCHAR(20) DEFAULT 'hindi',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS stats (
+                    id SERIAL PRIMARY KEY,
+                    total_roasts INTEGER DEFAULT 0,
+                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            # Initialize stats if empty
+            cursor.execute('SELECT COUNT(*) as count FROM stats')
+            if cursor.fetchone()['count'] == 0:
+                cursor.execute('INSERT INTO stats (total_roasts) VALUES (14203)')
+            
+            conn.commit()
+            print("✅ PostgreSQL Database initialized successfully")
+        except Exception as e:
+            print(f"❌ Database initialization error: {e}")
+        finally:
+            conn.close()
+
+# Initialize database on startup
+init_database()
+
+# Supabase setup (optional - for image storage)
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 
@@ -24,12 +75,12 @@ supabase = None
 if supabase_url and supabase_key:
     try:
         supabase: Client = create_client(supabase_url, supabase_key)
-        print("Supabase connected successfully")
+        print("✅ Supabase connected successfully")
     except Exception as e:
-        print(f"Supabase connection failed: {e}")
+        print(f"⚠️ Supabase connection failed: {e}")
         supabase = None
 else:
-    print("Supabase credentials not found")
+    print("⚠️ Supabase credentials not found (optional)")
 
 MEMES_FOLDER = "memes"
 
@@ -641,7 +692,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         <div class="live-ticker">
             <span class="ticker-icon">🔥</span>
-            <span id="egoCounter">14,203</span> <span id="tickerText">Egos Destroyed Today</span>
+            <span id="egoCounter">Loading...</span> <span id="tickerText">Egos Destroyed Today</span>
         </div>
 
         <h1 class="hero-headline">
@@ -834,16 +885,28 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             "Maximum cringe loading..."
         ];
 
-        // Animate ego counter
+        // Fetch real stats from database
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                document.getElementById('egoCounter').textContent = data.total_roasts.toLocaleString();
+            } catch (error) {
+                document.getElementById('egoCounter').textContent = '14,203';
+            }
+        }
+        fetchStats();
+
+        // Animate ego counter (increment locally)
         function animateCounter() {
             const counter = document.getElementById('egoCounter');
-            let count = 14203;
             setInterval(() => {
-                count += Math.floor(Math.random() * 5);
-                counter.textContent = count.toLocaleString();
-            }, 2000);
+                let currentVal = parseInt(counter.textContent.replace(/,/g, '')) || 14203;
+                currentVal += Math.floor(Math.random() * 3);
+                counter.textContent = currentVal.toLocaleString();
+            }, 3000);
         }
-        animateCounter();
+        setTimeout(animateCounter, 2000);
 
         // Set Language
         function setLanguage(lang) {
@@ -972,6 +1035,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 document.getElementById('resultImage').src = currentImageUrl;
                 document.getElementById('loadingContainer').classList.remove('active');
                 document.getElementById('resultCard').classList.add('active');
+                
+                // Refresh stats after successful roast
+                fetchStats();
 
             } catch (error) {
                 clearInterval(loadingInterval);
@@ -1030,6 +1096,44 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </script>
 </body>
 </html>"""
+
+
+# ===== DATABASE FUNCTIONS =====
+def save_roast_to_db(topic, roast_text, language='hindi'):
+    """Save roast to PostgreSQL database"""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                'INSERT INTO roasts (topic, roast_text, language) VALUES (%s, %s, %s)',
+                (topic, roast_text, language)
+            )
+            cursor.execute(
+                'UPDATE stats SET total_roasts = total_roasts + 1, last_updated = CURRENT_TIMESTAMP WHERE id = 1'
+            )
+            conn.commit()
+            print(f"✅ Roast saved to database")
+        except Exception as e:
+            print(f"❌ Database save error: {e}")
+        finally:
+            conn.close()
+
+def get_total_roasts():
+    """Get total roast count from database"""
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT total_roasts FROM stats WHERE id = 1')
+            result = cursor.fetchone()
+            return result['total_roasts'] if result else 14203
+        except Exception as e:
+            print(f"❌ Database read error: {e}")
+            return 14203
+        finally:
+            conn.close()
+    return 14203
 
 
 # ===== BACKEND FUNCTIONS =====
@@ -1237,8 +1341,9 @@ def add_text_to_image(image_path, text):
 
 
 def save_to_supabase(topic, roast_text, image_buffer, language='hindi'):
+    """Save image to Supabase storage (optional)"""
     if supabase is None:
-        print("Supabase not configured")
+        print("Supabase not configured - skipping image upload")
         return None
     
     try:
@@ -1253,22 +1358,11 @@ def save_to_supabase(topic, roast_text, image_buffer, language='hindi'):
         )
         
         public_url = supabase.storage.from_("memes").get_public_url(filename)
-        
-        data = {
-            "topic": topic,
-            "roast_text": roast_text,
-            "image_url": public_url,
-            "language": language,
-            "created_at": datetime.now().isoformat()
-        }
-        
-        supabase.table("roasts").insert(data).execute()
-        
-        print(f"Saved to Supabase: {filename}")
+        print(f"✅ Image saved to Supabase: {filename}")
         return public_url
         
     except Exception as e:
-        print(f"Supabase Error: {e}")
+        print(f"⚠️ Supabase Error: {e}")
         return None
 
 
@@ -1276,6 +1370,16 @@ def save_to_supabase(topic, roast_text, image_buffer, language='hindi'):
 @app.route('/')
 def home():
     return render_template_string(HTML_TEMPLATE)
+
+
+@app.route('/api/stats')
+def get_stats():
+    """API endpoint to get roast statistics"""
+    total = get_total_roasts()
+    return jsonify({
+        "total_roasts": total,
+        "status": "success"
+    })
 
 
 @app.route('/roast', methods=['GET'])
@@ -1287,16 +1391,19 @@ def roast():
         return jsonify({"error": "Kuch toh likh pehle!"}), 400
     
     if not os.path.exists(MEMES_FOLDER):
-        return jsonify({"error": "Memes folder not found"}), 500
+        os.makedirs(MEMES_FOLDER)
+        return jsonify({"error": "Memes folder is empty. Add some meme images!"}), 500
     
     meme_files = [f for f in os.listdir(MEMES_FOLDER) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
     
     if not meme_files:
-        return jsonify({"error": "No meme images found"}), 500
+        return jsonify({"error": "No meme images found in folder"}), 500
     
     try:
+        # Generate roast
         roast_text = get_roast(topic, language)
         
+        # Create meme image
         random_meme = random.choice(meme_files)
         meme_path = os.path.join(MEMES_FOLDER, random_meme)
         final_image = add_text_to_image(meme_path, roast_text)
@@ -1305,10 +1412,14 @@ def roast():
         final_image.save(img_io, 'JPEG', quality=95)
         img_io.seek(0)
         
+        # Save to PostgreSQL database
+        save_roast_to_db(topic, roast_text, language)
+        
+        # Optionally save to Supabase (for image storage)
         try:
             save_to_supabase(topic, roast_text, BytesIO(img_io.getvalue()), language)
         except Exception as e:
-            print(f"Supabase save failed: {e}")
+            print(f"Supabase save failed (non-critical): {e}")
         
         img_io.seek(0)
         return send_file(img_io, mimetype='image/jpeg')
@@ -1318,6 +1429,32 @@ def roast():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    db_status = "connected"
+    try:
+        conn = get_db_connection()
+        if conn:
+            conn.close()
+        else:
+            db_status = "disconnected"
+    except:
+        db_status = "error"
+    
+    return jsonify({
+        "status": "healthy",
+        "database": db_status,
+        "supabase": "connected" if supabase else "not configured",
+        "timestamp": datetime.now().isoformat()
+    })
+
+
 if __name__ == '__main__':
+    # Create memes folder if it doesn't exist
+    if not os.path.exists(MEMES_FOLDER):
+        os.makedirs(MEMES_FOLDER)
+        print(f"📁 Created '{MEMES_FOLDER}' folder - add meme images here!")
+    
     port = int(os.getenv("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
