@@ -13,7 +13,6 @@ from psycopg2.extras import RealDictCursor
 
 load_dotenv()
 
-# Enable static file serving
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -22,7 +21,6 @@ groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://roast_db_c13t_user:9PO09Y3SpZ6z5r0eYszLsYGHg0bcYtXx@dpg-d5ubdo24d50c73d1bmdg-a/roast_db_c13t")
 
 def get_db_connection():
-    """Create a database connection"""
     try:
         conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
         return conn
@@ -31,7 +29,6 @@ def get_db_connection():
         return None
 
 def init_database():
-    """Initialize database tables"""
     conn = get_db_connection()
     if conn:
         try:
@@ -53,11 +50,9 @@ def init_database():
                     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            # Initialize stats if empty
             cursor.execute('SELECT COUNT(*) as count FROM stats')
             if cursor.fetchone()['count'] == 0:
                 cursor.execute('INSERT INTO stats (total_roasts) VALUES (14203)')
-            
             conn.commit()
             print("✅ PostgreSQL Database initialized successfully")
         except Exception as e:
@@ -65,10 +60,9 @@ def init_database():
         finally:
             conn.close()
 
-# Initialize database on startup
 init_database()
 
-# Supabase setup (optional - for image storage)
+# Supabase setup (optional)
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 
@@ -80,12 +74,9 @@ if supabase_url and supabase_key:
     except Exception as e:
         print(f"⚠️ Supabase connection failed: {e}")
         supabase = None
-else:
-    print("⚠️ Supabase credentials not found (optional)")
 
 MEMES_FOLDER = "memes"
 
-# AI Model Configuration (Primary + Backups)
 AI_MODELS = [
     "llama-3.3-70b-versatile",
     "qwen/qwen-2.5-72b-instruct",
@@ -236,7 +227,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             text-shadow: 0 2px 15px rgba(0, 0, 0, 0.9);
         }
 
-        /* ===== LANGUAGE TOGGLE ===== */
         .language-toggle {
             display: flex;
             justify-content: center;
@@ -275,7 +265,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             background: rgba(255, 69, 0, 0.2);
         }
 
-        /* ===== INPUT ENGINE ===== */
         .input-engine {
             position: relative;
             max-width: 700px;
@@ -354,7 +343,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             fill: white;
         }
 
-        /* ===== EXAMPLE CHIPS SECTION ===== */
         .examples-section {
             margin-bottom: 40px;
         }
@@ -407,7 +395,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             display: none;
         }
 
-        /* More Options Button */
         .more-options-btn {
             padding: 10px 24px;
             background: rgba(255, 255, 255, 0.1);
@@ -434,7 +421,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             color: #FF4500;
         }
 
-        /* ===== LOADING ===== */
         .loading-container {
             display: none;
             padding: 80px 24px;
@@ -472,17 +458,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             50% { opacity: 0.5; }
         }
 
-        /* ===== RESULT CARD ===== */
         .result-card {
             display: none;
             max-width: 700px;
             margin: 0 auto;
             padding: 24px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 69, 0, 0.3);
+            border: 3px solid #FF4500;
             border-radius: 24px;
-            box-shadow: 0 0 60px rgba(255, 69, 0, 0.3);
+            box-shadow: 0 0 60px rgba(255, 69, 0, 0.4), inset 0 0 30px rgba(255, 69, 0, 0.1);
             animation: cardSlideIn 0.5s ease-out;
         }
 
@@ -505,6 +490,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             width: 100%;
             border-radius: 16px;
             margin-bottom: 24px;
+            border: 2px solid rgba(255, 69, 0, 0.5);
         }
 
         .action-buttons {
@@ -555,13 +541,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .retry-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 69, 0, 0.3);
+            background: rgba(255, 69, 0, 0.2);
+            color: #FF4500;
+            border: 2px solid #FF4500;
         }
 
         .retry-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: #FF4500;
+            color: white;
             transform: translateY(-2px);
         }
 
@@ -608,7 +595,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             75% { transform: translateX(10px); }
         }
 
-        /* Warning Badge */
         .warning-badge {
             display: inline-flex;
             align-items: center;
@@ -682,25 +668,25 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
         <div class="system-status">
             <div class="status-dot"></div>
-            <span id="statusText">Savage Mode: ON</span>
+            <span id="statusText">Bakchodi Mode: ON</span>
         </div>
     </nav>
 
     <div class="container">
         <div class="warning-badge">
-            ⚠️ 18+ Content | No Mercy Guaranteed
+            ⚠️ 18+ Content | Bezati Guaranteed
         </div>
 
         <div class="live-ticker">
             <span class="ticker-icon">🔥</span>
-            <span id="egoCounter">Loading...</span> <span id="tickerText">Egos Destroyed Today</span>
+            <span id="egoCounter">Loading...</span> <span id="tickerText">Logo Ki Bezati Hui</span>
         </div>
 
         <h1 class="hero-headline">
-            <span id="headlineText">Get <span class="accent">Roasted</span> Free</span>
+            <span id="headlineText">Apni <span class="accent">Asli Aukaat</span> Dekh</span>
         </h1>
         <p class="hero-subtext" id="subtextText">
-            AI that destroys your ego. No filters. Pure savage mode! 🤡
+            Wo roast jo tujhe khud mein dikhe. 100% relatable bakchodi! 🪞
         </p>
 
         <!-- ===== LANGUAGE TOGGLE ===== -->
@@ -721,7 +707,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     type="text" 
                     class="command-input" 
                     id="topicInput"
-                    placeholder="Kisko roast karna hai? Bol na..."
+                    placeholder="Kiski leni hai? Bol na bc..."
                     maxlength="100"
                 >
                 <button class="execute-btn" id="executeBtn" onclick="executeRoast()">
@@ -734,98 +720,98 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         <!-- ===== EXAMPLE CHIPS ===== -->
         <div class="examples-section">
-            <p class="examples-label" id="examplesLabel">🎯 Popular Roasts:</p>
+            <p class="examples-label" id="examplesLabel">🎯 Sabse Jyada Bezati:</p>
             
             <!-- HINDI CHIPS -->
             <div class="example-chips" id="hindiChips">
                 <button class="example-chip" onclick="useExample('Gym jaane wale log')">
-                    <span class="chip-emoji">💪</span>Gym Lovers
+                    <span class="chip-emoji">💪</span>Gym Frauds
                 </button>
                 <button class="example-chip" onclick="useExample('Engineering students')">
                     <span class="chip-emoji">💻</span>Engineers
                 </button>
-                <button class="example-chip" onclick="useExample('Monday morning office')">
-                    <span class="chip-emoji">😴</span>Monday Blues
+                <button class="example-chip" onclick="useExample('Procrastination karne wale')">
+                    <span class="chip-emoji">⏰</span>Aaram Lovers
                 </button>
-                <button class="example-chip" onclick="useExample('Diet pe rehne wale')">
-                    <span class="chip-emoji">🥗</span>Diet Wale
+                <button class="example-chip" onclick="useExample('Online shopping addiction')">
+                    <span class="chip-emoji">🛒</span>Shopaholics
                 </button>
                 
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Online shopping addiction')">
-                    <span class="chip-emoji">🛒</span>Shopaholic
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Social media pe attention chahiye')">
+                    <span class="chip-emoji">📱</span>Attention Seekers
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Gareeb log ameer sapne')">
+                    <span class="chip-emoji">💸</span>Broke People
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Gaming aur lag ka bahana')">
+                    <span class="chip-emoji">🎮</span>Gamers
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Corporate office life')">
+                    <span class="chip-emoji">👔</span>Office Slaves
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Diet pe rehne wale')">
+                    <span class="chip-emoji">🥗</span>Diet Failures
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Exam ek raat pehle padhna')">
+                    <span class="chip-emoji">📚</span>Last Night Scholars
+                </button>
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Relationship situationship')">
+                    <span class="chip-emoji">💔</span>Situationship
                 </button>
                 <button class="example-chip hidden hindi-extra" onclick="useExample('Netflix binge watchers')">
                     <span class="chip-emoji">📺</span>Netflix Addicts
-                </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Subah jaldi uthne wale')">
-                    <span class="chip-emoji">⏰</span>Early Birds
-                </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Cricket experts on social media')">
-                    <span class="chip-emoji">🏏</span>Cricket Experts
-                </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Foodies jo sab kuch khaate hain')">
-                    <span class="chip-emoji">🍕</span>Foodies
-                </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Procrastinators')">
-                    <span class="chip-emoji">⏳</span>Kal Karte Hain
-                </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Selfie lovers')">
-                    <span class="chip-emoji">🤳</span>Selfie Queens
-                </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Overthinkers')">
-                    <span class="chip-emoji">🧠</span>Sochte Rehne Wale
                 </button>
             </div>
             
             <!-- ENGLISH CHIPS -->
             <div class="example-chips" id="englishChips" style="display: none;">
-                <button class="example-chip" onclick="useExample('Gym people')">
-                    <span class="chip-emoji">💪</span>Gym Bros
+                <button class="example-chip" onclick="useExample('Gym people who never go')">
+                    <span class="chip-emoji">💪</span>Gym Frauds
                 </button>
                 <button class="example-chip" onclick="useExample('Software engineers')">
                     <span class="chip-emoji">💻</span>Engineers
                 </button>
-                <button class="example-chip" onclick="useExample('Monday mornings')">
-                    <span class="chip-emoji">😴</span>Monday Blues
+                <button class="example-chip" onclick="useExample('Procrastinators')">
+                    <span class="chip-emoji">⏰</span>Procrastinators
                 </button>
-                <button class="example-chip" onclick="useExample('People on diet')">
-                    <span class="chip-emoji">🥗</span>Diet People
+                <button class="example-chip" onclick="useExample('Online shopping addicts')">
+                    <span class="chip-emoji">🛒</span>Shopaholics
                 </button>
                 
-                <button class="example-chip hidden english-extra" onclick="useExample('Online shopping addicts')">
-                    <span class="chip-emoji">🛒</span>Shopaholics
+                <button class="example-chip hidden english-extra" onclick="useExample('Social media attention seekers')">
+                    <span class="chip-emoji">📱</span>Attention Seekers
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Broke people with rich dreams')">
+                    <span class="chip-emoji">💸</span>Broke Dreamers
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Gamers who blame lag')">
+                    <span class="chip-emoji">🎮</span>Gamers
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Corporate office workers')">
+                    <span class="chip-emoji">👔</span>Office Slaves
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('People on diet')">
+                    <span class="chip-emoji">🥗</span>Diet Failures
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Last night exam study')">
+                    <span class="chip-emoji">📚</span>Crammers
+                </button>
+                <button class="example-chip hidden english-extra" onclick="useExample('Situationship people')">
+                    <span class="chip-emoji">💔</span>Situationship
                 </button>
                 <button class="example-chip hidden english-extra" onclick="useExample('Netflix binge watchers')">
                     <span class="chip-emoji">📺</span>Netflix Addicts
                 </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Early morning people')">
-                    <span class="chip-emoji">⏰</span>Early Birds
-                </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Social media experts')">
-                    <span class="chip-emoji">📱</span>SM Experts
-                </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Foodies')">
-                    <span class="chip-emoji">🍕</span>Foodies
-                </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Procrastinators')">
-                    <span class="chip-emoji">⏳</span>Procrastinators
-                </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Selfie addicts')">
-                    <span class="chip-emoji">🤳</span>Selfie Addicts
-                </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Overthinkers')">
-                    <span class="chip-emoji">🧠</span>Overthinkers
-                </button>
             </div>
             
             <button class="more-options-btn" id="moreOptionsBtn" onclick="toggleMoreOptions()">
-                + More Options
+                + Aur Dikhao
             </button>
         </div>
 
         <div class="loading-container" id="loadingContainer">
             <div class="loading-ring"></div>
-            <div class="loading-text" id="loadingText">Loading roast...</div>
+            <div class="loading-text" id="loadingText">Teri aukaat dhundh raha hoon...</div>
         </div>
 
         <div class="result-card" id="resultCard">
@@ -841,7 +827,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     ⬇️ Download
                 </button>
                 <button class="retry-btn" onclick="reset()">
-                    🔄 Again
+                    🔄 Aur Suno
                 </button>
             </div>
         </div>
@@ -856,25 +842,25 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         let moreOptionsExpanded = false;
         
         const loadingMessagesHindi = [
-            "Teri pehchaan dhundh raha hoon...",
-            "Relatable content load ho raha hai...",
-            "Tera label ban raha hai...",
-            "Sach kadwa hota hai, ready ho ja...",
-            "Teri aukat calculate ho rahi hai...",
-            "Aaine mein dekhne ka waqt aa gaya...",
-            "Reality check loading...",
-            "Tera roast pak raha hai..."
+            "Teri aukaat dhundh raha hoon...",
+            "Bakchodi load ho rahi hai...",
+            "Tera nalla pan calculate ho raha hai...",
+            "Tujhe chuna lagane ki taiyari...",
+            "Teri reality check aa raha hai...",
+            "Fekarchand ki report ban rahi hai...",
+            "Tera kalesh ready ho raha hai...",
+            "Sasta roast nahi milega, wait kar..."
         ];
         
         const loadingMessagesEnglish = [
-            "Finding your identity...",
-            "Loading relatable content...",
-            "Creating your label...",
-            "Truth hurts, get ready...",
-            "Calculating your reality...",
-            "Mirror check loading...",
-            "Reality check incoming...",
-            "Cooking your roast..."
+            "Finding your true self...",
+            "Loading your reality check...",
+            "Calculating your failure rate...",
+            "Preparing your roast...",
+            "Discovering your weaknesses...",
+            "Truth incoming, brace yourself...",
+            "Your L is being prepared...",
+            "This one's gonna hurt..."
         ];
 
         async function fetchStats() {
@@ -909,25 +895,26 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             
             const input = document.getElementById('topicInput');
             if (lang === 'hindi') {
-                input.placeholder = "Kisko roast karna hai? Bol na...";
-                document.getElementById('examplesLabel').textContent = "🎯 Sabse Popular Bezati:";
-                document.getElementById('statusText').textContent = "Savage Mode: ON";
-                document.getElementById('tickerText').textContent = "Log Roast Hue Aaj";
-                document.getElementById('headlineText').innerHTML = 'Apni <span class="accent">Pehchaan</span> Dekh';
-                document.getElementById('subtextText').textContent = "Wo roast jo tujhe khud mein dikhega. 100% relatable! 🪞";
+                input.placeholder = "Kiski leni hai? Bol na bc...";
+                document.getElementById('examplesLabel').textContent = "🎯 Sabse Jyada Bezati:";
+                document.getElementById('statusText').textContent = "Bakchodi Mode: ON";
+                document.getElementById('tickerText').textContent = "Logo Ki Bezati Hui";
+                document.getElementById('headlineText').innerHTML = 'Apni <span class="accent">Asli Aukaat</span> Dekh';
+                document.getElementById('subtextText').textContent = "Wo roast jo tujhe khud mein dikhe. 100% relatable bakchodi! 🪞";
+                document.getElementById('moreOptionsBtn').textContent = moreOptionsExpanded ? '− Kam Dikhao' : '+ Aur Dikhao';
             } else {
-                input.placeholder = "Who do you want to roast?";
-                document.getElementById('examplesLabel').textContent = "🎯 Most Popular Roasts:";
+                input.placeholder = "Who needs a reality check?";
+                document.getElementById('examplesLabel').textContent = "🎯 Most Roasted Topics:";
                 document.getElementById('statusText').textContent = "Savage Mode: ON";
                 document.getElementById('tickerText').textContent = "People Roasted Today";
                 document.getElementById('headlineText').innerHTML = 'See Your <span class="accent">True Self</span>';
                 document.getElementById('subtextText').textContent = "Roasts that hit too close to home. 100% relatable! 🪞";
+                document.getElementById('moreOptionsBtn').textContent = moreOptionsExpanded ? '− Show Less' : '+ Show More';
             }
             
-            moreOptionsExpanded = false;
-            document.getElementById('moreOptionsBtn').textContent = '+ More Options';
-            document.getElementById('moreOptionsBtn').classList.remove('expanded');
             hideExtraChips();
+            moreOptionsExpanded = false;
+            document.getElementById('moreOptionsBtn').classList.remove('expanded');
         }
 
         function toggleMoreOptions() {
@@ -935,11 +922,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const btn = document.getElementById('moreOptionsBtn');
             
             if (moreOptionsExpanded) {
-                btn.textContent = '− Less Options';
+                btn.textContent = currentLanguage === 'hindi' ? '− Kam Dikhao' : '− Show Less';
                 btn.classList.add('expanded');
                 showExtraChips();
             } else {
-                btn.textContent = '+ More Options';
+                btn.textContent = currentLanguage === 'hindi' ? '+ Aur Dikhao' : '+ Show More';
                 btn.classList.remove('expanded');
                 hideExtraChips();
             }
@@ -980,8 +967,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             
             if (!topic) {
                 const errorMsg = currentLanguage === 'hindi' 
-                    ? 'Abe kuch toh likh! Khaali mein kya roast karun? 🤡' 
-                    : 'Type something first! Cannot roast empty air 🤡';
+                    ? 'Abe kuch toh likh nalle! 🤡' 
+                    : 'Type something first you clown! 🤡';
                 showError(errorMsg);
                 return;
             }
@@ -1023,7 +1010,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 clearInterval(loadingInterval);
                 document.getElementById('loadingContainer').classList.remove('active');
                 const errorMsg = currentLanguage === 'hindi' 
-                    ? 'Kuch gadbad ho gayi! Dobara try kar! 😤' 
+                    ? 'Kuch toh gadbad hai! Dobara try kar bc! 😤' 
                     : 'Something went wrong! Try again! 😤';
                 showError(errorMsg);
             } finally {
@@ -1039,15 +1026,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         function shareToWhatsApp() {
             const text = currentLanguage === 'hindi'
-                ? encodeURIComponent('Dekh meri kaise bezati hui 🔥😂 - Tu bhi try kar: ' + window.location.href)
-                : encodeURIComponent('Check out my roast 🔥😂 - Try it yourself: ' + window.location.href);
+                ? encodeURIComponent('Dekh meri kaise li gayi 🔥😂 - Tu bhi apni luwa: ' + window.location.href)
+                : encodeURIComponent('Got roasted hard 🔥😂 - Get yours: ' + window.location.href);
             window.open('https://wa.me/?text=' + text, '_blank');
         }
 
         function shareToInstagram() {
             downloadResult();
             const msg = currentLanguage === 'hindi' 
-                ? 'Image download ho gaya! 📸 Ab Instagram pe daal!' 
+                ? 'Image download ho gaya! 📸 Ab Instagram pe daal aur sabki jala!' 
                 : 'Image downloaded! 📸 Now share it on Instagram!';
             alert(msg);
         }
@@ -1079,7 +1066,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 # ===== DATABASE FUNCTIONS =====
 def save_roast_to_db(topic, identity_label, roast_text, language='hindi'):
-    """Save roast to PostgreSQL database"""
     conn = get_db_connection()
     if conn:
         try:
@@ -1099,7 +1085,6 @@ def save_roast_to_db(topic, identity_label, roast_text, language='hindi'):
             conn.close()
 
 def get_total_roasts():
-    """Get total roast count from database"""
     conn = get_db_connection()
     if conn:
         try:
@@ -1135,183 +1120,202 @@ def get_font(size=40):
 
 
 def get_roast(topic, language='hindi'):
-    """Generate 2-part roast: Identity Label + Relatable One-Liner"""
+    """Generate 2-part roast: Identity Label + Relatable One-Liner WITH SPICE"""
     
     if language == 'hindi':
         system_prompt = """
-Tu ek comedy writer hai jo RELATABLE roasts likhta hai. Tujhe 2 cheezein deni hain:
+Tu ek SAVAGE Hindi meme page ka writer hai. Tujhe 2 cheezein deni hain:
 
-### OUTPUT FORMAT (STRICTLY FOLLOW):
+### FORMAT (STRICTLY FOLLOW):
 LABEL: [1-2 word funny Hindi title]
-ROAST: [Relatable one-liner that everyone can relate to]
+ROAST: [Relatable one-liner jo sabko lage "ye toh main hoon bc"]
 
-### RULES:
+### LABEL EXAMPLES (Use as inspiration, CREATE NEW ONES):
+- Procrastination Ka Devta
+- Khatarnak Gareeb  
+- Attention Ka Bhookha
+- Lag Ka Bahana
+- Gym Ka Tourist
+- Wishlist Ka Raja
+- Corporate Majdoor
+- Bistar Ka Keeda
+- Show-off Engineer
+- Chapri Aesthetic
+- Ghosting Expert
+- Maggi Scientist
+- One Night Stand (With Books)
+- Show-off Traveler
+- Speaker Ka Dushman
+- Coffee Pe Zinda
+- Plan Canceller
+- Situationship Ka Maara
+- 2-Din Ka Josh
+- Alag Hi Delusion
+- Nalla Professional
+- Vela Supreme
+- Fekarchand Premium
+- Sasta SRK
+- Kaleshi King/Queen
 
-1. **LABEL** = Short funny identity (1-2 words max) in Hindi
-   Examples: "Aalsi Insaan", "Gym Fraud", "Diet Topper", "Sapno Ka Saudagar", "Permanently Broke", "Tunda Expert"
+### ROAST RULES:
+1. RELATABLE - 80% log bole "haan ye toh main hoon"
+2. SPICY WORDS USE KAR - bc, mc, bsdk, chutiya, gadha, bewkoof, nalayak, nalla, vela, fekarchand, sasta, rona-dhona, bakchodi, chuna lagana, kaleshi
+3. MAX 20 words
+4. Funny + Savage + True
+5. HAR BAAR DIFFERENT - copy mat kar
 
-2. **ROAST** = Relatable one-liner (max 15 words)
-   - Something EVERYONE can relate to
-   - No gaali/abuse - just witty observation
-   - Should make people say "Haan yaar ye toh main hi hoon!"
-   
-### RELATABLE EXAMPLES:
+### STYLE (Don't copy, get inspired):
+- "10 baje padhne baithna tha, 12 baj gaye reels dekhte huye bc"
+- "Account mein ₹50 hain aur sapne iPhone 15 Pro Max ke"
+- "Story daal ke 50 baar khud hi check karta hai nalla"
+- "Game hara toh lag, jeeta toh pro player - fekarchand"
+- "Gym sirf photo khichne aur fees donate karne jata hai chutiya"
+- "Add to cart sab karega, buy ek bhi nahi - gareeb"
+- "Ek sick leave ke liye 10 jhooth bolne wala expert"
+- "Poora din bed pe rot hona hi iska talent hai"
+- "Code copy-paste karke khud ko Sundar Pichai samajhta hai bewkoof"
+- "Reply nahi dena iska personality trait hai - kaleshi"
+- "Kitchen mein sirf Maggi banana aata hai masterchef ko"
+- "Poore saal bakchodi, exam se ek raat pehle Einstein"
+- "Metro mein baith ke 'Missing Mountains' likhta hai sasta traveler"
+- "Ghatiya playlist bajane ka confidence alag hi hai"
+- "Paani ki jagah caffeine naso mein daud raha hai"
+- "Haan bol ke end moment pe 'so gaya tha' - plan canceller"
+- "Na commitment mil rahi, na peecha chhoot raha - beech mein latka"
 
-Topic: "Gym jaane wale log"
-LABEL: Gym Fraud
-ROAST: Gym membership lena hi workout tha, ab body bhi chahiye?
+BE CREATIVE! DIFFERENT EVERY TIME! RELATABLE + FUNNY + SPICY!
 
-Topic: "Monday morning"
-LABEL: Somvaar Victim  
-ROAST: Alarm snooze karna bhi ek talent hai, 47 baar kiya subah.
-
-Topic: "Diet pe rehne wale"
-LABEL: Diet Topper
-ROAST: Salad order kiya, fir uske saath extra cheese garlic bread bhi.
-
-Topic: "Engineering students"
-LABEL: Branch Topper
-ROAST: 4 saal padhai ki fees di, ab LinkedIn pe "Open to Work" laga diya.
-
-Topic: "Online shopping"
-LABEL: Shopaholic
-ROAST: Sale ka matlab hai: wo cheez lena jo pehle bhi nahi chahiye thi.
-
-### IMPORTANT:
-- Be FUNNY not OFFENSIVE
-- Be RELATABLE - majority should connect
-- Keep it LIGHT and WITTY
-- NO abuse/gaali - family friendly savage
-
-Topic to roast: """
+Topic: """
 
     else:
         system_prompt = """
-You are a comedy writer who writes RELATABLE roasts. You need to give 2 things:
+You're a SAVAGE meme page writer. Give 2 things:
 
-### OUTPUT FORMAT (STRICTLY FOLLOW):
+### FORMAT (STRICTLY FOLLOW):
 LABEL: [1-2 word funny English title]
-ROAST: [Relatable one-liner that everyone can relate to]
+ROAST: [Relatable one-liner that makes everyone say "that's literally me lol"]
 
-### RULES:
+### LABEL EXAMPLES (Use as inspiration, CREATE NEW ONES):
+- Procrastination God
+- Professional Broke
+- Attention Addict
+- Lag Blamer
+- Gym Tourist
+- Cart Champion
+- Corporate Slave
+- Bed Potato
+- Copy-Paste Engineer
+- Fashion Disaster
+- Ghosting Pro
+- Microwave Chef
+- Last Minute Scholar
+- Fake Traveler
+- Playlist Criminal
+- Caffeine Addict
+- Plan Flaker
+- Almost Dating
+- 2-Day Hobby
+- Main Character Syndrome
+- Professional Napper
+- Excuse Expert
+- Budget Baller
+- Wannabe Influencer
 
-1. **LABEL** = Short funny identity (1-2 words max)
-   Examples: "Gym Fraud", "Diet Disaster", "Sleep Champion", "Professional Procrastinator", "Netflix PhD"
+### ROAST RULES:
+1. RELATABLE - 80% people say "that's me"
+2. EDGY WORDS OK - damn, hell, crap, dumbass, idiot, loser, clown, pathetic, trash
+3. MAX 20 words
+4. Funny + Savage + True
+5. DIFFERENT EVERY TIME - don't repeat
 
-2. **ROAST** = Relatable one-liner (max 15 words)
-   - Something EVERYONE can relate to
-   - No abuse - just witty observation
-   - Should make people say "That's literally me!"
-   
-### RELATABLE EXAMPLES:
+### STYLE (Don't copy, get inspired):
+- "Was gonna study at 10, it's now 2am and I'm watching cat videos"
+- "Bank account says $50, dreams say Lamborghini"
+- "Posts story then checks views 50 times like a psycho"
+- "Lost the game = lag, Won the game = skill"
+- "Gym membership is my most expensive photo studio"
+- "Add to cart everything, buy absolutely nothing - broke life"
+- "Crafts 10 lies for one sick day like a damn novelist"
+- "Being horizontal is my only consistent hobby"
+- "Copy-pastes Stack Overflow, calls himself a developer"
+- "Leaving people on read is not a red flag, it's a personality"
+- "Cooking skills: can successfully boil water sometimes"
+- "Ignores syllabus all year, becomes Einstein at 3am before exam"
+- "Takes metro, captions 'wanderlust' like a clown"
+- "Forces everyone to hear their trash playlist"
+- "Blood type is probably coffee at this point"
+- "Says 'definitely coming' then ghosts at last minute"
+- "Situationship = too scared to ask, too dumb to leave"
 
-Topic: "Gym people"
-LABEL: Gym Fraud
-ROAST: Buying the gym membership was the workout.
+BE CREATIVE! DIFFERENT EVERY TIME! RELATABLE + FUNNY + EDGY!
 
-Topic: "Monday mornings"
-LABEL: Monday Victim
-ROAST: My bed and I have a special relationship. The alarm is just jealous.
-
-Topic: "People on diet"
-LABEL: Diet Disaster
-ROAST: Ordered a salad, then rewarded myself with a pizza for being healthy.
-
-Topic: "Software engineers"
-LABEL: Code Monkey
-ROAST: Mass applied to 500 jobs, now waiting for rejection emails to feel wanted.
-
-Topic: "Online shopping"
-LABEL: Cart Champion
-ROAST: Added to cart at 2am, regretted at 2pm when it arrived.
-
-Topic: "Procrastinators"
-LABEL: Tomorrow Expert
-ROAST: I'll start being productive tomorrow. Said that yesterday too.
-
-### IMPORTANT:
-- Be FUNNY not OFFENSIVE
-- Be RELATABLE - majority should connect
-- Keep it LIGHT and WITTY
-- NO abuse - family friendly savage
-
-Topic to roast: """
+Topic: """
 
     for model_index, model_name in enumerate(AI_MODELS):
         try:
-            print(f"Trying model {model_index + 1}/{len(AI_MODELS)}: {model_name}")
-            
             completion = groq_client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": topic}
                 ],
                 model=model_name,
-                temperature=1.0,
-                max_tokens=100,
-                top_p=1,
+                temperature=1.4,  # High creativity
+                max_tokens=120,
+                top_p=0.95,
             )
             
             response = completion.choices[0].message.content.strip()
+            print(f"AI Response: {response}")
             
-            # Parse the response
             label = ""
             roast = ""
             
-            lines = response.split('\n')
-            for line in lines:
+            for line in response.split('\n'):
                 line = line.strip()
                 if line.upper().startswith('LABEL:'):
-                    label = line.split(':', 1)[1].strip().strip('"').strip("'")
+                    label = line.split(':', 1)[1].strip().strip('"\'')
                 elif line.upper().startswith('ROAST:'):
-                    roast = line.split(':', 1)[1].strip().strip('"').strip("'")
+                    roast = line.split(':', 1)[1].strip().strip('"\'')
             
-            # Clean up
             label = label.replace('**', '').replace('*', '').strip()
             roast = roast.replace('**', '').replace('*', '').strip()
             
-            # Fallback if parsing failed
-            if not label or not roast:
+            if not label:
                 if language == 'hindi':
-                    label = "Certified Pagal"
-                    roast = response[:80] if len(response) > 10 else "Tujhe roast karne se pehle tujhe samajhna padega, wo impossible hai."
+                    label = random.choice(["Certified Nalla", "Vela Premium", "Bakchod Expert", "Chapri Supreme"])
                 else:
-                    label = "Certified Clown"
-                    roast = response[:80] if len(response) > 10 else "You're so unique that even AI couldn't categorize you."
+                    label = random.choice(["Certified Clown", "Professional Idiot", "Expert Loser", "Premium Dumbass"])
             
-            print(f"✅ Success with {model_name}")
-            print(f"   Label: {label}")
-            print(f"   Roast: {roast}")
+            if not roast:
+                roast = response[:100] if len(response) > 10 else ("Tujhe roast karne layak content hi nahi hai bc" if language == 'hindi' else "You're too boring to even roast properly")
+            
+            print(f"✅ Label: {label}")
+            print(f"✅ Roast: {roast}")
             
             return label, roast
         
         except Exception as e:
             print(f"❌ Model {model_name} failed: {e}")
-            if model_index < len(AI_MODELS) - 1:
-                print("Switching to backup model...")
-                continue
+            continue
     
     # Fallback roasts
-    print("All AI models failed, using fallback")
-    
     if language == 'hindi':
         fallbacks = [
-            ("Certified Aalsi", "Kal se pakka kuch karunga, ye kal kabhi nahi aata."),
-            ("Expert Bahanebaz", "Bohot kaam hai aaj, isliye Netflix pe 3 season dekh liye."),
-            ("Pro Procrastinator", "Deadline kal hai? Perfect, aaj toh chill karta hoon."),
+            ("Certified Nalla", "AI bhi thak gaya tujhe samajhne mein, tu hopeless case hai bc"),
+            ("Vela Supreme", "Tere jaise nalle dhundhne mein bhi mehnat lagti hai"),
+            ("Bakchod Expert", "Kuch karna nahi hai life mein, bas bakchodi karni hai"),
         ]
     else:
         fallbacks = [
-            ("Certified Lazy", "I'll definitely do it tomorrow. Same thing I said yesterday."),
-            ("Expert Excuser", "Too busy to work, but watched an entire Netflix series today."),
-            ("Pro Procrastinator", "Deadline tomorrow? Perfect day to reorganize my desk."),
+            ("Certified Clown", "Even AI gave up on you, that's a new level of pathetic"),
+            ("Professional Idiot", "Your existence is already a roast, I don't need to add more"),
+            ("Expert Loser", "You're so boring even autocomplete doesn't want to finish your sentences"),
         ]
     
     return random.choice(fallbacks)
 
 
 def wrap_text(text, font, max_width):
-    """Wrap text to fit within max_width"""
     lines = []
     words = text.split()
     
@@ -1335,90 +1339,68 @@ def wrap_text(text, font, max_width):
 
 
 def add_text_to_image(image_path, label, roast):
-    """Add Identity Label (top) and Roast (bottom) to image"""
+    """Add Label (top) + Roast (bottom) with RED HOT style border"""
     img = Image.open(image_path)
     draw = ImageDraw.Draw(img)
     
     img_width, img_height = img.size
     
+    # ===== RED HOT BORDER =====
+    # Outer border (dark red)
+    border_width = 10
+    draw.rectangle([0, 0, img_width-1, img_height-1], outline="#8B0000", width=border_width)
+    # Inner border (bright orange-red)
+    draw.rectangle([border_width, border_width, img_width-border_width-1, img_height-border_width-1], outline="#FF4500", width=5)
+    # Innermost glow effect
+    draw.rectangle([border_width+5, border_width+5, img_width-border_width-6, img_height-border_width-6], outline="#FF6347", width=2)
+    
     # ===== TOP: IDENTITY LABEL =====
     label_font_size = int(img_height * 0.08)
     label_font = get_font(label_font_size)
     
-    # Get label dimensions
-    label_bbox = label_font.getbbox(label.upper())
+    label_text = label.upper()
+    label_bbox = label_font.getbbox(label_text)
     label_width = label_bbox[2] - label_bbox[0]
-    label_height = label_bbox[3] - label_bbox[1]
-    
-    # Position at top center
     label_x = (img_width - label_width) // 2
-    label_y = 40
+    label_y = 30
     
-    # Draw label background (orange/red banner)
-    padding = 20
-    banner_left = label_x - padding
-    banner_top = label_y - padding // 2
-    banner_right = label_x + label_width + padding
-    banner_bottom = label_y + label_height + padding
+    # Black outline for label
+    for dx in range(-4, 5):
+        for dy in range(-4, 5):
+            draw.text((label_x + dx, label_y + dy), label_text, font=label_font, fill="black")
     
-    # Draw banner rectangle
-    draw.rectangle(
-        [banner_left, banner_top, banner_right, banner_bottom],
-        fill='#FF4500'
-    )
+    # Orange-Red label text
+    draw.text((label_x, label_y), label_text, font=label_font, fill="#FF4500")
     
-    # Draw label text (white on orange)
-    draw.text(
-        (label_x, label_y),
-        label.upper(),
-        font=label_font,
-        fill="white"
-    )
-    
-    # ===== BOTTOM: RELATABLE ROAST =====
-    roast_font_size = int(img_height * 0.055)
+    # ===== BOTTOM: ROAST =====
+    roast_font_size = int(img_height * 0.052)
     roast_font = get_font(roast_font_size)
     
-    max_width = int(img_width * 0.88)
+    max_width = int(img_width * 0.85)
     lines = wrap_text(roast, roast_font, max_width)
     
-    line_height = roast_font_size + 10
+    line_height = roast_font_size + 12
     total_text_height = len(lines) * line_height
-    
-    # Position at bottom
-    y_position = img_height - total_text_height - 50
+    y_position = img_height - total_text_height - 40
     
     for line in lines:
         bbox = roast_font.getbbox(line)
         text_width = bbox[2] - bbox[0]
         x_position = (img_width - text_width) // 2
         
-        # Draw outline (black)
-        outline_range = 3
-        for adj_x in range(-outline_range, outline_range + 1):
-            for adj_y in range(-outline_range, outline_range + 1):
-                draw.text(
-                    (x_position + adj_x, y_position + adj_y),
-                    line,
-                    font=roast_font,
-                    fill="black"
-                )
+        # Black outline for roast
+        for dx in range(-3, 4):
+            for dy in range(-3, 4):
+                draw.text((x_position + dx, y_position + dy), line, font=roast_font, fill="black")
         
-        # Draw main text (white/gold)
-        draw.text(
-            (x_position, y_position),
-            line,
-            font=roast_font,
-            fill="#FFFFFF"
-        )
-        
+        # White/cream text for roast
+        draw.text((x_position, y_position), line, font=roast_font, fill="#FFFACD")
         y_position += line_height
     
     return img
 
 
 def save_to_supabase(topic, roast_text, image_buffer, language='hindi'):
-    """Save image to Supabase storage (optional)"""
     if supabase is None:
         return None
     
@@ -1450,7 +1432,6 @@ def home():
 
 @app.route('/api/stats')
 def get_stats():
-    """API endpoint to get roast statistics"""
     total = get_total_roasts()
     return jsonify({
         "total_roasts": total,
@@ -1507,7 +1488,6 @@ def roast():
 
 @app.route('/api/health')
 def health_check():
-    """Health check endpoint"""
     db_status = "connected"
     try:
         conn = get_db_connection()
