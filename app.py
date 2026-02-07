@@ -1,6 +1,6 @@
 import os
 import random
-import textwrap
+import json
 from io import BytesIO
 from datetime import datetime
 from flask import Flask, request, send_file, jsonify, render_template_string
@@ -82,6 +82,28 @@ AI_MODELS = [
     "qwen/qwen-2.5-72b-instruct",
     "meta-llama/llama-3.1-70b-versatile"
 ]
+
+# ===== DAILY TOPIC FUNCTION =====
+def get_daily_topic(language='hindi'):
+    """Get today's hot roast topic from daily_topic.json"""
+    try:
+        with open('daily_topic.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get(language, data.get('hindi'))
+    except Exception as e:
+        print(f"Error loading daily topic: {e}")
+        if language == 'hindi':
+            return {
+                "topic": "Monday Morning Office Wale",
+                "label": "Corporate Ghulam",
+                "description": "Subah 9 baje se marzi ke against kaam karne wale bechare"
+            }
+        else:
+            return {
+                "topic": "Monday Morning Office People",
+                "label": "Corporate Slave",
+                "description": "Poor souls working against their will since 9am"
+            }
 
 # ===== FRONTEND HTML =====
 HTML_TEMPLATE = """<!DOCTYPE html>
@@ -173,8 +195,140 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             z-index: 10;
             max-width: 900px;
             margin: 0 auto;
-            padding: 60px 24px;
+            padding: 40px 24px;
             text-align: center;
+        }
+
+        /* ===== HOT TOPIC BANNER - ATTENTION SEEKING ===== */
+        .hot-topic-banner {
+            position: relative;
+            background: linear-gradient(135deg, #FF0000 0%, #FF4500 30%, #FF6347 60%, #FF4500 100%);
+            border: 3px solid #FFD700;
+            border-radius: 20px;
+            padding: 20px 28px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: hotBannerPulse 2s ease-in-out infinite, hotBannerShake 5s ease-in-out infinite;
+            box-shadow: 
+                0 0 40px rgba(255, 69, 0, 0.7),
+                0 0 80px rgba(255, 0, 0, 0.4),
+                inset 0 0 30px rgba(255, 215, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .hot-topic-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 70%
+            );
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        @keyframes hotBannerPulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 40px rgba(255, 69, 0, 0.7),
+                    0 0 80px rgba(255, 0, 0, 0.4);
+            }
+            50% { 
+                box-shadow: 
+                    0 0 60px rgba(255, 69, 0, 0.9),
+                    0 0 120px rgba(255, 0, 0, 0.6);
+            }
+        }
+
+        @keyframes hotBannerShake {
+            0%, 90%, 100% { transform: translateX(0); }
+            92%, 96% { transform: translateX(-3px) rotate(-0.5deg); }
+            94%, 98% { transform: translateX(3px) rotate(0.5deg); }
+        }
+
+        .hot-topic-banner:hover {
+            transform: scale(1.03);
+            box-shadow: 
+                0 0 80px rgba(255, 69, 0, 1),
+                0 0 150px rgba(255, 0, 0, 0.7);
+        }
+
+        .hot-badge-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .fire-icon {
+            font-size: 1.5rem;
+            animation: fireFlicker 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes fireFlicker {
+            0% { transform: scale(1) rotate(-5deg); }
+            100% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .hot-badge {
+            background: #000;
+            color: #FFD700;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 2px solid #FFD700;
+            animation: badgePulse 1s ease-in-out infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .hot-topic-text {
+            position: relative;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8), 0 0 20px rgba(255,215,0,0.5);
+            margin-bottom: 8px;
+        }
+
+        .hot-topic-desc {
+            position: relative;
+            font-size: 0.95rem;
+            color: rgba(255,255,255,0.95);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            font-weight: 500;
+        }
+
+        .click-hint {
+            position: relative;
+            margin-top: 12px;
+            font-size: 0.8rem;
+            color: #FFD700;
+            font-weight: 700;
+            animation: clickPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes clickPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
         }
 
         .live-ticker {
@@ -189,7 +343,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             font-size: 0.85rem;
             font-weight: 600;
             color: #FF4500;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
         }
 
         .ticker-icon {
@@ -202,11 +356,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .hero-headline {
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-size: clamp(2.2rem, 8vw, 4rem);
             font-weight: 900;
             letter-spacing: -3px;
             line-height: 1.1;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             color: #fff;
             text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
         }
@@ -217,10 +371,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .hero-subtext {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #fff;
             font-weight: 400;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
             max-width: 600px;
             margin-left: auto;
             margin-right: auto;
@@ -231,7 +385,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             display: flex;
             justify-content: center;
             gap: 0;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 50px;
             padding: 4px;
@@ -242,8 +396,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .lang-btn {
-            padding: 12px 28px;
-            font-size: 0.95rem;
+            padding: 10px 24px;
+            font-size: 0.9rem;
             font-weight: 700;
             border: none;
             border-radius: 50px;
@@ -268,7 +422,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .input-engine {
             position: relative;
             max-width: 700px;
-            margin: 0 auto 32px;
+            margin: 0 auto 28px;
         }
 
         .command-line {
@@ -299,8 +453,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             background: transparent;
             border: none;
             outline: none;
-            padding: 20px 8px;
-            font-size: 1.1rem;
+            padding: 18px 8px;
+            font-size: 1rem;
             color: #fff;
             font-family: 'Inter', monospace;
         }
@@ -310,8 +464,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .execute-btn {
-            width: 56px;
-            height: 56px;
+            width: 52px;
+            height: 52px;
             background: #FF4500;
             border: none;
             border-radius: 12px;
@@ -338,19 +492,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .arrow-icon {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             fill: white;
         }
 
         .examples-section {
-            margin-bottom: 40px;
+            margin-bottom: 35px;
         }
 
         .examples-label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             font-weight: 500;
         }
 
@@ -358,18 +512,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             max-width: 700px;
             margin: 0 auto;
         }
 
         .example-chip {
-            padding: 10px 18px;
+            padding: 8px 16px;
             background: rgba(255, 69, 0, 0.15);
             border: 1px solid rgba(255, 69, 0, 0.4);
             border-radius: 50px;
             color: #fff;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -388,7 +542,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .example-chip .chip-emoji {
-            margin-right: 6px;
+            margin-right: 5px;
         }
 
         .example-chip.hidden {
@@ -396,12 +550,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .more-options-btn {
-            padding: 10px 24px;
+            padding: 8px 20px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px dashed rgba(255, 255, 255, 0.4);
             border-radius: 50px;
             color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -423,7 +577,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         .loading-container {
             display: none;
-            padding: 80px 24px;
+            padding: 60px 24px;
         }
 
         .loading-container.active {
@@ -431,12 +585,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .loading-ring {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border: 4px solid rgba(255, 69, 0, 0.1);
             border-top: 4px solid #FF4500;
             border-radius: 50%;
-            margin: 0 auto 32px;
+            margin: 0 auto 28px;
             animation: spin 1s linear infinite;
         }
 
@@ -446,7 +600,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .loading-text {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #FF4500;
             font-weight: 600;
             animation: textPulse 2s ease-in-out infinite;
@@ -462,12 +616,14 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             display: none;
             max-width: 700px;
             margin: 0 auto;
-            padding: 24px;
-            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(12px);
             border: 3px solid #FF4500;
-            border-radius: 24px;
-            box-shadow: 0 0 60px rgba(255, 69, 0, 0.4), inset 0 0 30px rgba(255, 69, 0, 0.1);
+            border-radius: 20px;
+            box-shadow: 
+                0 0 60px rgba(255, 69, 0, 0.5),
+                inset 0 0 30px rgba(255, 69, 0, 0.1);
             animation: cardSlideIn 0.5s ease-out;
         }
 
@@ -488,20 +644,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         .result-image {
             width: 100%;
-            border-radius: 16px;
-            margin-bottom: 24px;
+            border-radius: 14px;
+            margin-bottom: 20px;
             border: 2px solid rgba(255, 69, 0, 0.5);
         }
 
         .action-buttons {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         .whatsapp-btn, .retry-btn {
             flex: 1;
-            padding: 16px 24px;
-            font-size: 1rem;
+            padding: 14px 20px;
+            font-size: 0.9rem;
             font-weight: 700;
             border: none;
             border-radius: 12px;
@@ -525,8 +681,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             background: linear-gradient(45deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
             color: white;
             flex: 1;
-            padding: 16px 24px;
-            font-size: 1rem;
+            padding: 14px 20px;
+            font-size: 0.9rem;
             font-weight: 700;
             border: none;
             border-radius: 12px;
@@ -556,8 +712,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             background: #1e90ff;
             color: white;
             flex: 1;
-            padding: 16px 24px;
-            font-size: 1rem;
+            padding: 14px 20px;
+            font-size: 0.9rem;
             font-weight: 700;
             border: none;
             border-radius: 12px;
@@ -574,8 +730,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .error-message {
             display: none;
             max-width: 500px;
-            margin: 24px auto;
-            padding: 16px 24px;
+            margin: 20px auto;
+            padding: 14px 20px;
             background: rgba(255, 69, 0, 0.2);
             backdrop-filter: blur(12px);
             border: 1px solid #FF4500;
@@ -595,59 +751,58 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             75% { transform: translateX(10px); }
         }
 
-        .warning-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            background: rgba(255, 0, 0, 0.2);
-            border: 1px solid rgba(255, 0, 0, 0.5);
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #ff6b6b;
-            margin-bottom: 20px;
-        }
-
         @media (max-width: 768px) {
             .navbar {
-                padding: 20px 24px;
+                padding: 16px 20px;
             }
 
             .nav-brand {
-                font-size: 1.25rem;
+                font-size: 1.2rem;
             }
 
             .container {
-                padding: 40px 16px;
+                padding: 30px 16px;
+            }
+
+            .hot-topic-banner {
+                padding: 16px 20px;
+                border-radius: 16px;
+            }
+
+            .hot-topic-text {
+                font-size: 1.2rem;
+            }
+
+            .hot-topic-desc {
+                font-size: 0.85rem;
             }
 
             .hero-headline {
-                font-size: 2rem;
+                font-size: 1.8rem;
                 letter-spacing: -1px;
             }
 
             .hero-subtext {
-                font-size: 0.95rem;
+                font-size: 0.9rem;
             }
 
             .language-toggle {
                 width: 100%;
-                max-width: 280px;
+                max-width: 260px;
             }
 
             .lang-btn {
-                padding: 10px 20px;
-                font-size: 0.85rem;
+                padding: 8px 18px;
+                font-size: 0.8rem;
             }
 
             .example-chips {
-                gap: 8px;
+                gap: 6px;
             }
 
             .example-chip {
-                padding: 8px 14px;
-                font-size: 0.8rem;
+                padding: 6px 12px;
+                font-size: 0.75rem;
             }
 
             .action-buttons {
@@ -655,8 +810,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }
 
             .command-input {
-                font-size: 0.95rem;
-                padding: 16px 8px;
+                font-size: 0.9rem;
+                padding: 14px 8px;
             }
         }
     </style>
@@ -673,8 +828,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     </nav>
 
     <div class="container">
-        <div class="warning-badge">
-            ⚠️ 18+ Content | Bezati Guaranteed
+        
+        <!-- ===== HOT TOPIC BANNER - ATTENTION SEEKING ===== -->
+        <div class="hot-topic-banner" id="hotTopicBanner" onclick="useDailyTopic()">
+            <div class="hot-badge-container">
+                <span class="fire-icon">🔥</span>
+                <span class="hot-badge">AAJ KA SPECIAL ROAST</span>
+                <span class="fire-icon">🔥</span>
+            </div>
+            <div class="hot-topic-text" id="hotTopicText">Loading...</div>
+            <div class="hot-topic-desc" id="hotTopicDesc"></div>
+            <div class="click-hint">👆 TAP TO ROAST THIS TOPIC 👆</div>
         </div>
 
         <div class="live-ticker">
@@ -686,7 +850,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <span id="headlineText">Apni <span class="accent">Asli Aukaat</span> Dekh</span>
         </h1>
         <p class="hero-subtext" id="subtextText">
-            Wo roast jo tujhe khud mein dikhe. 100% relatable bakchodi! 🪞
+            2-3 line ka brutal roast jo tujhe khud mein dikhe. 100% relatable! 🪞
         </p>
 
         <!-- ===== LANGUAGE TOGGLE ===== -->
@@ -724,38 +888,38 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             
             <!-- HINDI CHIPS -->
             <div class="example-chips" id="hindiChips">
-                <button class="example-chip" onclick="useExample('Gym jaane wale log')">
+                <button class="example-chip" onclick="useExample('Gym wale log')">
                     <span class="chip-emoji">💪</span>Gym Frauds
                 </button>
                 <button class="example-chip" onclick="useExample('Engineering students')">
                     <span class="chip-emoji">💻</span>Engineers
                 </button>
-                <button class="example-chip" onclick="useExample('Procrastination karne wale')">
-                    <span class="chip-emoji">⏰</span>Aaram Lovers
+                <button class="example-chip" onclick="useExample('Procrastination experts')">
+                    <span class="chip-emoji">⏰</span>Kal Karte Hain
                 </button>
                 <button class="example-chip" onclick="useExample('Online shopping addiction')">
                     <span class="chip-emoji">🛒</span>Shopaholics
                 </button>
                 
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Social media pe attention chahiye')">
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Social media attention seekers')">
                     <span class="chip-emoji">📱</span>Attention Seekers
                 </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Gareeb log ameer sapne')">
-                    <span class="chip-emoji">💸</span>Broke People
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Broke people with rich dreams')">
+                    <span class="chip-emoji">💸</span>Gareeb Sapne
                 </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Gaming aur lag ka bahana')">
-                    <span class="chip-emoji">🎮</span>Gamers
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Gamers who blame lag')">
+                    <span class="chip-emoji">🎮</span>Lag Bahana
                 </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Corporate office life')">
-                    <span class="chip-emoji">👔</span>Office Slaves
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Corporate office slaves')">
+                    <span class="chip-emoji">👔</span>Office Majdoor
                 </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Diet pe rehne wale')">
-                    <span class="chip-emoji">🥗</span>Diet Failures
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Diet wale log')">
+                    <span class="chip-emoji">🥗</span>Diet Frauds
                 </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Exam ek raat pehle padhna')">
-                    <span class="chip-emoji">📚</span>Last Night Scholars
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Exam se ek raat pehle')">
+                    <span class="chip-emoji">📚</span>Last Night Padhaku
                 </button>
-                <button class="example-chip hidden hindi-extra" onclick="useExample('Relationship situationship')">
+                <button class="example-chip hidden hindi-extra" onclick="useExample('Situationship experts')">
                     <span class="chip-emoji">💔</span>Situationship
                 </button>
                 <button class="example-chip hidden hindi-extra" onclick="useExample('Netflix binge watchers')">
@@ -781,19 +945,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <button class="example-chip hidden english-extra" onclick="useExample('Social media attention seekers')">
                     <span class="chip-emoji">📱</span>Attention Seekers
                 </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Broke people with rich dreams')">
+                <button class="example-chip hidden english-extra" onclick="useExample('Broke people rich dreams')">
                     <span class="chip-emoji">💸</span>Broke Dreamers
                 </button>
                 <button class="example-chip hidden english-extra" onclick="useExample('Gamers who blame lag')">
-                    <span class="chip-emoji">🎮</span>Gamers
+                    <span class="chip-emoji">🎮</span>Lag Blamers
                 </button>
                 <button class="example-chip hidden english-extra" onclick="useExample('Corporate office workers')">
                     <span class="chip-emoji">👔</span>Office Slaves
                 </button>
                 <button class="example-chip hidden english-extra" onclick="useExample('People on diet')">
-                    <span class="chip-emoji">🥗</span>Diet Failures
+                    <span class="chip-emoji">🥗</span>Diet Frauds
                 </button>
-                <button class="example-chip hidden english-extra" onclick="useExample('Last night exam study')">
+                <button class="example-chip hidden english-extra" onclick="useExample('Last night study experts')">
                     <span class="chip-emoji">📚</span>Crammers
                 </button>
                 <button class="example-chip hidden english-extra" onclick="useExample('Situationship people')">
@@ -817,17 +981,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <div class="result-card" id="resultCard">
             <img src="" alt="Roasted" class="result-image" id="resultImage">
             <div class="action-buttons">
-                <button class="whatsapp-btn" id="whatsappBtn" onclick="shareToWhatsApp()">
+                <button class="whatsapp-btn" onclick="shareToWhatsApp()">
                     📱 WhatsApp
                 </button>
-                <button class="instagram-btn" id="instagramBtn" onclick="shareToInstagram()">
+                <button class="instagram-btn" onclick="shareToInstagram()">
                     📸 Instagram
                 </button>
-                <button class="download-btn" id="downloadBtn" onclick="downloadResult()">
+                <button class="download-btn" onclick="downloadResult()">
                     ⬇️ Download
                 </button>
                 <button class="retry-btn" onclick="reset()">
-                    🔄 Aur Suno
+                    🔄 Aur
                 </button>
             </div>
         </div>
@@ -840,28 +1004,67 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         let currentTopic = '';
         let currentLanguage = 'hindi';
         let moreOptionsExpanded = false;
+        let dailyTopicData = null;
         
         const loadingMessagesHindi = [
             "Teri aukaat dhundh raha hoon...",
+            "2-3 line ka maal ban raha hai...",
             "Bakchodi load ho rahi hai...",
-            "Tera nalla pan calculate ho raha hai...",
+            "Tera nalla pan calculate ho raha...",
             "Tujhe chuna lagane ki taiyari...",
-            "Teri reality check aa raha hai...",
-            "Fekarchand ki report ban rahi hai...",
+            "Fekarchand ki report ban rahi...",
             "Tera kalesh ready ho raha hai...",
-            "Sasta roast nahi milega, wait kar..."
+            "Brutal roast cook ho raha hai..."
         ];
         
         const loadingMessagesEnglish = [
             "Finding your true self...",
+            "Cooking a 2-3 line roast...",
             "Loading your reality check...",
             "Calculating your failure rate...",
-            "Preparing your roast...",
-            "Discovering your weaknesses...",
-            "Truth incoming, brace yourself...",
+            "Preparing brutal honesty...",
             "Your L is being prepared...",
+            "Truth incoming, brace yourself...",
             "This one's gonna hurt..."
         ];
+
+        // Fetch Daily Topic
+        async function fetchDailyTopic() {
+            try {
+                const response = await fetch('/api/daily-topic?lang=' + currentLanguage);
+                const data = await response.json();
+                if (data.success) {
+                    dailyTopicData = data.data;
+                    document.getElementById('hotTopicText').textContent = dailyTopicData.topic;
+                    document.getElementById('hotTopicDesc').textContent = dailyTopicData.description;
+                    
+                    // Update badge text based on language
+                    const badge = document.querySelector('.hot-badge');
+                    badge.textContent = currentLanguage === 'hindi' ? "AAJ KA SPECIAL ROAST" : "TODAY'S SPECIAL ROAST";
+                    
+                    const hint = document.querySelector('.click-hint');
+                    hint.textContent = currentLanguage === 'hindi' ? "👆 TAP TO ROAST THIS 👆" : "👆 TAP TO ROAST THIS 👆";
+                }
+            } catch (error) {
+                console.error('Failed to fetch daily topic:', error);
+            }
+        }
+
+        function useDailyTopic() {
+            if (dailyTopicData) {
+                document.getElementById('topicInput').value = dailyTopicData.topic;
+                
+                // Flash effect
+                const banner = document.getElementById('hotTopicBanner');
+                banner.style.transform = 'scale(0.97)';
+                banner.style.boxShadow = '0 0 100px rgba(255, 215, 0, 1)';
+                setTimeout(() => {
+                    banner.style.transform = 'scale(1)';
+                    banner.style.boxShadow = '';
+                    executeRoast();
+                }, 200);
+            }
+        }
 
         async function fetchStats() {
             try {
@@ -872,7 +1075,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 document.getElementById('egoCounter').textContent = '14,203';
             }
         }
+        
         fetchStats();
+        fetchDailyTopic();
 
         function animateCounter() {
             const counter = document.getElementById('egoCounter');
@@ -900,7 +1105,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 document.getElementById('statusText').textContent = "Bakchodi Mode: ON";
                 document.getElementById('tickerText').textContent = "Logo Ki Bezati Hui";
                 document.getElementById('headlineText').innerHTML = 'Apni <span class="accent">Asli Aukaat</span> Dekh';
-                document.getElementById('subtextText').textContent = "Wo roast jo tujhe khud mein dikhe. 100% relatable bakchodi! 🪞";
+                document.getElementById('subtextText').textContent = "2-3 line ka brutal roast jo tujhe khud mein dikhe. 100% relatable! 🪞";
                 document.getElementById('moreOptionsBtn').textContent = moreOptionsExpanded ? '− Kam Dikhao' : '+ Aur Dikhao';
             } else {
                 input.placeholder = "Who needs a reality check?";
@@ -908,9 +1113,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 document.getElementById('statusText').textContent = "Savage Mode: ON";
                 document.getElementById('tickerText').textContent = "People Roasted Today";
                 document.getElementById('headlineText').innerHTML = 'See Your <span class="accent">True Self</span>';
-                document.getElementById('subtextText').textContent = "Roasts that hit too close to home. 100% relatable! 🪞";
+                document.getElementById('subtextText').textContent = "2-3 lines of brutal truth that hits home. 100% relatable! 🪞";
                 document.getElementById('moreOptionsBtn').textContent = moreOptionsExpanded ? '− Show Less' : '+ Show More';
             }
+            
+            // Refetch daily topic for new language
+            fetchDailyTopic();
             
             hideExtraChips();
             moreOptionsExpanded = false;
@@ -968,7 +1176,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             if (!topic) {
                 const errorMsg = currentLanguage === 'hindi' 
                     ? 'Abe kuch toh likh nalle! 🤡' 
-                    : 'Type something first you clown! 🤡';
+                    : 'Type something first clown! 🤡';
                 showError(errorMsg);
                 return;
             }
@@ -985,7 +1193,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             const loadingInterval = setInterval(() => {
                 msgIndex = (msgIndex + 1) % messages.length;
                 document.getElementById('loadingText').textContent = messages[msgIndex];
-            }, 1200);
+            }, 1000);
 
             try {
                 const response = await fetch('/roast?topic=' + encodeURIComponent(topic) + '&lang=' + currentLanguage);
@@ -1034,8 +1242,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         function shareToInstagram() {
             downloadResult();
             const msg = currentLanguage === 'hindi' 
-                ? 'Image download ho gaya! 📸 Ab Instagram pe daal aur sabki jala!' 
-                : 'Image downloaded! 📸 Now share it on Instagram!';
+                ? 'Image download ho gaya! 📸 Ab Instagram pe daal!' 
+                : 'Image downloaded! 📸 Now share on Instagram!';
             alert(msg);
         }
 
@@ -1078,7 +1286,6 @@ def save_roast_to_db(topic, identity_label, roast_text, language='hindi'):
                 'UPDATE stats SET total_roasts = total_roasts + 1, last_updated = CURRENT_TIMESTAMP WHERE id = 1'
             )
             conn.commit()
-            print(f"✅ Roast saved to database")
         except Exception as e:
             print(f"❌ Database save error: {e}")
         finally:
@@ -1093,7 +1300,6 @@ def get_total_roasts():
             result = cursor.fetchone()
             return result['total_roasts'] if result else 14203
         except Exception as e:
-            print(f"❌ Database read error: {e}")
             return 14203
         finally:
             conn.close()
@@ -1120,134 +1326,83 @@ def get_font(size=40):
 
 
 def get_roast(topic, language='hindi'):
-    """Generate 2-part roast: Identity Label + Relatable One-Liner WITH SPICE"""
+    """Generate 2-part roast: Identity Label + 2-3 Line Relatable Roast"""
     
     if language == 'hindi':
         system_prompt = """
-Tu ek SAVAGE Hindi meme page ka writer hai. Tujhe 2 cheezein deni hain:
+Tu ek SAVAGE Hindi meme writer hai. Tujhe 2 cheezein deni hain:
 
 ### FORMAT (STRICTLY FOLLOW):
 LABEL: [1-2 word funny Hindi title]
-ROAST: [Relatable one-liner jo sabko lage "ye toh main hoon bc"]
+ROAST: [2-3 lines ka relatable roast jo sabko lage "ye toh main hoon bc"]
 
-### LABEL EXAMPLES (Use as inspiration, CREATE NEW ONES):
-- Procrastination Ka Devta
-- Khatarnak Gareeb  
-- Attention Ka Bhookha
-- Lag Ka Bahana
-- Gym Ka Tourist
-- Wishlist Ka Raja
-- Corporate Majdoor
-- Bistar Ka Keeda
-- Show-off Engineer
-- Chapri Aesthetic
-- Ghosting Expert
-- Maggi Scientist
-- One Night Stand (With Books)
-- Show-off Traveler
-- Speaker Ka Dushman
-- Coffee Pe Zinda
-- Plan Canceller
-- Situationship Ka Maara
-- 2-Din Ka Josh
-- Alag Hi Delusion
-- Nalla Professional
-- Vela Supreme
-- Fekarchand Premium
-- Sasta SRK
-- Kaleshi King/Queen
+### RULES:
+1. LABEL = Funny identity (1-2 words max)
+2. ROAST = 2-3 LINES, not just one line! Multiple sentences.
+3. RELATABLE - 80% log bole "haan ye toh main hoon"
+4. SPICY WORDS - bc, mc, bsdk, chutiya, gadha, bewkoof, nalla, vela, fekarchand, sasta, bakchodi, kaleshi, chuna
+5. Each line should hit different angle of same topic
+6. Funny + Savage + True
 
-### ROAST RULES:
-1. RELATABLE - 80% log bole "haan ye toh main hoon"
-2. SPICY WORDS USE KAR - bc, mc, bsdk, chutiya, gadha, bewkoof, nalayak, nalla, vela, fekarchand, sasta, rona-dhona, bakchodi, chuna lagana, kaleshi
-3. MAX 20 words
-4. Funny + Savage + True
-5. HAR BAAR DIFFERENT - copy mat kar
+### LABEL IDEAS:
+Procrastination Ka Devta, Khatarnak Gareeb, Gym Ka Tourist, Wishlist Ka Raja, Corporate Majdoor, Bistar Ka Keeda, Chapri Aesthetic, Ghosting Expert, Maggi Scientist, Situationship Ka Maara, Vela Supreme, Fekarchand Premium, Nalla Professional
 
-### STYLE (Don't copy, get inspired):
-- "10 baje padhne baithna tha, 12 baj gaye reels dekhte huye bc"
-- "Account mein ₹50 hain aur sapne iPhone 15 Pro Max ke"
-- "Story daal ke 50 baar khud hi check karta hai nalla"
-- "Game hara toh lag, jeeta toh pro player - fekarchand"
-- "Gym sirf photo khichne aur fees donate karne jata hai chutiya"
-- "Add to cart sab karega, buy ek bhi nahi - gareeb"
-- "Ek sick leave ke liye 10 jhooth bolne wala expert"
-- "Poora din bed pe rot hona hi iska talent hai"
-- "Code copy-paste karke khud ko Sundar Pichai samajhta hai bewkoof"
-- "Reply nahi dena iska personality trait hai - kaleshi"
-- "Kitchen mein sirf Maggi banana aata hai masterchef ko"
-- "Poore saal bakchodi, exam se ek raat pehle Einstein"
-- "Metro mein baith ke 'Missing Mountains' likhta hai sasta traveler"
-- "Ghatiya playlist bajane ka confidence alag hi hai"
-- "Paani ki jagah caffeine naso mein daud raha hai"
-- "Haan bol ke end moment pe 'so gaya tha' - plan canceller"
-- "Na commitment mil rahi, na peecha chhoot raha - beech mein latka"
+### EXAMPLE FORMAT:
+LABEL: Gym Ka Tourist
+ROAST: Gym membership lena hi workout tha, ab body bhi maang raha hai bc.
+Selfie toh 50 leli, ek pushup nahi hua aaj bhi.
+Trainer bhi ab tera naam bhool gaya hai chutiye.
 
-BE CREATIVE! DIFFERENT EVERY TIME! RELATABLE + FUNNY + SPICY!
+LABEL: Corporate Ghulam  
+ROAST: Monday se Friday tak toh jeena hi nahi hai tujhe.
+Salary aate hi EMI, rent aur upar se gareeb bhi wohi ka wohi.
+"Work-life balance" sirf LinkedIn pe likhne ke liye hai nalle.
+
+LABEL: Situationship Expert
+ROAST: Na girlfriend hai, na single hai, beech mein latka hua hai.
+"Dekh lenge" sunते sunते 2 saal nikal gaye bewkoof.
+Commitment se itna darr lagta hai jitna Monday se.
+
+BE CREATIVE! 2-3 LINES ALWAYS! DIFFERENT EVERY TIME!
 
 Topic: """
 
     else:
         system_prompt = """
-You're a SAVAGE meme page writer. Give 2 things:
+You're a SAVAGE meme writer. Give 2 things:
 
 ### FORMAT (STRICTLY FOLLOW):
-LABEL: [1-2 word funny English title]
-ROAST: [Relatable one-liner that makes everyone say "that's literally me lol"]
+LABEL: [1-2 word funny title]
+ROAST: [2-3 lines of relatable roast that makes everyone say "that's me lol"]
 
-### LABEL EXAMPLES (Use as inspiration, CREATE NEW ONES):
-- Procrastination God
-- Professional Broke
-- Attention Addict
-- Lag Blamer
-- Gym Tourist
-- Cart Champion
-- Corporate Slave
-- Bed Potato
-- Copy-Paste Engineer
-- Fashion Disaster
-- Ghosting Pro
-- Microwave Chef
-- Last Minute Scholar
-- Fake Traveler
-- Playlist Criminal
-- Caffeine Addict
-- Plan Flaker
-- Almost Dating
-- 2-Day Hobby
-- Main Character Syndrome
-- Professional Napper
-- Excuse Expert
-- Budget Baller
-- Wannabe Influencer
+### RULES:
+1. LABEL = Funny identity (1-2 words max)
+2. ROAST = 2-3 LINES, not just one! Multiple sentences.
+3. RELATABLE - 80% people say "that's literally me"
+4. EDGY WORDS - damn, hell, crap, dumbass, idiot, loser, clown, pathetic
+5. Each line hits different angle of same topic
+6. Funny + Savage + True
 
-### ROAST RULES:
-1. RELATABLE - 80% people say "that's me"
-2. EDGY WORDS OK - damn, hell, crap, dumbass, idiot, loser, clown, pathetic, trash
-3. MAX 20 words
-4. Funny + Savage + True
-5. DIFFERENT EVERY TIME - don't repeat
+### LABEL IDEAS:
+Procrastination God, Professional Broke, Gym Tourist, Cart Champion, Corporate Slave, Bed Potato, Copy-Paste Engineer, Ghosting Pro, Microwave Chef, Almost Dating, Premium Loser, Certified Clown
 
-### STYLE (Don't copy, get inspired):
-- "Was gonna study at 10, it's now 2am and I'm watching cat videos"
-- "Bank account says $50, dreams say Lamborghini"
-- "Posts story then checks views 50 times like a psycho"
-- "Lost the game = lag, Won the game = skill"
-- "Gym membership is my most expensive photo studio"
-- "Add to cart everything, buy absolutely nothing - broke life"
-- "Crafts 10 lies for one sick day like a damn novelist"
-- "Being horizontal is my only consistent hobby"
-- "Copy-pastes Stack Overflow, calls himself a developer"
-- "Leaving people on read is not a red flag, it's a personality"
-- "Cooking skills: can successfully boil water sometimes"
-- "Ignores syllabus all year, becomes Einstein at 3am before exam"
-- "Takes metro, captions 'wanderlust' like a clown"
-- "Forces everyone to hear their trash playlist"
-- "Blood type is probably coffee at this point"
-- "Says 'definitely coming' then ghosts at last minute"
-- "Situationship = too scared to ask, too dumb to leave"
+### EXAMPLE FORMAT:
+LABEL: Gym Tourist
+ROAST: Buying the membership was the only workout you did this year.
+Mirror selfies? 50. Actual exercises? Maybe 2.
+Even your trainer pretends not to know you anymore.
 
-BE CREATIVE! DIFFERENT EVERY TIME! RELATABLE + FUNNY + EDGY!
+LABEL: Corporate Slave
+ROAST: Monday to Friday you're basically a zombie in formal clothes.
+Salary comes, EMI goes, you're still broke somehow.
+"Work-life balance" only exists in your LinkedIn bio.
+
+LABEL: Situationship Pro
+ROAST: Not single, not taken, just confused for 2 years straight.
+"Let's see where this goes" has gone absolutely nowhere.
+Commitment scares you more than Monday mornings.
+
+BE CREATIVE! 2-3 LINES ALWAYS! DIFFERENT EVERY TIME!
 
 Topic: """
 
@@ -1259,8 +1414,8 @@ Topic: """
                     {"role": "user", "content": topic}
                 ],
                 model=model_name,
-                temperature=1.4,  # High creativity
-                max_tokens=120,
+                temperature=1.3,
+                max_tokens=200,
                 top_p=0.95,
             )
             
@@ -1268,17 +1423,31 @@ Topic: """
             print(f"AI Response: {response}")
             
             label = ""
-            roast = ""
+            roast_lines = []
             
-            for line in response.split('\n'):
+            lines = response.split('\n')
+            for line in lines:
                 line = line.strip()
                 if line.upper().startswith('LABEL:'):
                     label = line.split(':', 1)[1].strip().strip('"\'')
                 elif line.upper().startswith('ROAST:'):
-                    roast = line.split(':', 1)[1].strip().strip('"\'')
+                    roast_lines.append(line.split(':', 1)[1].strip().strip('"\''))
+                elif line and not line.upper().startswith('LABEL') and len(roast_lines) > 0:
+                    # Additional roast lines
+                    roast_lines.append(line.strip().strip('"\''))
+                elif line and len(roast_lines) == 0 and label:
+                    # First roast line without ROAST: prefix
+                    roast_lines.append(line.strip().strip('"\''))
             
+            # Clean up
             label = label.replace('**', '').replace('*', '').strip()
-            roast = roast.replace('**', '').replace('*', '').strip()
+            roast = ' '.join(roast_lines).replace('**', '').replace('*', '').strip()
+            
+            # Ensure we have 2-3 sentences
+            if roast.count('.') < 2:
+                # Try to split by common patterns
+                if '।' in roast:  # Hindi full stop
+                    roast = roast.replace('।', '.')
             
             if not label:
                 if language == 'hindi':
@@ -1286,8 +1455,11 @@ Topic: """
                 else:
                     label = random.choice(["Certified Clown", "Professional Idiot", "Expert Loser", "Premium Dumbass"])
             
-            if not roast:
-                roast = response[:100] if len(response) > 10 else ("Tujhe roast karne layak content hi nahi hai bc" if language == 'hindi' else "You're too boring to even roast properly")
+            if not roast or len(roast) < 20:
+                if language == 'hindi':
+                    roast = "Tujhe roast karne layak content hi nahi hai bc. Itna boring hai tu ki AI bhi bore ho gaya. Ja pehle kuch interesting kar life mein."
+                else:
+                    roast = "You're too boring to even roast properly. The AI literally fell asleep. Go do something interesting first."
             
             print(f"✅ Label: {label}")
             print(f"✅ Roast: {roast}")
@@ -1298,18 +1470,18 @@ Topic: """
             print(f"❌ Model {model_name} failed: {e}")
             continue
     
-    # Fallback roasts
+    # Fallback roasts (2-3 lines)
     if language == 'hindi':
         fallbacks = [
-            ("Certified Nalla", "AI bhi thak gaya tujhe samajhne mein, tu hopeless case hai bc"),
-            ("Vela Supreme", "Tere jaise nalle dhundhne mein bhi mehnat lagti hai"),
-            ("Bakchod Expert", "Kuch karna nahi hai life mein, bas bakchodi karni hai"),
+            ("Certified Nalla", "AI bhi thak gaya tujhe samajhne mein, tu hopeless case hai bc. Teri life mein itna kuch ho raha hai ki kuch bhi nahi ho raha. Ja so ja, wohi tera best talent hai."),
+            ("Vela Supreme", "Tere jaise nalle dhundhne mein bhi mehnat lagti hai. Din bhar phone pe aur raat bhar bhi phone pe. Productive toh tu apne sapno mein bhi nahi hai bewkoof."),
+            ("Bakchod Expert", "Kuch karna nahi hai life mein, bas bakchodi karni hai. Friends bhi ab bore ho gaye hain tujhse. Real talent: kuch na karke bhi busy rehna."),
         ]
     else:
         fallbacks = [
-            ("Certified Clown", "Even AI gave up on you, that's a new level of pathetic"),
-            ("Professional Idiot", "Your existence is already a roast, I don't need to add more"),
-            ("Expert Loser", "You're so boring even autocomplete doesn't want to finish your sentences"),
+            ("Certified Clown", "Even AI gave up on you, that's a new level of pathetic. Your life is so uneventful that nothing is happening. Go sleep, that's your only real talent."),
+            ("Professional Idiot", "Your existence is already a roast, I don't need to add more. Phone 24/7 but still got nothing to show for it. Productivity left the chat years ago."),
+            ("Expert Loser", "You're so boring even autocomplete doesn't want to finish your sentences. Friends pretend to be busy when you text. Peak skill: being busy doing absolutely nothing."),
         ]
     
     return random.choice(fallbacks)
@@ -1339,61 +1511,58 @@ def wrap_text(text, font, max_width):
 
 
 def add_text_to_image(image_path, label, roast):
-    """Add Label (top) + Roast (bottom) with RED HOT style border"""
+    """Add Label (top) + 2-3 line Roast (bottom) with RED HOT style"""
     img = Image.open(image_path)
     draw = ImageDraw.Draw(img)
     
     img_width, img_height = img.size
     
     # ===== RED HOT BORDER =====
-    # Outer border (dark red)
     border_width = 10
     draw.rectangle([0, 0, img_width-1, img_height-1], outline="#8B0000", width=border_width)
-    # Inner border (bright orange-red)
     draw.rectangle([border_width, border_width, img_width-border_width-1, img_height-border_width-1], outline="#FF4500", width=5)
-    # Innermost glow effect
     draw.rectangle([border_width+5, border_width+5, img_width-border_width-6, img_height-border_width-6], outline="#FF6347", width=2)
     
     # ===== TOP: IDENTITY LABEL =====
-    label_font_size = int(img_height * 0.08)
+    label_font_size = int(img_height * 0.075)
     label_font = get_font(label_font_size)
     
     label_text = label.upper()
     label_bbox = label_font.getbbox(label_text)
     label_width = label_bbox[2] - label_bbox[0]
     label_x = (img_width - label_width) // 2
-    label_y = 30
+    label_y = 25
     
-    # Black outline for label
+    # Black outline
     for dx in range(-4, 5):
         for dy in range(-4, 5):
             draw.text((label_x + dx, label_y + dy), label_text, font=label_font, fill="black")
     
-    # Orange-Red label text
+    # Orange label
     draw.text((label_x, label_y), label_text, font=label_font, fill="#FF4500")
     
-    # ===== BOTTOM: ROAST =====
-    roast_font_size = int(img_height * 0.052)
+    # ===== BOTTOM: 2-3 LINE ROAST =====
+    roast_font_size = int(img_height * 0.042)  # Slightly smaller for more lines
     roast_font = get_font(roast_font_size)
     
-    max_width = int(img_width * 0.85)
+    max_width = int(img_width * 0.88)
     lines = wrap_text(roast, roast_font, max_width)
     
-    line_height = roast_font_size + 12
+    line_height = roast_font_size + 8
     total_text_height = len(lines) * line_height
-    y_position = img_height - total_text_height - 40
+    y_position = img_height - total_text_height - 30
     
     for line in lines:
         bbox = roast_font.getbbox(line)
         text_width = bbox[2] - bbox[0]
         x_position = (img_width - text_width) // 2
         
-        # Black outline for roast
+        # Black outline
         for dx in range(-3, 4):
             for dy in range(-3, 4):
                 draw.text((x_position + dx, y_position + dy), line, font=roast_font, fill="black")
         
-        # White/cream text for roast
+        # Cream text
         draw.text((x_position, y_position), line, font=roast_font, fill="#FFFACD")
         y_position += line_height
     
@@ -1403,24 +1572,14 @@ def add_text_to_image(image_path, label, roast):
 def save_to_supabase(topic, roast_text, image_buffer, language='hindi'):
     if supabase is None:
         return None
-    
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"roast_{timestamp}_{random.randint(1000, 9999)}.jpg"
-        
         image_buffer.seek(0)
-        supabase.storage.from_("memes").upload(
-            filename,
-            image_buffer.read(),
-            file_options={"content-type": "image/jpeg"}
-        )
-        
-        public_url = supabase.storage.from_("memes").get_public_url(filename)
-        print(f"✅ Image saved to Supabase: {filename}")
-        return public_url
-        
+        supabase.storage.from_("memes").upload(filename, image_buffer.read(), file_options={"content-type": "image/jpeg"})
+        return supabase.storage.from_("memes").get_public_url(filename)
     except Exception as e:
-        print(f"⚠️ Supabase Error: {e}")
+        print(f"Supabase Error: {e}")
         return None
 
 
@@ -1433,10 +1592,14 @@ def home():
 @app.route('/api/stats')
 def get_stats():
     total = get_total_roasts()
-    return jsonify({
-        "total_roasts": total,
-        "status": "success"
-    })
+    return jsonify({"total_roasts": total, "success": True})
+
+
+@app.route('/api/daily-topic')
+def daily_topic():
+    lang = request.args.get('lang', 'hindi')
+    topic_data = get_daily_topic(lang)
+    return jsonify({"success": True, "data": topic_data})
 
 
 @app.route('/roast', methods=['GET'])
@@ -1457,10 +1620,8 @@ def roast():
         return jsonify({"error": "No meme images found!"}), 500
     
     try:
-        # Generate 2-part roast
         label, roast_text = get_roast(topic, language)
         
-        # Create meme image
         random_meme = random.choice(meme_files)
         meme_path = os.path.join(MEMES_FOLDER, random_meme)
         final_image = add_text_to_image(meme_path, label, roast_text)
@@ -1469,14 +1630,12 @@ def roast():
         final_image.save(img_io, 'JPEG', quality=95)
         img_io.seek(0)
         
-        # Save to database
         save_roast_to_db(topic, label, roast_text, language)
         
-        # Optionally save to Supabase
         try:
             save_to_supabase(topic, roast_text, BytesIO(img_io.getvalue()), language)
-        except Exception as e:
-            print(f"Supabase save failed: {e}")
+        except:
+            pass
         
         img_io.seek(0)
         return send_file(img_io, mimetype='image/jpeg')
@@ -1488,28 +1647,11 @@ def roast():
 
 @app.route('/api/health')
 def health_check():
-    db_status = "connected"
-    try:
-        conn = get_db_connection()
-        if conn:
-            conn.close()
-        else:
-            db_status = "disconnected"
-    except:
-        db_status = "error"
-    
-    return jsonify({
-        "status": "healthy",
-        "database": db_status,
-        "supabase": "connected" if supabase else "not configured",
-        "timestamp": datetime.now().isoformat()
-    })
+    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()})
 
 
 if __name__ == '__main__':
     if not os.path.exists(MEMES_FOLDER):
         os.makedirs(MEMES_FOLDER)
-        print(f"📁 Created '{MEMES_FOLDER}' folder - add meme images here!")
-    
     port = int(os.getenv("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
