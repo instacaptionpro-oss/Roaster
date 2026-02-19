@@ -1,80 +1,14 @@
 {
-    "date": "2025-01-27",
     "hindi": {
-        "topic": "Valentine's Week Singles",
-        "label": "Forever Alone Expert",
-        "description": "Wo log jinke liye Feb sirf 28 din ka mahina hai 💔"
+        "topic": "IPL Auction",
+        "label": "GHAR BAITHE SELECTOR"
     },
     "english": {
-        "topic": "Valentine's Week Singles",
-        "label": "Forever Alone Expert", 
-        "description": "People for whom Feb is just a 28-day month 💔"
+        "topic": "IPL Auction", 
+        "label": "COUCH SELECTOR"
     },
-    "upcoming": [
-        {
-            "date": "2026-02-10",
-            "hindi": {
-                "topic": "Crypto Investors 2026",
-                "label": "Diamond Hands Gareeb",
-                "description": "Abhi bhi HODL kar raha hai ₹500 wala investment"
-            },
-            "english": {
-                "topic": "Crypto Investors 2026",
-                "label": "Diamond Hands Broke",
-                "description": "Still HODLing that $10 investment from 2021"
-            }
-        },
-        {
-            "date": "2025-01-29",
-            "hindi": {
-                "topic": "ChatGPT Users",
-                "label": "AI Ka Naukar",
-                "description": "Assignment se leke love letter tak, sab AI se likhwata hai"
-            },
-            "english": {
-                "topic": "ChatGPT Users",
-                "label": "AI's Personal Slave",
-                "description": "From assignments to love letters, AI writes everything"
-            }
-        },
-        {
-            "date": "2025-01-30",
-            "hindi": {
-                "topic": "Gym January Joiners",
-                "label": "New Year Resolution Fraud",
-                "description": "January mein join kiya, February mein gayab"
-            },
-            "english": {
-                "topic": "Gym January Joiners",
-                "label": "Resolution Fraud",
-                "description": "Joined in January, disappeared in February"
-            }
-        },
-        {
-            "date": "2025-01-31",
-            "hindi": {
-                "topic": "LinkedIn Influencers",
-                "label": "Agree? Wala Chutiya",
-                "description": "Har post ke end mein 'Thoughts?' likhne wala"
-            },
-            "english": {
-                "topic": "LinkedIn Influencers",
-                "label": "Agree? Guy",
-                "description": "Ends every post with 'Thoughts?' like anyone cares"
-            }
-        },
-        {
-            "date": "2025-02-01",
-            "hindi": {
-                "topic": "Budget Day Experts",
-                "label": "Ek Din Ka Economist",
-                "description": "Aaj sabko tax aur GDP samajh aa jayega"
-            },
-            "english": {
-                "topic": "Budget Day Experts",
-                "label": "One Day Economist",
-                "description": "Everyone becomes a financial expert today"
-            }
-        }
-    ]
+    "mix": {
+        "topic": "IPL Auction",
+        "label": "FANTASY EXPERT"
+    }
 }
