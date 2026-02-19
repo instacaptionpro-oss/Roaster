@@ -7,28 +7,26 @@ from flask import Flask, request, send_file, jsonify, render_template_string
 from groq import Groq
 from PIL import Image, ImageDraw, ImageFont
 from dotenv import load_dotenv
-from supabase import create_client, Client
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-# Import search module
+# Import search if available
 try:
-    from search import get_smart_context, get_india_trending, get_global_trending
+    from search import get_smart_context, get_india_trending
     SEARCH_ENABLED = True
-    print("✅ Real-time search enabled")
 except:
     SEARCH_ENABLED = False
-    print("⚠️ Search module not found - using basic mode")
 
 load_dotenv()
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# ===== DATABASE =====
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://roast_db_c13t_user:9PO09Y3SpZ6z5r0eYszLsYGHg0bcYtXx@dpg-d5ubdo24d50c73d1bmdg-a/roast_db_c13t")
+MEMES_FOLDER = "memes"
+AI_MODELS = ["llama-3.3-70b-versatile", "qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.1-70b-versatile"]
 
+# Database functions
 def get_db_connection():
     try:
         return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
@@ -41,469 +39,296 @@ def init_database():
         try:
             cur = conn.cursor()
             cur.execute('''CREATE TABLE IF NOT EXISTS roasts (
-                id SERIAL PRIMARY KEY,
-                topic VARCHAR(255),
-                identity_label VARCHAR(100),
-                roast_text TEXT,
-                language VARCHAR(20) DEFAULT 'hindi',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                id SERIAL PRIMARY KEY, topic VARCHAR(255), label VARCHAR(100),
+                roast TEXT, language VARCHAR(20), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )''')
             cur.execute('''CREATE TABLE IF NOT EXISTS stats (
-                id SERIAL PRIMARY KEY,
-                total_roasts INTEGER DEFAULT 0
+                id SERIAL PRIMARY KEY, total_roasts INTEGER DEFAULT 0
             )''')
             cur.execute('SELECT COUNT(*) as c FROM stats')
             if cur.fetchone()['c'] == 0:
-                cur.execute('INSERT INTO stats (total_roasts) VALUES (47892)')
+                cur.execute('INSERT INTO stats (total_roasts) VALUES (52341)')
             conn.commit()
         except: pass
         finally: conn.close()
 
 init_database()
 
-# Supabase (optional)
-supabase = None
-try:
-    url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_KEY")
-    if url and key:
-        supabase = create_client(url, key)
-except: pass
+def get_total_roasts():
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute('SELECT total_roasts FROM stats WHERE id=1')
+            r = cur.fetchone()
+            return r['total_roasts'] if r else 52341
+        except: return 52341
+        finally: conn.close()
+    return 52341
 
-MEMES_FOLDER = "memes"
-AI_MODELS = ["llama-3.3-70b-versatile", "qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.1-70b-versatile"]
+def save_roast(topic, label, roast, lang):
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute('INSERT INTO roasts (topic, label, roast, language) VALUES (%s,%s,%s,%s)', (topic, label, roast, lang))
+            cur.execute('UPDATE stats SET total_roasts = total_roasts + 1')
+            conn.commit()
+        except: pass
+        finally: conn.close()
 
-def get_daily_topic(language='hindi'):
+def get_daily_topic(lang='hindi'):
     try:
         with open('daily_topic.json', 'r', encoding='utf-8') as f:
-            return json.load(f).get(language)
+            return json.load(f).get(lang)
     except:
-        return {"topic": "Gym People", "label": "Gym Tourist", "description": "Selfie > Workout"}
+        return {"topic": "Monday Morning", "label": "Somvar Syndrome"}
 
-# ===== POWERFUL FRONTEND =====
+# Example roasts for rotating display
+EXAMPLE_ROASTS = {
+    "hindi": [
+        {"topic": "Gym Wale", "label": "PROTEIN PAKODA", "roast": "Creatine ka dabba 2000 ka, body abhi bhi 2002 wali hai"},
+        {"topic": "Engineers", "label": "CTRL+C DEVELOPER", "roast": "Stack Overflow band ho jaye toh inki salary bhi band"},
+        {"topic": "Monday", "label": "SOMVAR VICTIM", "roast": "Alarm 6 baje laga ke 9 baje uthna talent nahi majboori hai"},
+        {"topic": "Influencers", "label": "FOLLOW KA BHIKHARI", "roast": "500 followers pe bhi bio mein 'DM for collab' likha hai"},
+        {"topic": "Startups", "label": "FUNDED FAILURE", "roast": "Idea nahi hai business ka, bas pitch deck ready hai"}
+    ],
+    "english": [
+        {"topic": "Gym Bros", "label": "PROTEIN CLOWN", "roast": "Spent more on supplements than actual workouts this year"},
+        {"topic": "Engineers", "label": "COPY PASTE DEV", "roast": "If Stack Overflow shuts down half the tech industry collapses"},
+        {"topic": "Monday", "label": "MONDAY SURVIVOR", "roast": "Set 5 alarms to wake up and still blamed traffic for being late"},
+        {"topic": "Influencers", "label": "CLOUT CHASER", "roast": "500 followers but bio says 'DM for collaborations'"},
+        {"topic": "Startups", "label": "FUNDED MESS", "roast": "No product no users but pitch deck has 47 slides"}
+    ]
+}
+
+# ===== CLEAN UI =====
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROASTER - India's #1 Brutal Truth Machine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ROASTER - India's Brutal Roast Machine</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        :root {
+            --bg: #0D0D0D;
+            --primary: #FF6B35;
+            --accent: #FFD23F;
+            --text: #FFFFFF;
+            --text-muted: #888888;
+            --card-bg: #1A1A1A;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 50%, #0a0a0a 100%);
-            color: #fff;
             overflow-x: hidden;
         }
         
-        /* Animated background particles */
-        .bg-particles {
+        /* ===== HEADER ===== */
+        .header {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(255,69,0,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255,0,0,0.1) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(255,100,0,0.05) 0%, transparent 70%);
-        }
-        
-        .navbar {
-            position: relative;
+            right: 0;
             z-index: 100;
+            padding: 16px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 40px;
-            background: rgba(0,0,0,0.8);
-            border-bottom: 2px solid #FF4500;
+            background: rgba(13,13,13,0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         
-        .nav-brand {
-            font-size: 1.8rem;
-            font-weight: 900;
-            background: linear-gradient(90deg, #FF4500, #FF6B35, #FF4500);
-            background-size: 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: brandGlow 3s infinite;
-        }
-        
-        @keyframes brandGlow {
-            0%, 100% { background-position: 0% 50%; filter: drop-shadow(0 0 10px #FF4500); }
-            50% { background-position: 100% 50%; filter: drop-shadow(0 0 20px #FF4500); }
-        }
-        
-        .live-counter {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 16px;
-            background: rgba(255,69,0,0.2);
-            border: 1px solid #FF4500;
-            border-radius: 50px;
-        }
-        
-        .live-dot {
-            width: 10px;
-            height: 10px;
-            background: #00ff00;
-            border-radius: 50%;
-            animation: livePulse 1s infinite;
-        }
-        
-        @keyframes livePulse {
-            0%, 100% { box-shadow: 0 0 5px #00ff00; }
-            50% { box-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00; }
-        }
-        
-        .counter-number {
-            font-weight: 900;
-            font-size: 1.1rem;
-            color: #FF4500;
-        }
-        
-        .container {
-            position: relative;
-            z-index: 10;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 40px 24px;
-        }
-        
-        /* ===== HERO SECTION - POWERFUL WORDS ===== */
-        .hero-section {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .hero-tagline {
-            display: inline-block;
-            padding: 8px 24px;
-            background: linear-gradient(90deg, rgba(255,69,0,0.3), rgba(255,0,0,0.3));
-            border: 1px solid rgba(255,69,0,0.5);
-            border-radius: 50px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #FF6B35;
-            margin-bottom: 20px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .hero-title {
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 16px;
-            letter-spacing: -2px;
-        }
-        
-        .hero-title .highlight {
-            background: linear-gradient(90deg, #FF4500, #FF0000, #FF4500);
-            background-size: 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: textShine 3s infinite;
-        }
-        
-        @keyframes textShine {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        
-        .hero-subtitle {
+        .logo {
             font-size: 1.2rem;
-            color: rgba(255,255,255,0.7);
-            max-width: 600px;
-            margin: 0 auto 16px;
-            line-height: 1.6;
-        }
-        
-        /* POWERFUL FEATURE BADGES */
-        .feature-badges {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 24px;
-        }
-        
-        .feature-badge {
+            font-weight: 900;
+            color: var(--primary);
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: rgba(255,255,255,0.8);
         }
         
-        .feature-badge .icon {
-            font-size: 1rem;
-        }
-        
-        /* ===== RGB HOT TOPIC ===== */
-        .hot-topic-section {
-            margin-bottom: 40px;
-        }
-        
-        .hot-topic-banner {
-            position: relative;
-            background: #0a0a0a;
-            border-radius: 20px;
-            padding: 28px 32px;
-            cursor: pointer;
-            transition: transform 0.3s;
-            overflow: hidden;
-        }
-        
-        .hot-topic-banner::before {
-            content: '';
-            position: absolute;
-            top: -4px; left: -4px; right: -4px; bottom: -4px;
-            background: linear-gradient(45deg, 
-                #ff0000, #ff7300, #fffb00, #48ff00, 
-                #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
-            background-size: 400%;
-            border-radius: 24px;
-            z-index: -1;
-            animation: rgbRotate 4s linear infinite;
-        }
-        
-        .hot-topic-banner::after {
-            content: '';
-            position: absolute;
-            top: -4px; left: -4px; right: -4px; bottom: -4px;
-            background: linear-gradient(45deg, 
-                #ff0000, #ff7300, #fffb00, #48ff00, 
-                #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
-            background-size: 400%;
-            border-radius: 24px;
-            z-index: -2;
-            filter: blur(30px);
-            opacity: 0.6;
-            animation: rgbRotate 4s linear infinite;
-        }
-        
-        @keyframes rgbRotate {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .hot-topic-banner:hover {
-            transform: scale(1.02);
-        }
-        
-        .hot-label-row {
+        .live-count {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-        
-        .fire-emoji {
-            font-size: 1.6rem;
-            animation: fireShake 0.4s infinite alternate;
-        }
-        
-        @keyframes fireShake {
-            0% { transform: rotate(-8deg) scale(1); }
-            100% { transform: rotate(8deg) scale(1.1); }
-        }
-        
-        .hot-label {
-            font-size: 0.75rem;
-            font-weight: 900;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            background: linear-gradient(90deg, #FF4500, #FFD700, #FF4500);
-            background-size: 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: textShine 2s infinite;
-        }
-        
-        .hot-topic-title {
-            font-size: 1.8rem;
-            font-weight: 900;
-            color: #fff;
-            margin-bottom: 8px;
-            text-shadow: 0 0 30px rgba(255,255,255,0.3);
-        }
-        
-        .hot-topic-desc {
-            font-size: 1rem;
-            color: rgba(255,255,255,0.7);
-        }
-        
-        .tap-hint {
-            margin-top: 16px;
+            gap: 8px;
             font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #00FF00;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .count-num {
+            color: var(--accent);
             font-weight: 700;
-            color: #00ff88;
-            animation: tapPulse 1.5s infinite;
         }
         
-        @keyframes tapPulse {
-            0%, 100% { opacity: 0.5; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.02); }
-        }
-        
-        /* ===== WHAT WE DO SECTION ===== */
-        .what-we-do {
-            background: rgba(255,69,0,0.1);
-            border: 1px solid rgba(255,69,0,0.3);
-            border-radius: 20px;
-            padding: 32px;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-        
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            color: #FF4500;
-        }
-        
-        .usp-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        
-        .usp-card {
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 16px;
-            padding: 24px 16px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .usp-card:hover {
-            border-color: #FF4500;
-            transform: translateY(-4px);
-        }
-        
-        .usp-icon {
-            font-size: 2rem;
-            margin-bottom: 12px;
-        }
-        
-        .usp-title {
-            font-size: 1rem;
-            font-weight: 800;
-            margin-bottom: 8px;
-            color: #fff;
-        }
-        
-        .usp-desc {
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.6);
-            line-height: 1.4;
-        }
-        
-        /* ===== INPUT SECTION ===== */
-        .input-section {
-            margin-bottom: 32px;
-        }
-        
-        .language-toggle {
+        /* ===== HERO SECTION ===== */
+        .hero {
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
-            gap: 0;
-            margin-bottom: 20px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 50px;
-            padding: 4px;
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-            border: 1px solid rgba(255,69,0,0.3);
+            align-items: center;
+            padding: 80px 20px 120px;
+            position: relative;
         }
         
-        .lang-btn {
-            padding: 10px 28px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: transparent;
-            color: rgba(255,255,255,0.5);
+        /* Rotating Example Card */
+        .example-card {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 40px;
+            opacity: 0.6;
+            transform: scale(0.95);
+            transition: all 0.5s ease;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        .lang-btn.active {
-            background: #FF4500;
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(255,69,0,0.5);
+        .example-card:hover {
+            opacity: 0.9;
+            transform: scale(1);
         }
         
-        .input-box {
-            max-width: 700px;
-            margin: 0 auto;
+        .example-label {
+            display: inline-block;
+            background: var(--primary);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        
+        .example-topic {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .example-roast {
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.5;
+            color: var(--text);
+        }
+        
+        .example-hint {
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 12px;
+        }
+        
+        /* Input Section */
+        .input-section {
+            width: 100%;
+            max-width: 500px;
         }
         
         .input-wrapper {
-            display: flex;
-            gap: 8px;
-            background: rgba(0,0,0,0.6);
-            border: 2px solid rgba(255,69,0,0.3);
+            position: relative;
+            margin-bottom: 16px;
+        }
+        
+        .main-input {
+            width: 100%;
+            padding: 20px 24px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            background: var(--card-bg);
+            border: 2px solid transparent;
             border-radius: 16px;
-            padding: 6px;
+            color: var(--text);
+            outline: none;
             transition: all 0.3s;
         }
         
-        .input-wrapper:focus-within {
-            border-color: #FF4500;
-            box-shadow: 0 0 30px rgba(255,69,0,0.3);
+        .main-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(255,107,53,0.2);
         }
         
-        .topic-input {
-            flex: 1;
+        .main-input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        /* Language Toggle */
+        .lang-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .lang-btn {
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
             background: transparent;
-            border: none;
-            outline: none;
-            padding: 16px;
-            font-size: 1.1rem;
-            color: #fff;
-            font-family: inherit;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
         }
         
-        .topic-input::placeholder {
-            color: rgba(255,255,255,0.3);
+        .lang-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #000;
         }
         
+        /* Main Button */
         .roast-btn {
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #FF4500, #FF0000);
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
+            width: 100%;
+            padding: 20px;
+            font-size: 1.2rem;
             font-weight: 800;
-            color: #fff;
+            font-family: inherit;
+            background: linear-gradient(135deg, var(--primary), #FF8C42);
+            border: none;
+            border-radius: 16px;
+            color: #000;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 10px;
         }
         
         .roast-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(255,69,0,0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(255,107,53,0.4);
+        }
+        
+        .roast-btn:active {
+            transform: translateY(0);
         }
         
         .roast-btn:disabled {
@@ -512,8 +337,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             transform: none;
         }
         
-        /* Quick picks */
-        .quick-picks {
+        /* Quick Chips */
+        .quick-chips {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
@@ -521,98 +346,72 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             margin-top: 20px;
         }
         
-        .quick-chip {
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 50px;
+        .chip {
+            padding: 8px 14px;
             font-size: 0.8rem;
-            font-weight: 600;
-            color: rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            color: var(--text-muted);
             cursor: pointer;
             transition: all 0.3s;
         }
         
-        .quick-chip:hover {
-            background: rgba(255,69,0,0.2);
-            border-color: #FF4500;
-            color: #fff;
+        .chip:hover {
+            background: rgba(255,107,53,0.2);
+            border-color: var(--primary);
+            color: var(--text);
         }
         
-        /* ===== LOADING ===== */
-        .loading-section {
-            display: none;
-            text-align: center;
-            padding: 60px;
-        }
-        
-        .loading-section.active {
-            display: block;
-        }
-        
-        .loader {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255,69,0,0.2);
-            border-top-color: #FF4500;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-        
-        .loading-text {
-            font-size: 1rem;
-            color: #FF4500;
-            font-weight: 600;
-        }
-        
-        /* ===== RESULT ===== */
+        /* ===== RESULT SECTION ===== */
         .result-section {
             display: none;
-            max-width: 600px;
-            margin: 0 auto;
+            min-height: 100vh;
+            padding: 80px 20px 40px;
+            flex-direction: column;
+            align-items: center;
         }
         
         .result-section.active {
-            display: block;
-            animation: slideUp 0.5s ease;
+            display: flex;
         }
         
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px); }
-            to { opacity: 1; transform: translateY(0); }
+        .result-topic {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
         }
         
         .result-card {
-            background: rgba(0,0,0,0.8);
-            border: 3px solid #FF4500;
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 0 60px rgba(255,69,0,0.4);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         
         .result-image {
             width: 100%;
-            border-radius: 16px;
-            margin-bottom: 20px;
+            display: block;
         }
         
-        .share-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+        .primary-actions {
+            display: flex;
             gap: 12px;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 16px;
         }
         
-        .share-btn {
-            padding: 14px;
+        .action-btn {
+            flex: 1;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
             border: none;
             border-radius: 12px;
-            font-size: 0.9rem;
-            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s;
             display: flex;
@@ -621,377 +420,394 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             gap: 8px;
         }
         
-        .share-btn:hover {
-            transform: translateY(-3px);
+        .btn-save {
+            background: var(--primary);
+            color: #000;
         }
         
-        .btn-whatsapp { background: #25D366; color: #fff; }
-        .btn-insta { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: #fff; }
-        .btn-download { background: #1e90ff; color: #fff; }
-        .btn-again { background: transparent; border: 2px solid #FF4500; color: #FF4500; }
-        
-        .error-box {
-            display: none;
-            background: rgba(255,0,0,0.2);
-            border: 1px solid #ff0000;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            margin: 20px auto;
-            max-width: 500px;
+        .btn-new {
+            background: var(--card-bg);
+            border: 2px solid var(--primary);
+            color: var(--primary);
         }
         
-        .error-box.active { display: block; }
-        
-        /* TRUST SECTION */
-        .trust-section {
-            text-align: center;
-            padding: 40px 20px;
-            margin-top: 40px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+        .action-btn:hover {
+            transform: translateY(-2px);
         }
         
-        .trust-title {
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.4);
-            margin-bottom: 16px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-        
-        .trust-stats {
+        .share-actions {
             display: flex;
+            gap: 12px;
+        }
+        
+        .share-btn {
+            padding: 12px 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .share-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: var(--text);
+        }
+        
+        /* ===== LOADING ===== */
+        .loading-section {
+            display: none;
+            min-height: 100vh;
+            flex-direction: column;
             justify-content: center;
-            gap: 40px;
-            flex-wrap: wrap;
+            align-items: center;
+            padding: 20px;
         }
         
-        .trust-stat {
-            text-align: center;
+        .loading-section.active {
+            display: flex;
         }
         
-        .trust-number {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #FF4500;
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,107,53,0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 24px;
         }
         
-        .trust-label {
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+        
+        /* ===== TRENDING BAR (Bottom) ===== */
+        .trending-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 12px 16px;
+            background: rgba(13,13,13,0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .trending-bar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .trending-label {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
+        .trending-chip {
+            padding: 6px 14px;
             font-size: 0.8rem;
-            color: rgba(255,255,255,0.5);
+            background: rgba(255,107,53,0.15);
+            border: 1px solid rgba(255,107,53,0.3);
+            border-radius: 20px;
+            color: var(--text);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
         }
         
-        @media (max-width: 768px) {
-            .navbar { padding: 16px 20px; }
-            .nav-brand { font-size: 1.4rem; }
-            .container { padding: 24px 16px; }
-            .hero-title { font-size: 2rem; }
-            .hot-topic-title { font-size: 1.4rem; }
-            .usp-grid { grid-template-columns: 1fr 1fr; }
-            .share-buttons { grid-template-columns: 1fr 1fr; }
-            .trust-stats { gap: 24px; }
-            .feature-badges { gap: 8px; }
+        .trending-chip:hover {
+            background: var(--primary);
+            color: #000;
+        }
+        
+        /* ===== MOBILE ===== */
+        @media (max-width: 600px) {
+            .header {
+                padding: 12px 16px;
+            }
+            
+            .logo {
+                font-size: 1rem;
+            }
+            
+            .hero {
+                padding: 70px 16px 100px;
+            }
+            
+            .example-card {
+                padding: 20px;
+                margin-bottom: 30px;
+            }
+            
+            .main-input {
+                padding: 18px 20px;
+                font-size: 1rem;
+            }
+            
+            .roast-btn {
+                padding: 18px;
+                font-size: 1.1rem;
+            }
+            
+            .result-section {
+                padding: 70px 16px 80px;
+            }
+            
+            .primary-actions {
+                flex-direction: column;
+            }
+            
+            .share-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        
+        /* Hide sections */
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
 <body>
-    <div class="bg-particles"></div>
-    
-    <nav class="navbar">
-        <div class="nav-brand">🔥 ROASTER</div>
-        <div class="live-counter">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">🔥 ROASTER</div>
+        <div class="live-count">
             <div class="live-dot"></div>
-            <span class="counter-number" id="liveCounter">47,892</span>
-            <span id="counterLabel">roasted</span>
+            <span class="count-num" id="liveCount">52,341</span>
+            <span>roasted</span>
         </div>
-    </nav>
+    </header>
     
-    <div class="container">
+    <!-- HERO SECTION -->
+    <section class="hero" id="heroSection">
+        <!-- Rotating Example Card -->
+        <div class="example-card" id="exampleCard">
+            <div class="example-label" id="exampleLabel">PROTEIN PAKODA</div>
+            <div class="example-topic" id="exampleTopic">Gym Wale</div>
+            <div class="example-roast" id="exampleRoast">"Creatine ka dabba 2000 ka, body abhi bhi 2002 wali hai"</div>
+            <div class="example-hint">↑ Ye mil sakta hai tujhe bhi</div>
+        </div>
         
-        <!-- HERO SECTION -->
-        <section class="hero-section">
-            <div class="hero-tagline" id="heroTagline">🇮🇳 INDIA'S #1 ROAST MACHINE</div>
-            
-            <h1 class="hero-title" id="heroTitle">
-                <span id="titleLine1">Sach Sunne Ki</span><br>
-                <span class="highlight" id="titleLine2">Himmat Hai?</span>
-            </h1>
-            
-            <p class="hero-subtitle" id="heroSubtitle">
-                Wo AI jo tere mooh pe sach bolega. Wo baat jo tera dost nahi bolega, hum bolenge. <strong>15-20 words mein teri poori reality.</strong>
-            </p>
-            
-            <div class="feature-badges">
-                <div class="feature-badge"><span class="icon">🔥</span><span id="badge1">100% Brutal</span></div>
-                <div class="feature-badge"><span class="icon">🎯</span><span id="badge2">Real-Time Trends</span></div>
-                <div class="feature-badge"><span class="icon">🤖</span><span id="badge3">AI-Powered</span></div>
-                <div class="feature-badge"><span class="icon">😂</span><span id="badge4">Relatable AF</span></div>
-            </div>
-        </section>
-        
-        <!-- RGB HOT TOPIC -->
-        <section class="hot-topic-section">
-            <div class="hot-topic-banner" id="hotTopicBanner" onclick="useDailyTopic()">
-                <div class="hot-label-row">
-                    <span class="fire-emoji">🔥</span>
-                    <span class="hot-label" id="hotLabel">TODAY'S VIRAL ROAST</span>
-                    <span class="fire-emoji">🔥</span>
-                </div>
-                <div class="hot-topic-title" id="hotTopicTitle">Loading...</div>
-                <div class="hot-topic-desc" id="hotTopicDesc">Tap to roast this trending topic</div>
-                <div class="tap-hint">👆 TAP TO ROAST 👆</div>
-            </div>
-        </section>
-        
-        <!-- WHAT WE DO -->
-        <section class="what-we-do">
-            <h2 class="section-title" id="whatWeDoTitle">🎯 Hum Kya Karte Hain?</h2>
-            <div class="usp-grid">
-                <div class="usp-card">
-                    <div class="usp-icon">🪞</div>
-                    <div class="usp-title" id="usp1Title">Reality Mirror</div>
-                    <div class="usp-desc" id="usp1Desc">Wo sach jo tu khud se chhupata hai, hum mooh pe bolte hain</div>
-                </div>
-                <div class="usp-card">
-                    <div class="usp-icon">📈</div>
-                    <div class="usp-title" id="usp2Title">Trend-Based</div>
-                    <div class="usp-desc" id="usp2Desc">Latest news aur memes se connected roasts - always relevant</div>
-                </div>
-                <div class="usp-card">
-                    <div class="usp-icon">🧠</div>
-                    <div class="usp-title" id="usp3Title">Smart AI</div>
-                    <div class="usp-desc" id="usp3Desc">15-20 words mein puri baat - na zyada, na kam</div>
-                </div>
-                <div class="usp-card">
-                    <div class="usp-icon">💀</div>
-                    <div class="usp-title" id="usp4Title">No Mercy</div>
-                    <div class="usp-desc" id="usp4Desc">Emotional damage guaranteed - mummy kasam</div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- INPUT SECTION -->
-        <section class="input-section">
-            <div class="language-toggle">
-                <button class="lang-btn active" id="hindiBtn" onclick="setLanguage('hindi')">🇮🇳 Hindi</button>
-                <button class="lang-btn" id="englishBtn" onclick="setLanguage('english')">🇺🇸 English</button>
+        <!-- Input Section -->
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    class="main-input" 
+                    id="topicInput"
+                    placeholder="Kisko roast karein?"
+                    maxlength="100"
+                    autofocus
+                >
             </div>
             
-            <div class="input-box">
-                <div class="input-wrapper">
-                    <input type="text" class="topic-input" id="topicInput" placeholder="Kiski leni hai aaj..." maxlength="100">
-                    <button class="roast-btn" id="roastBtn" onclick="executeRoast()">
-                        <span>🔥</span>
-                        <span id="roastBtnText">ROAST</span>
-                    </button>
-                </div>
-                
-                <div class="quick-picks" id="quickPicks">
-                    <button class="quick-chip" onclick="useExample('Gym wale')">💪 Gym</button>
-                    <button class="quick-chip" onclick="useExample('Engineers')">💻 Engineers</button>
-                    <button class="quick-chip" onclick="useExample('Startups')">🚀 Startups</button>
-                    <button class="quick-chip" onclick="useExample('Influencers')">📱 Influencers</button>
-                    <button class="quick-chip" onclick="useExample('Cricket fans')">🏏 Cricket</button>
-                    <button class="quick-chip" onclick="useExample('Office wale')">👔 Office</button>
-                </div>
+            <div class="lang-toggle">
+                <button class="lang-btn active" id="hindiBtn" onclick="setLang('hindi')">हिंदी</button>
+                <button class="lang-btn" id="englishBtn" onclick="setLang('english')">English</button>
+                <button class="lang-btn" id="mixBtn" onclick="setLang('mix')">Mix</button>
             </div>
-        </section>
-        
-        <!-- LOADING -->
-        <section class="loading-section" id="loadingSection">
-            <div class="loader"></div>
-            <div class="loading-text" id="loadingText">Teri aukaat dhundh raha...</div>
-        </section>
-        
-        <!-- RESULT -->
-        <section class="result-section" id="resultSection">
-            <div class="result-card">
-                <img src="" alt="Roast" class="result-image" id="resultImage">
-                <div class="share-buttons">
-                    <button class="share-btn btn-whatsapp" onclick="shareWhatsApp()">📱 WhatsApp</button>
-                    <button class="share-btn btn-insta" onclick="shareInsta()">📸 Instagram</button>
-                    <button class="share-btn btn-download" onclick="downloadImage()">⬇️ Download</button>
-                    <button class="share-btn btn-again" onclick="resetRoast()">🔄 Again</button>
-                </div>
+            
+            <button class="roast-btn" id="roastBtn" onclick="generateRoast()">
+                <span>🔥</span>
+                <span id="btnText">ROAST KARO</span>
+            </button>
+            
+            <div class="quick-chips" id="quickChips">
+                <button class="chip" onclick="useTopic('Monday')">Monday</button>
+                <button class="chip" onclick="useTopic('My Ex')">My Ex</button>
+                <button class="chip" onclick="useTopic('Engineers')">Engineers</button>
+                <button class="chip" onclick="useTopic('Gym')">Gym</button>
+                <button class="chip" onclick="useTopic('Office')">Office</button>
             </div>
-        </section>
+        </div>
+    </section>
+    
+    <!-- LOADING SECTION -->
+    <section class="loading-section" id="loadingSection">
+        <div class="loader"></div>
+        <div class="loading-text" id="loadingText">Roast ban raha hai...</div>
+    </section>
+    
+    <!-- RESULT SECTION -->
+    <section class="result-section" id="resultSection">
+        <div class="result-topic" id="resultTopic">Topic: Monday</div>
         
-        <div class="error-box" id="errorBox"></div>
+        <div class="result-card">
+            <img src="" alt="Roast" class="result-image" id="resultImage">
+        </div>
         
-        <!-- TRUST SECTION -->
-        <section class="trust-section">
-            <div class="trust-title" id="trustTitle">Trusted by Thousands</div>
-            <div class="trust-stats">
-                <div class="trust-stat">
-                    <div class="trust-number" id="statRoasts">47K+</div>
-                    <div class="trust-label" id="statRoastsLabel">Roasts Generated</div>
-                </div>
-                <div class="trust-stat">
-                    <div class="trust-number">4.8⭐</div>
-                    <div class="trust-label" id="statRatingLabel">Savage Rating</div>
-                </div>
-                <div class="trust-stat">
-                    <div class="trust-number">15s</div>
-                    <div class="trust-label" id="statTimeLabel">Avg. Roast Time</div>
-                </div>
-            </div>
-        </section>
+        <div class="primary-actions">
+            <button class="action-btn btn-save" onclick="downloadImage()">
+                <span>📥</span> Save
+            </button>
+            <button class="action-btn btn-new" onclick="newRoast()">
+                <span>🔄</span> New Roast
+            </button>
+        </div>
+        
+        <div class="share-actions">
+            <button class="share-btn" onclick="shareWhatsApp()">WhatsApp</button>
+            <button class="share-btn" onclick="shareTwitter()">Twitter</button>
+            <button class="share-btn" onclick="copyLink()">Copy Link</button>
+        </div>
+    </section>
+    
+    <!-- TRENDING BAR -->
+    <div class="trending-bar" id="trendingBar">
+        <span class="trending-label">🔥 Trending:</span>
+        <button class="trending-chip" onclick="useTopic('IPL')">IPL</button>
+        <button class="trending-chip" onclick="useTopic('AI Jobs')">AI Jobs</button>
+        <button class="trending-chip" onclick="useTopic('Traffic')">Traffic</button>
+        <button class="trending-chip" onclick="useTopic('Startup')">Startup</button>
+        <button class="trending-chip" onclick="useTopic('Influencers')">Influencers</button>
+        <button class="trending-chip" onclick="useTopic('Cricket')">Cricket</button>
     </div>
 
     <script>
         let currentLang = 'hindi';
         let currentImg = '';
-        let dailyTopic = null;
+        let currentTopic = '';
+        let exampleIndex = 0;
         
-        const loadingMsgsHindi = [
-            "Teri aukaat dhundh raha...",
-            "Real-time sach nikal raha...",
-            "Trends check kar raha...",
-            "Brutal roast pak raha...",
-            "Sach kadwa hai, ready ho ja..."
-        ];
+        const examples = {
+            hindi: [
+                {label: "PROTEIN PAKODA", topic: "Gym Wale", roast: "Creatine ka dabba 2000 ka, body abhi bhi 2002 wali hai"},
+                {label: "CTRL+C WARRIOR", topic: "Engineers", roast: "Stack Overflow band ho jaye toh inki salary bhi band"},
+                {label: "SOMVAR VICTIM", topic: "Monday", roast: "Alarm 6 ka lagaya, utha 9 baje, blame kiya traffic ko"},
+                {label: "CLOUT BHIKHARI", topic: "Influencers", roast: "500 followers pe bio mein 'DM for collab' likha hai"},
+                {label: "PITCH DECK PRO", topic: "Startups", roast: "Product nahi hai, users nahi hai, bas funding ki baat hai"}
+            ],
+            english: [
+                {label: "PROTEIN CLOWN", topic: "Gym Bros", roast: "Spent more on supplements than actual gym visits this year"},
+                {label: "STACKOVERFLOW DEV", topic: "Engineers", roast: "If Google goes down half the developers become unemployed"},
+                {label: "MONDAY HATER", topic: "Monday", roast: "Sets 10 alarms, still blames traffic for being late"},
+                {label: "CLOUT CHASER", topic: "Influencers", roast: "500 followers but 'Open for collaborations' in bio"},
+                {label: "PITCH MASTER", topic: "Startups", roast: "No product no users just vibes and a 50 slide deck"}
+            ],
+            mix: [
+                {label: "GYM KA TOURIST", topic: "Gym Bros", roast: "Protein shake peeta hai daily, gym jaata hai yearly"},
+                {label: "COPY PASTE DEV", topic: "Engineers", roast: "Resume pe 10 skills, actually sirf Googling aati hai"},
+                {label: "MONDAY SYNDROME", topic: "Monday", roast: "Friday ko party, Monday ko 'I have a headache' message"},
+                {label: "INSTA FAMOUS", topic: "Influencers", roast: "Followers fake hai, engagement fake hai, bas ego real hai"},
+                {label: "STARTUP BRO", topic: "Startups", roast: "Idea copied, team nahi hai, but Shark Tank ka sapna hai"}
+            ]
+        };
         
-        const loadingMsgsEnglish = [
-            "Finding your level...",
-            "Checking real-time trends...",
-            "Cooking brutal truth...",
-            "Preparing reality check...",
-            "Truth hurts, get ready..."
-        ];
+        const loadingMsgs = {
+            hindi: ["Roast pak raha hai...", "Sach nikal raha hai...", "Brutal mode on...", "Thoda ruk, mast aayega..."],
+            english: ["Cooking your roast...", "Finding the truth...", "Brutal mode on...", "Wait, it'll be fire..."],
+            mix: ["Roast ban raha hai...", "Sach with spice...", "Loading brutal truth...", "Aane wala hai mast..."]
+        };
         
-        // Fetch stats
-        async function fetchStats() {
+        // Rotate examples
+        function rotateExample() {
+            const ex = examples[currentLang];
+            exampleIndex = (exampleIndex + 1) % ex.length;
+            const current = ex[exampleIndex];
+            
+            const card = document.getElementById('exampleCard');
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            
+            setTimeout(() => {
+                document.getElementById('exampleLabel').textContent = current.label;
+                document.getElementById('exampleTopic').textContent = current.topic;
+                document.getElementById('exampleRoast').textContent = '"' + current.roast + '"';
+                card.style.opacity = '0.6';
+                card.style.transform = 'scale(0.95)';
+            }, 300);
+        }
+        setInterval(rotateExample, 4000);
+        
+        // Update counter
+        async function updateCounter() {
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
-                document.getElementById('liveCounter').textContent = data.total_roasts.toLocaleString();
-                document.getElementById('statRoasts').textContent = Math.floor(data.total_roasts / 1000) + 'K+';
+                document.getElementById('liveCount').textContent = data.total_roasts.toLocaleString();
             } catch(e) {}
         }
-        fetchStats();
-        
-        // Live counter animation
+        updateCounter();
         setInterval(() => {
-            const el = document.getElementById('liveCounter');
-            let num = parseInt(el.textContent.replace(/,/g, '')) || 47892;
-            el.textContent = (num + Math.floor(Math.random() * 3)).toLocaleString();
-        }, 4000);
+            const el = document.getElementById('liveCount');
+            let n = parseInt(el.textContent.replace(/,/g, '')) || 52341;
+            el.textContent = (n + Math.floor(Math.random() * 2)).toLocaleString();
+        }, 5000);
         
-        // Fetch daily topic
-        async function fetchDailyTopic() {
-            try {
-                const res = await fetch('/api/daily-topic?lang=' + currentLang);
-                const data = await res.json();
-                if (data.success) {
-                    dailyTopic = data.data;
-                    document.getElementById('hotTopicTitle').textContent = dailyTopic.topic;
-                    document.getElementById('hotTopicDesc').textContent = dailyTopic.description;
-                }
-            } catch(e) {}
-        }
-        fetchDailyTopic();
-        
-        function useDailyTopic() {
-            if (dailyTopic) {
-                document.getElementById('topicInput').value = dailyTopic.topic;
-                document.getElementById('hotTopicBanner').style.transform = 'scale(0.97)';
-                setTimeout(() => {
-                    document.getElementById('hotTopicBanner').style.transform = '';
-                    executeRoast();
-                }, 150);
-            }
-        }
-        
-        function setLanguage(lang) {
+        // Language
+        function setLang(lang) {
             currentLang = lang;
-            document.getElementById('hindiBtn').classList.toggle('active', lang === 'hindi');
-            document.getElementById('englishBtn').classList.toggle('active', lang === 'english');
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(lang + 'Btn').classList.add('active');
             
-            if (lang === 'hindi') {
-                document.getElementById('heroTagline').textContent = "🇮🇳 INDIA'S #1 ROAST MACHINE";
-                document.getElementById('titleLine1').textContent = "Sach Sunne Ki";
-                document.getElementById('titleLine2').textContent = "Himmat Hai?";
-                document.getElementById('heroSubtitle').innerHTML = "Wo AI jo tere mooh pe sach bolega. Wo baat jo tera dost nahi bolega, hum bolenge. <strong>15-20 words mein teri poori reality.</strong>";
-                document.getElementById('topicInput').placeholder = "Kiski leni hai aaj...";
-                document.getElementById('roastBtnText').textContent = "ROAST";
-                document.getElementById('hotLabel').textContent = "AAJ KA VIRAL ROAST";
-                document.getElementById('whatWeDoTitle').textContent = "🎯 Hum Kya Karte Hain?";
-                document.getElementById('counterLabel').textContent = "bezati hui";
-                document.getElementById('badge1').textContent = "100% Brutal";
-                document.getElementById('badge2').textContent = "Real-Time";
-                document.getElementById('badge3').textContent = "AI-Powered";
-                document.getElementById('badge4').textContent = "Relatable";
-                
-                // USP Cards
-                document.getElementById('usp1Title').textContent = "Reality Mirror";
-                document.getElementById('usp1Desc').textContent = "Wo sach jo tu khud se chhupata hai, hum mooh pe bolte hain";
-                document.getElementById('usp2Title').textContent = "Trend-Based";
-                document.getElementById('usp2Desc').textContent = "Latest news aur memes se connected roasts";
-                document.getElementById('usp3Title').textContent = "Smart AI";
-                document.getElementById('usp3Desc').textContent = "15-20 words mein puri baat";
-                document.getElementById('usp4Title').textContent = "No Mercy";
-                document.getElementById('usp4Desc').textContent = "Emotional damage guaranteed";
-                
-                document.getElementById('trustTitle').textContent = "Logo Ka Bharosa";
-                document.getElementById('statRoastsLabel').textContent = "Bezati Hui";
-                document.getElementById('statRatingLabel').textContent = "Savage Rating";
-                document.getElementById('statTimeLabel').textContent = "Roast Time";
-            } else {
-                document.getElementById('heroTagline').textContent = "🌍 #1 BRUTAL TRUTH MACHINE";
-                document.getElementById('titleLine1').textContent = "Can You Handle";
-                document.getElementById('titleLine2').textContent = "The Truth?";
-                document.getElementById('heroSubtitle').innerHTML = "The AI that tells you what your friends won't. <strong>15-20 words of pure reality check.</strong>";
-                document.getElementById('topicInput').placeholder = "Who needs a reality check...";
-                document.getElementById('roastBtnText').textContent = "ROAST";
-                document.getElementById('hotLabel').textContent = "TODAY'S VIRAL ROAST";
-                document.getElementById('whatWeDoTitle').textContent = "🎯 What We Do?";
-                document.getElementById('counterLabel').textContent = "roasted";
-                document.getElementById('badge1').textContent = "100% Brutal";
-                document.getElementById('badge2').textContent = "Real-Time";
-                document.getElementById('badge3').textContent = "AI-Powered";
-                document.getElementById('badge4').textContent = "Relatable";
-                
-                document.getElementById('usp1Title').textContent = "Reality Mirror";
-                document.getElementById('usp1Desc').textContent = "The truth you hide from yourself, we say to your face";
-                document.getElementById('usp2Title').textContent = "Trend-Based";
-                document.getElementById('usp2Desc').textContent = "Connected to latest news and memes";
-                document.getElementById('usp3Title').textContent = "Smart AI";
-                document.getElementById('usp3Desc').textContent = "15-20 words, straight to the point";
-                document.getElementById('usp4Title').textContent = "No Mercy";
-                document.getElementById('usp4Desc').textContent = "Emotional damage guaranteed";
-                
-                document.getElementById('trustTitle').textContent = "Trusted Globally";
-                document.getElementById('statRoastsLabel').textContent = "Roasts Generated";
-                document.getElementById('statRatingLabel').textContent = "Savage Rating";
-                document.getElementById('statTimeLabel').textContent = "Avg. Time";
-            }
+            const placeholders = {
+                hindi: "Kisko roast karein?",
+                english: "Who to roast?",
+                mix: "Kisko roast karna hai?"
+            };
+            document.getElementById('topicInput').placeholder = placeholders[lang];
             
-            fetchDailyTopic();
+            const btnTexts = {
+                hindi: "ROAST KARO",
+                english: "ROAST NOW",
+                mix: "ROAST KARO"
+            };
+            document.getElementById('btnText').textContent = btnTexts[lang];
+            
+            exampleIndex = -1;
+            rotateExample();
         }
         
-        function useExample(topic) {
+        // Use topic
+        function useTopic(topic) {
             document.getElementById('topicInput').value = topic;
+            document.getElementById('topicInput').focus();
         }
         
+        // Enter key
         document.getElementById('topicInput').addEventListener('keypress', e => {
-            if (e.key === 'Enter') executeRoast();
+            if (e.key === 'Enter') generateRoast();
         });
         
-        async function executeRoast() {
+        // Generate roast
+        async function generateRoast() {
             const topic = document.getElementById('topicInput').value.trim();
             if (!topic) {
-                showError(currentLang === 'hindi' ? 'Abe kuch toh likh!' : 'Type something!');
+                document.getElementById('topicInput').style.borderColor = '#ff0000';
+                setTimeout(() => {
+                    document.getElementById('topicInput').style.borderColor = 'transparent';
+                }, 1000);
                 return;
             }
             
-            // UI updates
-            document.getElementById('resultSection').classList.remove('active');
-            document.getElementById('errorBox').classList.remove('active');
-            document.getElementById('loadingSection').classList.add('active');
-            document.getElementById('roastBtn').disabled = true;
+            currentTopic = topic;
             
-            // Loading messages
-            const msgs = currentLang === 'hindi' ? loadingMsgsHindi : loadingMsgsEnglish;
+            // Show loading
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('active');
+            document.getElementById('loadingSection').classList.add('active');
+            document.getElementById('trendingBar').classList.add('hidden');
+            
+            // Rotate loading messages
+            const msgs = loadingMsgs[currentLang];
             let i = 0;
             const interval = setInterval(() => {
                 document.getElementById('loadingText').textContent = msgs[++i % msgs.length];
@@ -1005,37 +821,33 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 
                 const blob = await res.blob();
                 currentImg = URL.createObjectURL(blob);
+                
                 document.getElementById('resultImage').src = currentImg;
+                document.getElementById('resultTopic').textContent = 'Topic: ' + topic;
+                
                 document.getElementById('loadingSection').classList.remove('active');
                 document.getElementById('resultSection').classList.add('active');
-                fetchStats();
+                
+                updateCounter();
             } catch(e) {
                 clearInterval(interval);
-                document.getElementById('loadingSection').classList.remove('active');
-                showError(currentLang === 'hindi' ? 'Error! Dobara try kar' : 'Error! Try again');
-            } finally {
-                document.getElementById('roastBtn').disabled = false;
+                alert('Error! Try again.');
+                newRoast();
             }
         }
         
-        function showError(msg) {
-            const el = document.getElementById('errorBox');
-            el.textContent = msg;
-            el.classList.add('active');
+        // New roast
+        function newRoast() {
+            document.getElementById('loadingSection').classList.remove('active');
+            document.getElementById('resultSection').classList.remove('active');
+            document.getElementById('heroSection').classList.remove('hidden');
+            document.getElementById('trendingBar').classList.remove('hidden');
+            document.getElementById('topicInput').value = '';
+            document.getElementById('topicInput').focus();
+            currentImg = '';
         }
         
-        function shareWhatsApp() {
-            const text = currentLang === 'hindi' 
-                ? 'Dekh meri bezati 🔥 ' + window.location.href 
-                : 'Check my roast 🔥 ' + window.location.href;
-            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-        }
-        
-        function shareInsta() {
-            downloadImage();
-            alert(currentLang === 'hindi' ? 'Downloaded! Ab Insta pe daal' : 'Downloaded! Share on Insta');
-        }
-        
+        // Download
         function downloadImage() {
             if (currentImg) {
                 const a = document.createElement('a');
@@ -1045,44 +857,29 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }
         }
         
-        function resetRoast() {
-            document.getElementById('resultSection').classList.remove('active');
-            document.getElementById('topicInput').value = '';
-            currentImg = '';
+        // Share
+        function shareWhatsApp() {
+            const text = 'Check out this roast! 🔥 ' + window.location.href;
+            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+        }
+        
+        function shareTwitter() {
+            const text = 'Just got roasted! 🔥 ' + window.location.href;
+            window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+        }
+        
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href);
+            alert('Link copied!');
         }
     </script>
 </body>
 </html>"""
 
 
-# ===== DATABASE FUNCTIONS =====
-def save_roast_to_db(topic, label, roast, lang):
-    conn = get_db_connection()
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute('INSERT INTO roasts (topic, identity_label, roast_text, language) VALUES (%s,%s,%s,%s)', (topic, label, roast, lang))
-            cur.execute('UPDATE stats SET total_roasts = total_roasts + 1')
-            conn.commit()
-        except: pass
-        finally: conn.close()
-
-def get_total_roasts():
-    conn = get_db_connection()
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute('SELECT total_roasts FROM stats WHERE id=1')
-            r = cur.fetchone()
-            return r['total_roasts'] if r else 47892
-        except: return 47892
-        finally: conn.close()
-    return 47892
-
-
 # ===== IMAGE FUNCTIONS =====
 def get_font(size=40):
-    paths = ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "arial.ttf"]
+    paths = ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "arial.ttf", "DejaVuSans-Bold.ttf"]
     for p in paths:
         try: return ImageFont.truetype(p, size)
         except: continue
@@ -1104,109 +901,159 @@ def add_text_to_image(img_path, label, roast):
     draw = ImageDraw.Draw(img)
     w, h = img.size
     
-    # Border
-    for i in range(6):
-        c = "#FF4500" if i < 3 else "#8B0000"
-        draw.rectangle([i, i, w-1-i, h-1-i], outline=c)
+    # Simple clean border
+    for i in range(5):
+        draw.rectangle([i, i, w-1-i, h-1-i], outline="#FF6B35")
     
-    # Label
-    lf = get_font(int(h * 0.07))
+    # Label at top
+    lf = get_font(int(h * 0.065))
     lt = label.upper()
     lb = lf.getbbox(lt)
     lx = (w - lb[2]) // 2
-    for dx in range(-3,4):
-        for dy in range(-3,4):
-            draw.text((lx+dx, 20+dy), lt, font=lf, fill="black")
-    draw.text((lx, 20), lt, font=lf, fill="#FF4500")
     
-    # Roast
-    rf = get_font(int(h * 0.05))
+    # Label background
+    padding = 10
+    draw.rectangle([lx - padding, 15, lx + lb[2] + padding, 20 + lb[3] + padding], fill="#FF6B35")
+    draw.text((lx, 18), lt, font=lf, fill="#000000")
+    
+    # Roast at bottom
+    rf = get_font(int(h * 0.048))
     lines = wrap_text(roast, rf, int(w * 0.9))
-    lh = int(h * 0.05) + 10
-    y = h - len(lines) * lh - 25
+    lh = int(h * 0.05) + 8
+    y = h - len(lines) * lh - 20
+    
     for line in lines:
         lb = rf.getbbox(line)
         x = (w - lb[2]) // 2
-        for dx in range(-3,4):
-            for dy in range(-3,4):
-                draw.text((x+dx, y+dy), line, font=rf, fill="black")
-        draw.text((x, y), line, font=rf, fill="#FFFACD")
+        # Shadow
+        for dx in range(-2,3):
+            for dy in range(-2,3):
+                draw.text((x+dx, y+dy), line, font=rf, fill="#000000")
+        draw.text((x, y), line, font=rf, fill="#FFFFFF")
         y += lh
     
     return img
 
 
-# ===== AI ROAST WITH REAL-TIME SEARCH =====
+# ===== NATURAL ROAST AI =====
 def get_roast(topic, language='hindi'):
     # Get real-time context if available
     context = ""
     if SEARCH_ENABLED:
         try:
             data = get_smart_context(topic, language)
-            context = data.get('topic_info', '')[:300]
+            context = data.get('topic_info', '')[:400]
         except:
             context = ""
     
+    # Simple natural prompt - like a bro talking to bro
     if language == 'hindi':
-        prompt = f"""Tu India ka sabse savage roaster hai. 
+        prompt = f"""Tu India ka sabse brutal roaster hai. Tera kaam hai sirf roast karna - no filter, no mercy.
 
-REAL-TIME CONTEXT (use if relevant):
-{context if context else 'No specific context'}
+Tu ek bhai ki tarah naturally baat karta hai. Forced funny nahi, natural savage.
 
-RULES:
-- LABEL: 1-2 funny Hindi words
-- ROAST: Exactly 15-20 words, relatable, spicy
-- Use: bc, mc, chutiya, nalla, vela, bewkoof, gadha
-- Make it TRENDING and CURRENT if context available
-- 80% logo ko lage "ye toh main hoon"
+{f'CURRENT INFO: {context}' if context else ''}
 
-FORMAT:
-LABEL: [title]
-ROAST: [15-20 word roast]
+Topic: {topic}
 
-Topic: {topic}"""
-    else:
-        prompt = f"""You're the most savage roaster.
+Rules:
+- LABEL: 2 words max, funny Hindi/Hinglish title (like "PROTEIN PAKODA", "CTRL+C CODER")
+- ROAST: 10-18 words, natural language, brutal but relatable
+- Use current references if available
+- Be creative, different every time
+- Talk like a friend roasting friend
+- No emojis, no hashtags
 
-REAL-TIME CONTEXT (use if relevant):
-{context if context else 'No specific context'}
+Format:
+LABEL: [2 word title]
+ROAST: [brutal one-liner]"""
 
-RULES:
-- LABEL: 1-2 funny words
-- ROAST: Exactly 15-20 words, relatable, edgy
-- Use current references if context available
-- Make 80% people say "that's literally me"
+    elif language == 'english':
+        prompt = f"""You're India's most brutal roaster. Your job is to roast - no filter, no mercy.
 
-FORMAT:
-LABEL: [title]
-ROAST: [15-20 word roast]
+You talk naturally like a bro. Not forced funny, just natural savage.
 
-Topic: {topic}"""
+{f'CURRENT INFO: {context}' if context else ''}
 
+Topic: {topic}
+
+Rules:
+- LABEL: 2 words max, funny title (like "PROTEIN CLOWN", "COPY PASTE DEV")  
+- ROAST: 10-18 words, natural, brutal but relatable
+- Use current references if available
+- Be creative, different every time
+- Talk like a friend roasting friend
+- No emojis, no hashtags
+
+Format:
+LABEL: [2 word title]
+ROAST: [brutal one-liner]"""
+
+    else:  # mix
+        prompt = f"""Tu India ka sabse brutal roaster hai. Hinglish mein baat kar - Hindi + English mix.
+
+Natural bhai jaisa bol. Forced nahi, natural savage.
+
+{f'CURRENT INFO: {context}' if context else ''}
+
+Topic: {topic}
+
+Rules:
+- LABEL: 2 words max, funny Hinglish title
+- ROAST: 10-18 words, Hinglish, brutal but relatable
+- Use current references if available
+- Be creative har baar different
+- Bhai jaisa roast kar
+- No emojis, no hashtags
+
+Format:
+LABEL: [2 word title]
+ROAST: [brutal one-liner]"""
+
+    # Try AI models
     for model in AI_MODELS:
         try:
             res = groq_client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model=model, temperature=1.2, max_tokens=80
+                model=model,
+                temperature=1.4,  # High creativity
+                max_tokens=100
             )
             text = res.choices[0].message.content.strip()
             
             label, roast = "", ""
             for line in text.split('\n'):
-                if line.upper().startswith('LABEL:'): 
-                    label = line.split(':',1)[1].strip().strip('"\'*')
-                elif line.upper().startswith('ROAST:'): 
-                    roast = line.split(':',1)[1].strip().strip('"\'*')
+                line = line.strip()
+                if line.upper().startswith('LABEL:'):
+                    label = line.split(':', 1)[1].strip().strip('"\'*').upper()
+                elif line.upper().startswith('ROAST:'):
+                    roast = line.split(':', 1)[1].strip().strip('"\'*')
             
-            if not label: label = "Certified Nalla" if language == 'hindi' else "Certified Clown"
-            if not roast or len(roast) < 10: roast = text[:100].replace('*','')
+            # Fallbacks
+            if not label:
+                labels = {
+                    'hindi': ["CERTIFIED NALLA", "VELA SUPREME", "BAKCHOD PRO"],
+                    'english': ["CERTIFIED CLOWN", "PRO FAILURE", "EXPERT LOSER"],
+                    'mix': ["CERTIFIED CHUTIYA", "PRO VELA", "BAKCHOD KING"]
+                }
+                label = random.choice(labels.get(language, labels['hindi']))
+            
+            if not roast or len(roast) < 10:
+                roast = text.replace('*', '').strip()[:100] if text else "Tujhe roast karne layak content hi nahi hai"
             
             return label, roast
+            
         except Exception as e:
             print(f"Model failed: {e}")
             continue
     
-    return ("Certified Nalla", "AI bhi thak gaya bc") if language == 'hindi' else ("Certified Clown", "Even AI gave up on you")
+    # Ultimate fallback
+    fallbacks = {
+        'hindi': ("BACKUP ROAST", "AI bhi thak gaya tujhe roast karte karte"),
+        'english': ("BACKUP ROAST", "Even AI got tired roasting you"),
+        'mix': ("BACKUP ROAST", "AI bhi give up kar diya tere pe")
+    }
+    return fallbacks.get(language, fallbacks['hindi'])
 
 
 # ===== ROUTES =====
@@ -1218,37 +1065,26 @@ def home():
 def stats():
     return jsonify({"total_roasts": get_total_roasts(), "success": True})
 
-@app.route('/api/daily-topic')
-def daily_topic_api():
-    return jsonify({"success": True, "data": get_daily_topic(request.args.get('lang', 'hindi'))})
-
-@app.route('/api/trending')
-def trending_api():
-    """Get trending topics"""
-    if SEARCH_ENABLED:
-        try:
-            lang = request.args.get('lang', 'hindi')
-            topics = get_india_trending() if lang == 'hindi' else get_global_trending()
-            return jsonify({"success": True, "topics": topics})
-        except:
-            pass
-    return jsonify({"success": False, "topics": []})
+@app.route('/api/examples')
+def get_examples():
+    lang = request.args.get('lang', 'hindi')
+    return jsonify({"success": True, "examples": EXAMPLE_ROASTS.get(lang, EXAMPLE_ROASTS['hindi'])})
 
 @app.route('/roast')
 def roast():
     topic = request.args.get('topic', '').strip()
     lang = request.args.get('lang', 'hindi')
     
-    if not topic: 
+    if not topic:
         return jsonify({"error": "No topic"}), 400
     
-    if not os.path.exists(MEMES_FOLDER): 
+    if not os.path.exists(MEMES_FOLDER):
         os.makedirs(MEMES_FOLDER)
-        return jsonify({"error": "No memes folder"}), 500
-    
-    memes = [f for f in os.listdir(MEMES_FOLDER) if f.lower().endswith(('.jpg','.jpeg','.png'))]
-    if not memes: 
         return jsonify({"error": "No memes"}), 500
+    
+    memes = [f for f in os.listdir(MEMES_FOLDER) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    if not memes:
+        return jsonify({"error": "No meme images"}), 500
     
     try:
         label, roast_text = get_roast(topic, lang)
@@ -1258,7 +1094,7 @@ def roast():
         img.save(buf, 'JPEG', quality=95)
         buf.seek(0)
         
-        save_roast_to_db(topic, label, roast_text, lang)
+        save_roast(topic, label, roast_text, lang)
         
         return send_file(BytesIO(buf.getvalue()), mimetype='image/jpeg')
     except Exception as e:
