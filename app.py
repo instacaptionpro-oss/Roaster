@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-# Import search if available
 try:
     from search import get_smart_context, get_india_trending
     SEARCH_ENABLED = True
@@ -26,7 +25,6 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://roast_db_c13t_user:9
 MEMES_FOLDER = "memes"
 AI_MODELS = ["llama-3.3-70b-versatile", "qwen/qwen-2.5-72b-instruct", "meta-llama/llama-3.1-70b-versatile"]
 
-# Database functions
 def get_db_connection():
     try:
         return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
@@ -77,32 +75,7 @@ def save_roast(topic, label, roast, lang):
         except: pass
         finally: conn.close()
 
-def get_daily_topic(lang='hindi'):
-    try:
-        with open('daily_topic.json', 'r', encoding='utf-8') as f:
-            return json.load(f).get(lang)
-    except:
-        return {"topic": "Monday Morning", "label": "Somvar Syndrome"}
-
-# Example roasts for rotating display
-EXAMPLE_ROASTS = {
-    "hindi": [
-        {"topic": "Gym Wale", "label": "PROTEIN PAKODA", "roast": "Creatine ka dabba 2000 ka, body abhi bhi 2002 wali hai"},
-        {"topic": "Engineers", "label": "CTRL+C DEVELOPER", "roast": "Stack Overflow band ho jaye toh inki salary bhi band"},
-        {"topic": "Monday", "label": "SOMVAR VICTIM", "roast": "Alarm 6 baje laga ke 9 baje uthna talent nahi majboori hai"},
-        {"topic": "Influencers", "label": "FOLLOW KA BHIKHARI", "roast": "500 followers pe bhi bio mein 'DM for collab' likha hai"},
-        {"topic": "Startups", "label": "FUNDED FAILURE", "roast": "Idea nahi hai business ka, bas pitch deck ready hai"}
-    ],
-    "english": [
-        {"topic": "Gym Bros", "label": "PROTEIN CLOWN", "roast": "Spent more on supplements than actual workouts this year"},
-        {"topic": "Engineers", "label": "COPY PASTE DEV", "roast": "If Stack Overflow shuts down half the tech industry collapses"},
-        {"topic": "Monday", "label": "MONDAY SURVIVOR", "roast": "Set 5 alarms to wake up and still blamed traffic for being late"},
-        {"topic": "Influencers", "label": "CLOUT CHASER", "roast": "500 followers but bio says 'DM for collaborations'"},
-        {"topic": "Startups", "label": "FUNDED MESS", "roast": "No product no users but pitch deck has 47 slides"}
-    ]
-}
-
-# ===== CLEAN UI =====
+# ===== CLEAN UI WITH YOUR COLORS =====
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -114,18 +87,19 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --bg: #0D0D0D;
-            --primary: #FF6B35;
-            --accent: #FFD23F;
-            --text: #FFFFFF;
-            --text-muted: #888888;
-            --card-bg: #1A1A1A;
+            --bg-main: #0A0A0A;
+            --bg-input: #2C2C2E;
+            --bg-card: #1C1C1E;
+            --text-primary: #FFFFFF;
+            --text-placeholder: #8E8E93;
+            --accent-red: #FF3B30;
+            --accent-orange: #FF9500;
         }
         
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            background: var(--bg-main);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
         }
@@ -141,18 +115,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(13,13,13,0.9);
+            background: rgba(10,10,10,0.95);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,59,48,0.2);
         }
         
         .logo {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 900;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .live-count {
@@ -160,121 +134,114 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             align-items: center;
             gap: 8px;
             font-size: 0.8rem;
-            color: var(--text-muted);
+            color: var(--text-placeholder);
         }
         
         .live-dot {
             width: 8px;
             height: 8px;
-            background: #00FF00;
+            background: #30D158;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
         
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(48,209,88,0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(48,209,88,0); }
         }
         
         .count-num {
-            color: var(--accent);
+            color: var(--accent-orange);
             font-weight: 700;
         }
         
-        /* ===== HERO SECTION ===== */
+        /* ===== HERO ===== */
         .hero {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 80px 20px 120px;
-            position: relative;
+            padding: 100px 20px 140px;
         }
         
-        /* Rotating Example Card */
+        /* Example Card */
         .example-card {
-            position: relative;
             width: 100%;
-            max-width: 380px;
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 24px;
+            max-width: 400px;
+            background: var(--bg-card);
+            border: 2px solid var(--accent-red);
+            border-radius: 16px;
+            padding: 20px 24px;
             margin-bottom: 40px;
-            opacity: 0.6;
-            transform: scale(0.95);
-            transition: all 0.5s ease;
-            border: 1px solid rgba(255,255,255,0.1);
+            opacity: 0.7;
+            transition: all 0.4s ease;
+            box-shadow: 0 0 30px rgba(255,59,48,0.15);
         }
         
         .example-card:hover {
-            opacity: 0.9;
-            transform: scale(1);
+            opacity: 1;
+            box-shadow: 0 0 40px rgba(255,59,48,0.3);
         }
         
         .example-label {
             display: inline-block;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
             color: #000;
             padding: 4px 12px;
-            border-radius: 20px;
+            border-radius: 6px;
             font-size: 0.7rem;
             font-weight: 800;
-            margin-bottom: 12px;
             letter-spacing: 1px;
+            margin-bottom: 12px;
         }
         
         .example-topic {
-            font-size: 0.8rem;
-            color: var(--text-muted);
+            font-size: 0.75rem;
+            color: var(--text-placeholder);
             margin-bottom: 8px;
         }
         
         .example-roast {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             line-height: 1.5;
-            color: var(--text);
+            color: var(--text-primary);
         }
         
         .example-hint {
             text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 12px;
+            font-size: 0.7rem;
+            color: var(--text-placeholder);
+            margin-top: 14px;
         }
         
         /* Input Section */
         .input-section {
             width: 100%;
-            max-width: 500px;
-        }
-        
-        .input-wrapper {
-            position: relative;
-            margin-bottom: 16px;
+            max-width: 480px;
         }
         
         .main-input {
             width: 100%;
-            padding: 20px 24px;
+            padding: 18px 22px;
             font-size: 1.1rem;
             font-family: inherit;
-            background: var(--card-bg);
-            border: 2px solid transparent;
-            border-radius: 16px;
-            color: var(--text);
+            background: var(--bg-input);
+            border: 2px solid var(--accent-red);
+            border-radius: 14px;
+            color: var(--text-primary);
             outline: none;
             transition: all 0.3s;
+            margin-bottom: 14px;
         }
         
         .main-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 30px rgba(255,107,53,0.2);
+            box-shadow: 0 0 25px rgba(255,59,48,0.3);
         }
         
         .main-input::placeholder {
-            color: var(--text-muted);
+            color: var(--text-placeholder);
         }
         
         /* Language Toggle */
@@ -282,37 +249,43 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             display: flex;
             justify-content: center;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
         
         .lang-btn {
-            padding: 8px 16px;
+            padding: 8px 18px;
             font-size: 0.8rem;
             font-weight: 600;
+            font-family: inherit;
             background: transparent;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 20px;
-            color: var(--text-muted);
+            border: 1.5px solid var(--bg-input);
+            border-radius: 8px;
+            color: var(--text-placeholder);
             cursor: pointer;
             transition: all 0.3s;
         }
         
         .lang-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            border-color: transparent;
             color: #000;
+        }
+        
+        .lang-btn:hover:not(.active) {
+            border-color: var(--accent-red);
+            color: var(--text-primary);
         }
         
         /* Main Button */
         .roast-btn {
             width: 100%;
-            padding: 20px;
-            font-size: 1.2rem;
+            padding: 18px;
+            font-size: 1.15rem;
             font-weight: 800;
             font-family: inherit;
-            background: linear-gradient(135deg, var(--primary), #FF8C42);
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
             border: none;
-            border-radius: 16px;
+            border-radius: 14px;
             color: #000;
             cursor: pointer;
             transition: all 0.3s;
@@ -320,11 +293,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             align-items: center;
             justify-content: center;
             gap: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .roast-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(255,107,53,0.4);
+            box-shadow: 0 8px 30px rgba(255,59,48,0.4);
         }
         
         .roast-btn:active {
@@ -349,112 +324,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         .chip {
             padding: 8px 14px;
             font-size: 0.8rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            color: var(--text-muted);
+            font-family: inherit;
+            background: var(--bg-input);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-placeholder);
             cursor: pointer;
             transition: all 0.3s;
         }
         
         .chip:hover {
-            background: rgba(255,107,53,0.2);
-            border-color: var(--primary);
-            color: var(--text);
-        }
-        
-        /* ===== RESULT SECTION ===== */
-        .result-section {
-            display: none;
-            min-height: 100vh;
-            padding: 80px 20px 40px;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .result-section.active {
-            display: flex;
-        }
-        
-        .result-topic {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 16px;
-        }
-        
-        .result-card {
-            width: 100%;
-            max-width: 450px;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }
-        
-        .result-image {
-            width: 100%;
-            display: block;
-        }
-        
-        .primary-actions {
-            display: flex;
-            gap: 12px;
-            width: 100%;
-            max-width: 450px;
-            margin-bottom: 16px;
-        }
-        
-        .action-btn {
-            flex: 1;
-            padding: 16px;
-            font-size: 1rem;
-            font-weight: 700;
-            font-family: inherit;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .btn-save {
-            background: var(--primary);
+            background: var(--accent-red);
             color: #000;
-        }
-        
-        .btn-new {
-            background: var(--card-bg);
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .action-btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .share-actions {
-            display: flex;
-            gap: 12px;
-        }
-        
-        .share-btn {
-            padding: 12px 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 10px;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .share-btn:hover {
-            background: rgba(255,255,255,0.2);
-            color: var(--text);
         }
         
         /* ===== LOADING ===== */
@@ -472,13 +353,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
         
         .loader {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255,107,53,0.2);
-            border-top-color: var(--primary);
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--bg-input);
+            border-top-color: var(--accent-red);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         
         @keyframes spin {
@@ -486,21 +367,121 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
         
         .loading-text {
-            font-size: 1rem;
-            color: var(--text-muted);
+            font-size: 0.95rem;
+            color: var(--text-placeholder);
         }
         
-        /* ===== TRENDING BAR (Bottom) ===== */
+        /* ===== RESULT ===== */
+        .result-section {
+            display: none;
+            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            padding: 90px 20px 50px;
+        }
+        
+        .result-section.active {
+            display: flex;
+        }
+        
+        .result-topic {
+            font-size: 0.8rem;
+            color: var(--text-placeholder);
+            margin-bottom: 16px;
+        }
+        
+        .result-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-card);
+            border: 2px solid var(--accent-red);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 0 40px rgba(255,59,48,0.25);
+        }
+        
+        .result-image {
+            width: 100%;
+            display: block;
+        }
+        
+        .primary-actions {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 420px;
+            margin-bottom: 16px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-save {
+            background: var(--accent-red);
+            color: var(--text-primary);
+        }
+        
+        .btn-new {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 2px solid var(--accent-red);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,59,48,0.3);
+        }
+        
+        .share-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .share-btn {
+            padding: 10px 18px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: inherit;
+            background: var(--bg-input);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-placeholder);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .share-btn:hover {
+            background: var(--accent-red);
+            color: var(--text-primary);
+        }
+        
+        /* ===== TRENDING BAR ===== */
         .trending-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             z-index: 100;
-            padding: 12px 16px;
-            background: rgba(13,13,13,0.95);
+            padding: 14px 16px;
+            background: rgba(10,10,10,0.95);
             backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(255,255,255,0.05);
+            border-top: 1px solid rgba(255,59,48,0.2);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -508,81 +489,47 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             -webkit-overflow-scrolling: touch;
         }
         
-        .trending-bar::-webkit-scrollbar {
-            display: none;
-        }
+        .trending-bar::-webkit-scrollbar { display: none; }
         
         .trending-label {
             font-size: 0.75rem;
-            color: var(--primary);
+            color: var(--accent-red);
             font-weight: 700;
             white-space: nowrap;
         }
         
         .trending-chip {
             padding: 6px 14px;
-            font-size: 0.8rem;
-            background: rgba(255,107,53,0.15);
-            border: 1px solid rgba(255,107,53,0.3);
-            border-radius: 20px;
-            color: var(--text);
+            font-size: 0.75rem;
+            font-family: inherit;
+            background: var(--bg-input);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-primary);
             cursor: pointer;
             white-space: nowrap;
             transition: all 0.3s;
         }
         
         .trending-chip:hover {
-            background: var(--primary);
+            background: var(--accent-red);
             color: #000;
         }
         
         /* ===== MOBILE ===== */
-        @media (max-width: 600px) {
-            .header {
-                padding: 12px 16px;
-            }
-            
-            .logo {
-                font-size: 1rem;
-            }
-            
-            .hero {
-                padding: 70px 16px 100px;
-            }
-            
-            .example-card {
-                padding: 20px;
-                margin-bottom: 30px;
-            }
-            
-            .main-input {
-                padding: 18px 20px;
-                font-size: 1rem;
-            }
-            
-            .roast-btn {
-                padding: 18px;
-                font-size: 1.1rem;
-            }
-            
-            .result-section {
-                padding: 70px 16px 80px;
-            }
-            
-            .primary-actions {
-                flex-direction: column;
-            }
-            
-            .share-actions {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
+        @media (max-width: 500px) {
+            .header { padding: 14px 18px; }
+            .logo { font-size: 1.1rem; }
+            .hero { padding: 80px 16px 120px; }
+            .example-card { padding: 18px 20px; margin-bottom: 32px; }
+            .example-roast { font-size: 1rem; }
+            .main-input { padding: 16px 18px; font-size: 1rem; }
+            .roast-btn { padding: 16px; font-size: 1rem; }
+            .result-section { padding: 80px 16px 80px; }
+            .primary-actions { flex-direction: column; }
         }
         
-        /* Hide sections */
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -596,28 +543,17 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
     </header>
     
-    <!-- HERO SECTION -->
+    <!-- HERO -->
     <section class="hero" id="heroSection">
-        <!-- Rotating Example Card -->
         <div class="example-card" id="exampleCard">
             <div class="example-label" id="exampleLabel">PROTEIN PAKODA</div>
             <div class="example-topic" id="exampleTopic">Gym Wale</div>
             <div class="example-roast" id="exampleRoast">"Creatine ka dabba 2000 ka, body abhi bhi 2002 wali hai"</div>
-            <div class="example-hint">↑ Ye mil sakta hai tujhe bhi</div>
+            <div class="example-hint">↑ Ye tujhe bhi mil sakta hai</div>
         </div>
         
-        <!-- Input Section -->
         <div class="input-section">
-            <div class="input-wrapper">
-                <input 
-                    type="text" 
-                    class="main-input" 
-                    id="topicInput"
-                    placeholder="Kisko roast karein?"
-                    maxlength="100"
-                    autofocus
-                >
-            </div>
+            <input type="text" class="main-input" id="topicInput" placeholder="Kisko roast karein?" maxlength="100" autofocus>
             
             <div class="lang-toggle">
                 <button class="lang-btn active" id="hindiBtn" onclick="setLang('hindi')">हिंदी</button>
@@ -627,10 +563,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             
             <button class="roast-btn" id="roastBtn" onclick="generateRoast()">
                 <span>🔥</span>
-                <span id="btnText">ROAST KARO</span>
+                <span id="btnText">Roast Karo</span>
             </button>
             
-            <div class="quick-chips" id="quickChips">
+            <div class="quick-chips">
                 <button class="chip" onclick="useTopic('Monday')">Monday</button>
                 <button class="chip" onclick="useTopic('My Ex')">My Ex</button>
                 <button class="chip" onclick="useTopic('Engineers')">Engineers</button>
@@ -640,104 +576,86 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
     </section>
     
-    <!-- LOADING SECTION -->
+    <!-- LOADING -->
     <section class="loading-section" id="loadingSection">
         <div class="loader"></div>
         <div class="loading-text" id="loadingText">Roast ban raha hai...</div>
     </section>
     
-    <!-- RESULT SECTION -->
+    <!-- RESULT -->
     <section class="result-section" id="resultSection">
         <div class="result-topic" id="resultTopic">Topic: Monday</div>
-        
         <div class="result-card">
             <img src="" alt="Roast" class="result-image" id="resultImage">
         </div>
-        
         <div class="primary-actions">
-            <button class="action-btn btn-save" onclick="downloadImage()">
-                <span>📥</span> Save
-            </button>
-            <button class="action-btn btn-new" onclick="newRoast()">
-                <span>🔄</span> New Roast
-            </button>
+            <button class="action-btn btn-save" onclick="downloadImage()">📥 Save</button>
+            <button class="action-btn btn-new" onclick="newRoast()">🔄 New Roast</button>
         </div>
-        
         <div class="share-actions">
             <button class="share-btn" onclick="shareWhatsApp()">WhatsApp</button>
             <button class="share-btn" onclick="shareTwitter()">Twitter</button>
-            <button class="share-btn" onclick="copyLink()">Copy Link</button>
+            <button class="share-btn" onclick="copyLink()">Copy</button>
         </div>
     </section>
     
-    <!-- TRENDING BAR -->
+    <!-- TRENDING -->
     <div class="trending-bar" id="trendingBar">
         <span class="trending-label">🔥 Trending:</span>
         <button class="trending-chip" onclick="useTopic('IPL')">IPL</button>
-        <button class="trending-chip" onclick="useTopic('AI Jobs')">AI Jobs</button>
-        <button class="trending-chip" onclick="useTopic('Traffic')">Traffic</button>
+        <button class="trending-chip" onclick="useTopic('AI')">AI</button>
         <button class="trending-chip" onclick="useTopic('Startup')">Startup</button>
         <button class="trending-chip" onclick="useTopic('Influencers')">Influencers</button>
         <button class="trending-chip" onclick="useTopic('Cricket')">Cricket</button>
+        <button class="trending-chip" onclick="useTopic('Dating')">Dating</button>
     </div>
 
     <script>
         let currentLang = 'hindi';
         let currentImg = '';
-        let currentTopic = '';
-        let exampleIndex = 0;
+        let exampleIdx = 0;
         
         const examples = {
             hindi: [
                 {label: "PROTEIN PAKODA", topic: "Gym Wale", roast: "Creatine ka dabba 2000 ka, body abhi bhi 2002 wali hai"},
-                {label: "CTRL+C WARRIOR", topic: "Engineers", roast: "Stack Overflow band ho jaye toh inki salary bhi band"},
-                {label: "SOMVAR VICTIM", topic: "Monday", roast: "Alarm 6 ka lagaya, utha 9 baje, blame kiya traffic ko"},
-                {label: "CLOUT BHIKHARI", topic: "Influencers", roast: "500 followers pe bio mein 'DM for collab' likha hai"},
-                {label: "PITCH DECK PRO", topic: "Startups", roast: "Product nahi hai, users nahi hai, bas funding ki baat hai"}
+                {label: "CTRL+C CODER", topic: "Engineers", roast: "Stack Overflow band ho jaye toh inki salary bhi band"},
+                {label: "SOMVAR VICTIM", topic: "Monday", roast: "Alarm 6 ka, utha 9 baje, blame kiya traffic ko"}
             ],
             english: [
-                {label: "PROTEIN CLOWN", topic: "Gym Bros", roast: "Spent more on supplements than actual gym visits this year"},
-                {label: "STACKOVERFLOW DEV", topic: "Engineers", roast: "If Google goes down half the developers become unemployed"},
-                {label: "MONDAY HATER", topic: "Monday", roast: "Sets 10 alarms, still blames traffic for being late"},
-                {label: "CLOUT CHASER", topic: "Influencers", roast: "500 followers but 'Open for collaborations' in bio"},
-                {label: "PITCH MASTER", topic: "Startups", roast: "No product no users just vibes and a 50 slide deck"}
+                {label: "PROTEIN CLOWN", topic: "Gym Bros", roast: "Spent more on supplements than actual workouts"},
+                {label: "COPY PASTE DEV", topic: "Engineers", roast: "If Stack Overflow dies, half the tech industry dies"},
+                {label: "MONDAY HATER", topic: "Monday", roast: "Sets 5 alarms, still blames traffic for being late"}
             ],
             mix: [
-                {label: "GYM KA TOURIST", topic: "Gym Bros", roast: "Protein shake peeta hai daily, gym jaata hai yearly"},
+                {label: "GYM TOURIST", topic: "Gym Bros", roast: "Protein daily peeta hai, gym yearly jaata hai"},
                 {label: "COPY PASTE DEV", topic: "Engineers", roast: "Resume pe 10 skills, actually sirf Googling aati hai"},
-                {label: "MONDAY SYNDROME", topic: "Monday", roast: "Friday ko party, Monday ko 'I have a headache' message"},
-                {label: "INSTA FAMOUS", topic: "Influencers", roast: "Followers fake hai, engagement fake hai, bas ego real hai"},
-                {label: "STARTUP BRO", topic: "Startups", roast: "Idea copied, team nahi hai, but Shark Tank ka sapna hai"}
+                {label: "MONDAY SYNDROME", topic: "Monday", roast: "Friday party, Monday 'headache' message"}
             ]
         };
         
         const loadingMsgs = {
-            hindi: ["Roast pak raha hai...", "Sach nikal raha hai...", "Brutal mode on...", "Thoda ruk, mast aayega..."],
-            english: ["Cooking your roast...", "Finding the truth...", "Brutal mode on...", "Wait, it'll be fire..."],
-            mix: ["Roast ban raha hai...", "Sach with spice...", "Loading brutal truth...", "Aane wala hai mast..."]
+            hindi: ["Roast pak raha hai...", "Sach nikal raha hai...", "Thoda ruk..."],
+            english: ["Cooking roast...", "Finding truth...", "Wait for it..."],
+            mix: ["Roast ban raha...", "Truth loading...", "Almost ready..."]
         };
         
-        // Rotate examples
         function rotateExample() {
             const ex = examples[currentLang];
-            exampleIndex = (exampleIndex + 1) % ex.length;
-            const current = ex[exampleIndex];
+            exampleIdx = (exampleIdx + 1) % ex.length;
+            const c = ex[exampleIdx];
             
             const card = document.getElementById('exampleCard');
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.9)';
+            card.style.opacity = '0.3';
             
             setTimeout(() => {
-                document.getElementById('exampleLabel').textContent = current.label;
-                document.getElementById('exampleTopic').textContent = current.topic;
-                document.getElementById('exampleRoast').textContent = '"' + current.roast + '"';
-                card.style.opacity = '0.6';
-                card.style.transform = 'scale(0.95)';
-            }, 300);
+                document.getElementById('exampleLabel').textContent = c.label;
+                document.getElementById('exampleTopic').textContent = c.topic;
+                document.getElementById('exampleRoast').textContent = '"' + c.roast + '"';
+                card.style.opacity = '0.7';
+            }, 200);
         }
         setInterval(rotateExample, 4000);
         
-        // Update counter
         async function updateCounter() {
             try {
                 const res = await fetch('/api/stats');
@@ -746,97 +664,78 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             } catch(e) {}
         }
         updateCounter();
+        
         setInterval(() => {
             const el = document.getElementById('liveCount');
             let n = parseInt(el.textContent.replace(/,/g, '')) || 52341;
             el.textContent = (n + Math.floor(Math.random() * 2)).toLocaleString();
         }, 5000);
         
-        // Language
         function setLang(lang) {
             currentLang = lang;
             document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(lang + 'Btn').classList.add('active');
             
-            const placeholders = {
-                hindi: "Kisko roast karein?",
-                english: "Who to roast?",
-                mix: "Kisko roast karna hai?"
-            };
-            document.getElementById('topicInput').placeholder = placeholders[lang];
+            const ph = {hindi: "Kisko roast karein?", english: "Who to roast?", mix: "Kisko roast karna hai?"};
+            document.getElementById('topicInput').placeholder = ph[lang];
             
-            const btnTexts = {
-                hindi: "ROAST KARO",
-                english: "ROAST NOW",
-                mix: "ROAST KARO"
-            };
-            document.getElementById('btnText').textContent = btnTexts[lang];
+            const btn = {hindi: "Roast Karo", english: "Roast Now", mix: "Roast Karo"};
+            document.getElementById('btnText').textContent = btn[lang];
             
-            exampleIndex = -1;
+            exampleIdx = -1;
             rotateExample();
         }
         
-        // Use topic
-        function useTopic(topic) {
-            document.getElementById('topicInput').value = topic;
+        function useTopic(t) {
+            document.getElementById('topicInput').value = t;
             document.getElementById('topicInput').focus();
         }
         
-        // Enter key
         document.getElementById('topicInput').addEventListener('keypress', e => {
             if (e.key === 'Enter') generateRoast();
         });
         
-        // Generate roast
         async function generateRoast() {
             const topic = document.getElementById('topicInput').value.trim();
             if (!topic) {
-                document.getElementById('topicInput').style.borderColor = '#ff0000';
-                setTimeout(() => {
-                    document.getElementById('topicInput').style.borderColor = 'transparent';
-                }, 1000);
+                document.getElementById('topicInput').style.boxShadow = '0 0 20px rgba(255,59,48,0.6)';
+                setTimeout(() => document.getElementById('topicInput').style.boxShadow = '', 500);
                 return;
             }
             
-            currentTopic = topic;
-            
-            // Show loading
             document.getElementById('heroSection').classList.add('hidden');
             document.getElementById('resultSection').classList.remove('active');
             document.getElementById('loadingSection').classList.add('active');
             document.getElementById('trendingBar').classList.add('hidden');
             
-            // Rotate loading messages
             const msgs = loadingMsgs[currentLang];
             let i = 0;
             const interval = setInterval(() => {
                 document.getElementById('loadingText').textContent = msgs[++i % msgs.length];
-            }, 1200);
+            }, 1000);
             
             try {
                 const res = await fetch('/roast?topic=' + encodeURIComponent(topic) + '&lang=' + currentLang);
                 clearInterval(interval);
                 
-                if (!res.ok) throw new Error('Failed');
+                if (!res.ok) throw new Error();
                 
                 const blob = await res.blob();
                 currentImg = URL.createObjectURL(blob);
                 
                 document.getElementById('resultImage').src = currentImg;
                 document.getElementById('resultTopic').textContent = 'Topic: ' + topic;
-                
                 document.getElementById('loadingSection').classList.remove('active');
                 document.getElementById('resultSection').classList.add('active');
                 
                 updateCounter();
             } catch(e) {
                 clearInterval(interval);
-                alert('Error! Try again.');
+                alert('Error! Try again');
                 newRoast();
             }
         }
         
-        // New roast
         function newRoast() {
             document.getElementById('loadingSection').classList.remove('active');
             document.getElementById('resultSection').classList.remove('active');
@@ -847,7 +746,6 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             currentImg = '';
         }
         
-        // Download
         function downloadImage() {
             if (currentImg) {
                 const a = document.createElement('a');
@@ -857,19 +755,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             }
         }
         
-        // Share
         function shareWhatsApp() {
-            const text = 'Check out this roast! 🔥 ' + window.location.href;
-            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+            window.open('https://wa.me/?text=' + encodeURIComponent('Check this roast! 🔥 ' + location.href), '_blank');
         }
         
         function shareTwitter() {
-            const text = 'Just got roasted! 🔥 ' + window.location.href;
-            window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+            window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('Got roasted! 🔥 ' + location.href), '_blank');
         }
         
         function copyLink() {
-            navigator.clipboard.writeText(window.location.href);
+            navigator.clipboard.writeText(location.href);
             alert('Link copied!');
         }
     </script>
@@ -879,7 +774,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 # ===== IMAGE FUNCTIONS =====
 def get_font(size=40):
-    paths = ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "arial.ttf", "DejaVuSans-Bold.ttf"]
+    paths = ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "arial.ttf"]
     for p in paths:
         try: return ImageFont.truetype(p, size)
         except: continue
@@ -901,31 +796,28 @@ def add_text_to_image(img_path, label, roast):
     draw = ImageDraw.Draw(img)
     w, h = img.size
     
-    # Simple clean border
-    for i in range(5):
-        draw.rectangle([i, i, w-1-i, h-1-i], outline="#FF6B35")
+    # Red border
+    for i in range(4):
+        draw.rectangle([i, i, w-1-i, h-1-i], outline="#FF3B30")
     
-    # Label at top
-    lf = get_font(int(h * 0.065))
+    # Label
+    lf = get_font(int(h * 0.06))
     lt = label.upper()
     lb = lf.getbbox(lt)
     lx = (w - lb[2]) // 2
     
-    # Label background
-    padding = 10
-    draw.rectangle([lx - padding, 15, lx + lb[2] + padding, 20 + lb[3] + padding], fill="#FF6B35")
-    draw.text((lx, 18), lt, font=lf, fill="#000000")
+    draw.rectangle([lx-12, 12, lx+lb[2]+12, 18+lb[3]+8], fill="#FF3B30")
+    draw.text((lx, 15), lt, font=lf, fill="#000000")
     
-    # Roast at bottom
-    rf = get_font(int(h * 0.048))
+    # Roast
+    rf = get_font(int(h * 0.045))
     lines = wrap_text(roast, rf, int(w * 0.9))
-    lh = int(h * 0.05) + 8
-    y = h - len(lines) * lh - 20
+    lh = int(h * 0.048) + 6
+    y = h - len(lines) * lh - 18
     
     for line in lines:
         lb = rf.getbbox(line)
         x = (w - lb[2]) // 2
-        # Shadow
         for dx in range(-2,3):
             for dy in range(-2,3):
                 draw.text((x+dx, y+dy), line, font=rf, fill="#000000")
@@ -935,125 +827,67 @@ def add_text_to_image(img_path, label, roast):
     return img
 
 
-# ===== NATURAL ROAST AI =====
+# ===== AI ROAST =====
 def get_roast(topic, language='hindi'):
-    # Get real-time context if available
     context = ""
     if SEARCH_ENABLED:
         try:
+            from search import get_smart_context
             data = get_smart_context(topic, language)
             context = data.get('topic_info', '')[:400]
-        except:
-            context = ""
+        except: pass
     
-    # Simple natural prompt - like a bro talking to bro
-    if language == 'hindi':
-        prompt = f"""Tu India ka sabse brutal roaster hai. Tera kaam hai sirf roast karna - no filter, no mercy.
+    prompts = {
+        'hindi': f"""Tu India ka sabse brutal roaster hai. Natural bhai jaisa bol.
 
-Tu ek bhai ki tarah naturally baat karta hai. Forced funny nahi, natural savage.
-
-{f'CURRENT INFO: {context}' if context else ''}
+{f'Context: {context}' if context else ''}
 
 Topic: {topic}
 
-Rules:
-- LABEL: 2 words max, funny Hindi/Hinglish title (like "PROTEIN PAKODA", "CTRL+C CODER")
-- ROAST: 10-18 words, natural language, brutal but relatable
-- Use current references if available
-- Be creative, different every time
-- Talk like a friend roasting friend
-- No emojis, no hashtags
+LABEL: 2 word funny title
+ROAST: 10-18 words, brutal, natural Hindi""",
+        
+        'english': f"""You're a brutal roaster. Talk natural like a bro.
 
-Format:
-LABEL: [2 word title]
-ROAST: [brutal one-liner]"""
-
-    elif language == 'english':
-        prompt = f"""You're India's most brutal roaster. Your job is to roast - no filter, no mercy.
-
-You talk naturally like a bro. Not forced funny, just natural savage.
-
-{f'CURRENT INFO: {context}' if context else ''}
+{f'Context: {context}' if context else ''}
 
 Topic: {topic}
 
-Rules:
-- LABEL: 2 words max, funny title (like "PROTEIN CLOWN", "COPY PASTE DEV")  
-- ROAST: 10-18 words, natural, brutal but relatable
-- Use current references if available
-- Be creative, different every time
-- Talk like a friend roasting friend
-- No emojis, no hashtags
+LABEL: 2 word funny title
+ROAST: 10-18 words, brutal, natural English""",
+        
+        'mix': f"""Tu brutal roaster hai. Hinglish mein bol.
 
-Format:
-LABEL: [2 word title]
-ROAST: [brutal one-liner]"""
-
-    else:  # mix
-        prompt = f"""Tu India ka sabse brutal roaster hai. Hinglish mein baat kar - Hindi + English mix.
-
-Natural bhai jaisa bol. Forced nahi, natural savage.
-
-{f'CURRENT INFO: {context}' if context else ''}
+{f'Context: {context}' if context else ''}
 
 Topic: {topic}
 
-Rules:
-- LABEL: 2 words max, funny Hinglish title
-- ROAST: 10-18 words, Hinglish, brutal but relatable
-- Use current references if available
-- Be creative har baar different
-- Bhai jaisa roast kar
-- No emojis, no hashtags
-
-Format:
-LABEL: [2 word title]
-ROAST: [brutal one-liner]"""
-
-    # Try AI models
+LABEL: 2 word funny title
+ROAST: 10-18 words, brutal, Hinglish"""
+    }
+    
     for model in AI_MODELS:
         try:
             res = groq_client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=model,
-                temperature=1.4,  # High creativity
-                max_tokens=100
+                messages=[{"role": "user", "content": prompts.get(language, prompts['hindi'])}],
+                model=model, temperature=1.4, max_tokens=80
             )
             text = res.choices[0].message.content.strip()
             
             label, roast = "", ""
             for line in text.split('\n'):
-                line = line.strip()
-                if line.upper().startswith('LABEL:'):
-                    label = line.split(':', 1)[1].strip().strip('"\'*').upper()
-                elif line.upper().startswith('ROAST:'):
-                    roast = line.split(':', 1)[1].strip().strip('"\'*')
+                if 'LABEL:' in line.upper():
+                    label = line.split(':', 1)[1].strip().strip('"*').upper()
+                elif 'ROAST:' in line.upper():
+                    roast = line.split(':', 1)[1].strip().strip('"*')
             
-            # Fallbacks
-            if not label:
-                labels = {
-                    'hindi': ["CERTIFIED NALLA", "VELA SUPREME", "BAKCHOD PRO"],
-                    'english': ["CERTIFIED CLOWN", "PRO FAILURE", "EXPERT LOSER"],
-                    'mix': ["CERTIFIED CHUTIYA", "PRO VELA", "BAKCHOD KING"]
-                }
-                label = random.choice(labels.get(language, labels['hindi']))
-            
-            if not roast or len(roast) < 10:
-                roast = text.replace('*', '').strip()[:100] if text else "Tujhe roast karne layak content hi nahi hai"
+            if not label: label = "CERTIFIED ROAST"
+            if not roast: roast = text[:80].replace('*','')
             
             return label, roast
-            
-        except Exception as e:
-            print(f"Model failed: {e}")
-            continue
+        except: continue
     
-    # Ultimate fallback
-    fallbacks = {
-        'hindi': ("BACKUP ROAST", "AI bhi thak gaya tujhe roast karte karte"),
-        'english': ("BACKUP ROAST", "Even AI got tired roasting you"),
-        'mix': ("BACKUP ROAST", "AI bhi give up kar diya tere pe")
-    }
-    return fallbacks.get(language, fallbacks['hindi'])
+    return ("BACKUP ROAST", "AI thak gaya tujhe roast karte karte")
 
 
 # ===== ROUTES =====
@@ -1063,28 +897,17 @@ def home():
 
 @app.route('/api/stats')
 def stats():
-    return jsonify({"total_roasts": get_total_roasts(), "success": True})
-
-@app.route('/api/examples')
-def get_examples():
-    lang = request.args.get('lang', 'hindi')
-    return jsonify({"success": True, "examples": EXAMPLE_ROASTS.get(lang, EXAMPLE_ROASTS['hindi'])})
+    return jsonify({"total_roasts": get_total_roasts()})
 
 @app.route('/roast')
 def roast():
     topic = request.args.get('topic', '').strip()
     lang = request.args.get('lang', 'hindi')
     
-    if not topic:
-        return jsonify({"error": "No topic"}), 400
+    if not topic: return jsonify({"error": "No topic"}), 400
     
-    if not os.path.exists(MEMES_FOLDER):
-        os.makedirs(MEMES_FOLDER)
-        return jsonify({"error": "No memes"}), 500
-    
-    memes = [f for f in os.listdir(MEMES_FOLDER) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-    if not memes:
-        return jsonify({"error": "No meme images"}), 500
+    memes = [f for f in os.listdir(MEMES_FOLDER) if f.endswith(('.jpg','.jpeg','.png'))] if os.path.exists(MEMES_FOLDER) else []
+    if not memes: return jsonify({"error": "No memes"}), 500
     
     try:
         label, roast_text = get_roast(topic, lang)
@@ -1095,15 +918,13 @@ def roast():
         buf.seek(0)
         
         save_roast(topic, label, roast_text, lang)
-        
         return send_file(BytesIO(buf.getvalue()), mimetype='image/jpeg')
     except Exception as e:
-        print(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/health')
 def health():
-    return jsonify({"status": "ok", "search": SEARCH_ENABLED})
+    return jsonify({"status": "ok"})
 
 if __name__ == '__main__':
     os.makedirs(MEMES_FOLDER, exist_ok=True)
