@@ -45,7 +45,7 @@ except:
     PUSH_ENABLED = False
 
 try:
-    from core.storage import upload_battle_card
+    from core.storage import upload_roast_card, upload_battle_card
     STORAGE_ENABLED = True
 except:
     STORAGE_ENABLED = False
@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 app          = Flask(__name__, static_folder='static', static_url_path='/static')
+app.secret_key = os.getenv('SECRET_KEY', 'roaster-secret-change-this')
 groq_client  = Groq(api_key=os.getenv("GROQ_API_KEY"))
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://roast_db_c13t_user:9PO09Y3SpZ6z5r0eYszLsYGHg0bcYtXx@dpg-d5ubdo24d50c73d1bmdg-a/roast_db_c13t")
 MEMES_FOLDER  = "memes"
@@ -476,7 +477,21 @@ def roast():
 
         ms = int((time.time()-t0)*1000)
         save_roast_analytics(topic,label,roast_text,lang,quality,ip,session_id,ms,True)
-        return send_file(BytesIO(buf.getvalue()), mimetype='image/jpeg')
+
+        # Serve image instantly to user
+        image_bytes = buf.getvalue()
+
+        # Upload to Cloudinary in background (for share links)
+        if STORAGE_ENABLED:
+            import threading
+            def bg_upload():
+                try:
+                    upload_roast_card(BytesIO(image_bytes), session_id)
+                except Exception as ue:
+                    logger.error(f"BG Cloudinary upload failed: {ue}")
+            threading.Thread(target=bg_upload, daemon=True).start()
+
+        return send_file(BytesIO(image_bytes), mimetype='image/jpeg')
 
     except Exception as e:
         ms = int((time.time()-t0)*1000)
@@ -677,6 +692,343 @@ def analytics():
     finally:
         conn.close()
 
+
+
+
+# =====================================================================
+# ADMIN DASHBOARD
+# =====================================================================
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "roaster2025")
+
+ADMIN_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roaster AI — Admin</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0a0008; color:#fff; font-family:'Segoe UI',sans-serif; min-height:100vh; }
+  .topbar { background:#130010; border-bottom:2px solid #cc0000;
+            padding:16px 32px; display:flex; justify-content:space-between; align-items:center; }
+  .topbar h1 { font-size:1.4rem; color:#ff4422; }
+  .logout { color:#888; text-decoration:none; font-size:0.85rem; }
+  .logout:hover { color:#ff4422; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+          gap:16px; padding:24px; }
+  .stat-card { background:#1a0015; border:1px solid #330020; border-radius:12px;
+               padding:20px; text-align:center; }
+  .stat-card .num { font-size:2.2rem; font-weight:900; color:#ff4422; }
+  .stat-card .lbl { font-size:0.8rem; color:#888; margin-top:4px; text-transform:uppercase; letter-spacing:1px; }
+  .section { padding:0 24px 24px; }
+  .section h2 { font-size:1rem; color:#ff4422; margin-bottom:12px;
+                text-transform:uppercase; letter-spacing:2px; border-bottom:1px solid #330020; padding-bottom:8px; }
+  .row-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  table { width:100%; border-collapse:collapse; background:#1a0015;
+          border-radius:10px; overflow:hidden; }
+  th { background:#330020; padding:10px 14px; text-align:left;
+       font-size:0.78rem; color:#ff4422; text-transform:uppercase; letter-spacing:1px; }
+  td { padding:10px 14px; font-size:0.88rem; border-bottom:1px solid #220018; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#220018; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:20px;
+           font-size:0.75rem; font-weight:700; }
+  .badge.win  { background:#1a3300; color:#44ff44; }
+  .badge.loss { background:#330000; color:#ff4422; }
+  .bar-wrap { background:#0a0008; border-radius:4px; height:8px; margin-top:4px; }
+  .bar-fill { height:8px; border-radius:4px; background:linear-gradient(90deg,#cc0000,#ff6600); }
+  .login-wrap { display:flex; justify-content:center; align-items:center; min-height:100vh; }
+  .login-box { background:#1a0015; border:1px solid #330020; border-radius:16px;
+               padding:40px; width:320px; text-align:center; }
+  .login-box h2 { color:#ff4422; margin-bottom:24px; font-size:1.3rem; }
+  .login-box input { width:100%; padding:12px 16px; background:#0a0008;
+                     border:1px solid #440028; border-radius:8px; color:#fff;
+                     font-size:1rem; margin-bottom:12px; }
+  .login-box button { width:100%; padding:12px; background:#cc0000;
+                      border:none; border-radius:8px; color:#fff;
+                      font-size:1rem; font-weight:700; cursor:pointer; }
+  .login-box button:hover { background:#ff2200; }
+  .refresh { float:right; font-size:0.75rem; color:#555; }
+</style>
+</head>
+<body>
+
+{% if not logged_in %}
+<div class="login-wrap">
+  <div class="login-box">
+    <h2>🔥 Admin Access</h2>
+    <form method="POST">
+      <input type="password" name="password" placeholder="Enter password" autofocus>
+      <button type="submit">Enter</button>
+      {% if error %}<p style="color:#ff4422;margin-top:8px;font-size:0.85rem;">Wrong password</p>{% endif %}
+    </form>
+  </div>
+</div>
+
+{% else %}
+<div class="topbar">
+  <h1>🔥 Roaster AI — Admin</h1>
+  <a href="/admin?logout=1" class="logout">Logout</a>
+</div>
+
+<!-- OVERVIEW STATS -->
+<div class="grid">
+  <div class="stat-card">
+    <div class="num">{{ stats.total_roasts }}</div>
+    <div class="lbl">Total Roasts</div>
+  </div>
+  <div class="stat-card">
+    <div class="num">{{ stats.today_roasts }}</div>
+    <div class="lbl">Roasts Today</div>
+  </div>
+  <div class="stat-card">
+    <div class="num">{{ stats.unique_users }}</div>
+    <div class="lbl">Unique Users</div>
+  </div>
+  <div class="stat-card">
+    <div class="num">{{ stats.total_battles }}</div>
+    <div class="lbl">Battles Created</div>
+  </div>
+  <div class="stat-card">
+    <div class="num">{{ stats.battles_completed }}</div>
+    <div class="lbl">Battles Completed</div>
+  </div>
+  <div class="stat-card">
+    <div class="num">{{ stats.avg_response }}ms</div>
+    <div class="lbl">Avg Response Time</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="row-grid">
+
+    <!-- TOP TOPICS -->
+    <div>
+      <h2>🏆 Top Topics</h2>
+      <table>
+        <tr><th>#</th><th>Topic</th><th>Roasts</th></tr>
+        {% for i, t in enumerate(stats.top_topics) %}
+        <tr>
+          <td>{{ i+1 }}</td>
+          <td>{{ t.topic }}</td>
+          <td>{{ t.cnt }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <!-- TOP COUNTRIES -->
+    <div>
+      <h2>🌍 Top Countries</h2>
+      <table>
+        <tr><th>Country</th><th>Users</th><th>Share</th></tr>
+        {% for c in stats.top_countries %}
+        <tr>
+          <td>{{ c.country }}</td>
+          <td>{{ c.cnt }}</td>
+          <td>
+            <div class="bar-wrap">
+              <div class="bar-fill" style="width:{{ (c.cnt / stats.total_roasts * 100)|round(1) if stats.total_roasts else 0 }}%"></div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <div class="row-grid">
+
+    <!-- LANGUAGE SPLIT -->
+    <div>
+      <h2>🗣️ Language Split</h2>
+      <table>
+        <tr><th>Language</th><th>Count</th></tr>
+        {% for l in stats.by_language %}
+        <tr><td>{{ l.language }}</td><td>{{ l.cnt }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <!-- QUALITY SPLIT -->
+    <div>
+      <h2>🔥 Intensity Levels</h2>
+      <table>
+        <tr><th>Level</th><th>Count</th></tr>
+        {% for q in stats.by_quality %}
+        <tr><td>{{ q.quality_name }}</td><td>{{ q.cnt }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <div class="row-grid">
+
+    <!-- DEVICE SPLIT -->
+    <div>
+      <h2>📱 Device Split</h2>
+      <table>
+        <tr><th>Device</th><th>Count</th></tr>
+        {% for d in stats.by_device %}
+        <tr><td>{{ d.device_type }}</td><td>{{ d.cnt }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <!-- RECENT BATTLES -->
+    <div>
+      <h2>⚔️ Recent Battles</h2>
+      <table>
+        <tr><th>ID</th><th>Topic</th><th>Status</th><th>Rounds</th></tr>
+        {% for b in stats.recent_battles %}
+        <tr>
+          <td>{{ b.battle_id }}</td>
+          <td>{{ b.topic[:20] }}</td>
+          <td>
+            <span class="badge {{ 'win' if b.status == 'ended' else 'loss' }}">
+              {{ b.status }}
+            </span>
+          </td>
+          <td>{{ b.total_rounds }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h2>🕐 Recent Roasts</h2>
+  <table>
+    <tr><th>Topic</th><th>Language</th><th>Level</th><th>Country</th><th>Device</th><th>Time</th></tr>
+    {% for r in stats.recent_roasts %}
+    <tr>
+      <td>{{ r.topic }}</td>
+      <td>{{ r.language }}</td>
+      <td>{{ r.quality_name }}</td>
+      <td>{{ r.country }}</td>
+      <td>{{ r.device_type }}</td>
+      <td style="color:#555;font-size:0.8rem;">{{ r.created_at.strftime('%d %b %H:%M') if r.created_at else '-' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% endif %}
+</body>
+</html>"""
+
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    session_key = "admin_logged_in"
+
+    # Logout
+    if request.args.get('logout'):
+        from flask import session
+        session.pop(session_key, None)
+        return redirect('/admin')
+
+    # Check login
+    from flask import session
+    logged_in = session.get(session_key, False)
+
+    if request.method == 'POST':
+        pwd = request.form.get('password', '')
+        if pwd == ADMIN_PASSWORD:
+            session[session_key] = True
+            logged_in = True
+        else:
+            return render_template_string(ADMIN_HTML, logged_in=False, error=True,
+                                          stats={}, enumerate=enumerate)
+
+    if not logged_in:
+        return render_template_string(ADMIN_HTML, logged_in=False, error=False,
+                                      stats={}, enumerate=enumerate)
+
+    # Pull all stats from DB
+    stats = _get_admin_stats()
+    return render_template_string(ADMIN_HTML, logged_in=True, error=False,
+                                  stats=stats, enumerate=enumerate)
+
+
+def _get_admin_stats():
+    conn = get_db_connection()
+    if not conn:
+        return {}
+    try:
+        cur  = conn.cursor()
+        data = {}
+
+        # Overview
+        cur.execute("SELECT COUNT(*) as c FROM analytics WHERE success=TRUE")
+        data['total_roasts'] = cur.fetchone()['c']
+
+        cur.execute("SELECT COUNT(*) as c FROM analytics WHERE success=TRUE AND created_at::date = CURRENT_DATE")
+        data['today_roasts'] = cur.fetchone()['c']
+
+        cur.execute("SELECT COUNT(DISTINCT session_id) as c FROM analytics")
+        data['unique_users'] = cur.fetchone()['c']
+
+        cur.execute("SELECT AVG(response_ms)::int as a FROM analytics WHERE success=TRUE")
+        data['avg_response'] = cur.fetchone()['a'] or 0
+
+        cur.execute("SELECT COUNT(*) as c FROM battles")
+        data['total_battles'] = cur.fetchone()['c']
+
+        cur.execute("SELECT COUNT(*) as c FROM battles WHERE status='ended'")
+        data['battles_completed'] = cur.fetchone()['c']
+
+        # Top topics
+        cur.execute("""SELECT topic, COUNT(*) as cnt FROM analytics
+                       WHERE success=TRUE AND topic != ''
+                       GROUP BY topic ORDER BY cnt DESC LIMIT 10""")
+        data['top_topics'] = cur.fetchall()
+
+        # Top countries
+        cur.execute("""SELECT country, COUNT(*) as cnt FROM analytics
+                       WHERE success=TRUE GROUP BY country ORDER BY cnt DESC LIMIT 8""")
+        data['top_countries'] = cur.fetchall()
+
+        # Language split
+        cur.execute("""SELECT language, COUNT(*) as cnt FROM analytics
+                       WHERE success=TRUE GROUP BY language ORDER BY cnt DESC""")
+        data['by_language'] = cur.fetchall()
+
+        # Quality split
+        cur.execute("""SELECT quality_name, COUNT(*) as cnt FROM analytics
+                       WHERE success=TRUE GROUP BY quality_name ORDER BY cnt DESC""")
+        data['by_quality'] = cur.fetchall()
+
+        # Device split
+        cur.execute("""SELECT device_type, COUNT(*) as cnt FROM analytics
+                       GROUP BY device_type ORDER BY cnt DESC""")
+        data['by_device'] = cur.fetchall()
+
+        # Recent battles
+        cur.execute("""SELECT battle_id, topic, status, total_rounds
+                       FROM battles ORDER BY created_at DESC LIMIT 10""")
+        data['recent_battles'] = cur.fetchall()
+
+        # Recent roasts
+        cur.execute("""SELECT topic, language, quality_name, country, device_type, created_at
+                       FROM analytics WHERE success=TRUE
+                       ORDER BY created_at DESC LIMIT 15""")
+        data['recent_roasts'] = cur.fetchall()
+
+        return data
+    except Exception as e:
+        logger.error(f"Admin stats error: {e}")
+        return {}
+    finally:
+        conn.close()
 
 # =====================================================================
 # TEMPLATES
