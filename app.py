@@ -1033,7 +1033,9 @@ def _get_admin_stats():
 # =====================================================================
 # TEMPLATES
 # =====================================================================
-HTML_TEMPLATE  = open('index.html').read() if os.path.exists('index.html') else "<h1>Roaster AI</h1>"
+import pathlib
+_BASE         = pathlib.Path(__file__).parent
+HTML_TEMPLATE = (_BASE / 'index.html').read_text(encoding='utf-8') if (_BASE / 'index.html').exists() else '<h1>Roaster AI</h1>'
 
 BATTLE_TEMPLATE = """<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Roast Battle</title>
