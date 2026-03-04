@@ -428,7 +428,17 @@ def get_roast(topic, language='hindi', quality=3):
 # =====================================================================
 @app.route('/')
 def home():
-    return render_template_string(HTML_TEMPLATE)
+    import pathlib, os
+    # Try multiple paths to find index.html
+    candidates = [
+        pathlib.Path(__file__).parent / 'index.html',
+        pathlib.Path.cwd() / 'index.html',
+        pathlib.Path('/opt/render/project/src/index.html'),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p.read_text(encoding='utf-8')
+    return '<h1>Roaster AI — index.html not found</h1>', 500
 
 @app.route('/api/stats')
 def stats():
@@ -1033,9 +1043,7 @@ def _get_admin_stats():
 # =====================================================================
 # TEMPLATES
 # =====================================================================
-import pathlib
-_BASE         = pathlib.Path(__file__).parent
-HTML_TEMPLATE = (_BASE / 'index.html').read_text(encoding='utf-8') if (_BASE / 'index.html').exists() else '<h1>Roaster AI</h1>'
+# HTML loaded at request time — see home() route
 
 BATTLE_TEMPLATE = """<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Roast Battle</title>
