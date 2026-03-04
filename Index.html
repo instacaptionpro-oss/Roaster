@@ -4,418 +4,1153 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roaster AI - Silence Your Ego</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+
+    <!-- ===== GOOGLE ANALYTICS 4 =====
+         Replace GA_MEASUREMENT_ID with your real ID from:
+         analytics.google.com → Admin → Data Streams → Measurement ID (e.g. G-XXXXXXXXXX)
+    -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID', {
+            send_page_view: true,
+            custom_map: {
+                'dimension1': 'roast_quality',
+                'dimension2': 'roast_language',
+                'dimension3': 'roast_topic'
+            }
+        });
+
+        // Helper: fire a GA4 event safely
+        function gaEvent(name, params) {
+            try { gtag('event', name, params || {}); } catch(e) {}
         }
 
+        // Generate a session ID for backend correlation
+        window.SESSION_ID = (localStorage.getItem('rsid') || (() => {
+            const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+            localStorage.setItem('rsid', id);
+            return id;
+        })());
+    </script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-            background-image: url('https://i.postimg.cc/R0g9tGYB/Mr.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background: #000;
             color: #fff;
+            overflow-x: hidden;
         }
 
         .navbar {
+            position: relative;
+            z-index: 10;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 26px 48px;
+            padding: 18px 36px;
         }
 
         .nav-brand {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: #fff;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-logo {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(200, 40, 10, 0.6));
         }
 
         .system-status {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #fff;
-            opacity: 0.95;
+            gap: 7px;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.4);
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 7px; height: 7px;
             border-radius: 50%;
-            background: #4ade80;
-            box-shadow: 0 0 8px rgba(74, 222, 128, 0.2);
+            background: #cc0000;
+            box-shadow: 0 0 10px #cc0000, 0 0 20px #880000;
+            animation: redPulse 2s infinite;
         }
 
-        .container {
-            max-width: 980px;
-            margin: 40px auto;
-            padding: 56px;
+        @keyframes redPulse {
+            0%,100% { box-shadow: 0 0 6px #cc0000; }
+            50%      { box-shadow: 0 0 18px #ff0000, 0 0 30px #880000; }
+        }
+
+        .hero {
+            position: relative;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2px 20px 0;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: clamp(1.75rem, 4.2vw, 2.9rem);
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 4px;
+            text-shadow: 0 0 30px rgba(180,0,0,0.4);
+        }
+
+        .accent { color: #cc0000; text-shadow: 0 0 20px rgba(200,0,0,0.8); }
+
+        .hero-sub {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.28);
+            margin-bottom: 12px;
+        }
+
+        /* ===== HEX STAGE ===== */
+        .hex-stage {
+            position: relative;
+            width: min(500px, 88vw);
+            height: min(500px, 88vw);
+            margin: 0 auto 18px;
+        }
+
+        #hexCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /*
+          SPIKE TAG POSITIONS (centroid of each outer spike triangle)
+          Centroid of spike = (2/3)*R from center toward tip
+          R = 0.42 * stage → centroid = 0.28 * stage from center
+
+          Tip angles: -90°, -30°, 30°, 90°, 150°, 210°
+          As % of stage (center=50%):
+            top     (-90°): 50%, 22%
+            top-R   (-30°): 74.2%, 36%
+            bot-R   ( 30°): 74.2%, 64%
+            bottom  ( 90°): 50%, 78%
+            bot-L   (150°): 25.8%, 64%
+            top-L   (210°): 25.8%, 36%
+        */
+        .spike-tag {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            width: 66px;
+        }
+
+        .spike-tag.pop {
+            animation: tagPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+
+        @keyframes tagPop {
+            from { opacity:0; transform:translate(-50%,-50%) scale(0.15); }
+            to   { opacity:1; transform:translate(-50%,-50%) scale(1); }
+        }
+
+        .st-0 { left:50%;   top:22%; }
+        .st-1 { left:74.2%; top:36%; }
+        .st-2 { left:74.2%; top:64%; }
+        .st-3 { left:50%;   top:78%; }
+        .st-4 { left:25.8%; top:64%; }
+        .st-5 { left:25.8%; top:36%; }
+
+        .stag-emoji {
+            font-size: clamp(0.72rem, 1.6vw, 0.95rem);
+            line-height: 1;
+            display: block;
+            letter-spacing: -2px;
+            filter: drop-shadow(0 0 6px rgba(200,0,0,0.8));
+        }
+
+        .stag-text {
+            font-size: clamp(0.38rem, 0.85vw, 0.5rem);
+            font-weight: 900;
+            letter-spacing: 0.8px;
+            color: #ff4444;
+            text-shadow: 0 0 8px rgba(200,0,0,0.9), 0 0 16px rgba(150,0,0,0.6);
+            white-space: nowrap;
+            display: block;
+        }
+
+        /* ===== INPUT ===== */
+        .input-section {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 20px 44px;
         }
 
         .live-ticker {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(0,0,0,0.45);
-            padding: 8px 12px;
+            gap: 6px;
+            background: rgba(150,0,0,0.08);
+            border: 1px solid rgba(150,0,0,0.25);
+            padding: 5px 12px;
             border-radius: 999px;
-            margin-bottom: 18px;
+            margin-bottom: 11px;
+            font-size: 0.73rem;
             font-weight: 700;
-        }
-
-        .hero-headline {
-            font-size: 3.5rem;
-            margin-bottom: 12px;
-            line-height: 1.02;
-        }
-
-        .accent {
-            color: #ff4500;
-        }
-
-        .hero-subtext {
-            margin-bottom: 28px;
-            color: #f3f3f3;
-            opacity: 0.95;
-        }
-
-        .input-engine {
-            margin-bottom: 20px;
+            color: rgba(255,100,100,0.7);
         }
 
         .command-line {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
-            background: rgba(0,0,0,0.6);
-            border-radius: 12px;
-            padding: 14px;
+            background: rgba(80,0,0,0.12);
+            border: 1px solid rgba(150,0,0,0.3);
+            border-radius: 13px;
+            padding: 12px 15px;
+            transition: border-color .3s, box-shadow .3s;
         }
 
-        .command-prefix {
-            font-weight: 700;
-            color: #ffb37a;
+        .command-line:focus-within {
+            border-color: rgba(200,0,0,0.6);
+            box-shadow: 0 0 30px rgba(150,0,0,0.15);
         }
+
+        .command-prefix { font-weight:900; color:#cc0000; font-size:1.2rem; }
 
         .command-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
+            flex:1; background:transparent; border:none;
+            color:#fff; font-size:0.96rem; outline:none; font-family:inherit;
         }
+
+        .command-input::placeholder { color:rgba(255,255,255,0.18); }
 
         .execute-btn {
-            background: linear-gradient(90deg,#ff7a18,#ff4500);
-            border: none;
-            padding: 10px 14px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            background: linear-gradient(135deg,#aa0000,#660000);
+            border:none; padding:10px 13px; border-radius:9px;
+            cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+            box-shadow: 0 0 16px rgba(150,0,0,0.5);
+            transition: transform .15s, box-shadow .15s;
         }
 
-        .loading-container {
-            display: none;
-            margin-top: 20px;
+        .execute-btn:hover {
+            transform:scale(1.08);
+            box-shadow:0 0 30px rgba(200,0,0,0.7);
         }
+
+        .loading-container { display:none; text-align:center; padding:20px 0; }
+
+        .loading-ring {
+            width:34px; height:34px;
+            border:3px solid rgba(150,0,0,0.15);
+            border-top-color:#cc0000; border-radius:50%;
+            animation:spin .8s linear infinite; margin:0 auto 10px;
+        }
+
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .loading-text { font-size:0.8rem; color:rgba(255,100,100,0.5); }
 
         .result-card {
-            display: none;
-            margin-top: 20px;
-            background: rgba(0,0,0,0.7);
-            padding: 20px;
-            border-radius: 16px;
+            display:none; margin-top:14px;
+            background:rgba(20,0,0,0.8);
+            border:1px solid rgba(150,0,0,0.2);
+            padding:15px; border-radius:15px;
         }
 
-        .result-card.active {
-            display: block;
+        .result-card.active { display:block; }
+        .result-image { width:100%; border-radius:9px; margin-bottom:12px; display:block; }
+        .action-buttons { display:flex; gap:9px; }
+
+        .whatsapp-btn, .retry-btn {
+            flex:1; padding:10px; border:none; border-radius:9px;
+            cursor:pointer; font-weight:700; font-size:0.8rem; transition:transform .15s;
         }
+
+        .whatsapp-btn { background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; }
+        .retry-btn    { background:rgba(150,0,0,0.15); color:#ff4444; border:1px solid rgba(150,0,0,0.3); }
+        .whatsapp-btn:hover,.retry-btn:hover { transform:translateY(-2px); }
 
         .error-message {
-            display: none;
-            margin-top: 16px;
-            background: #ff4d4f;
-            padding: 12px;
-            border-radius: 12px;
-            color: #fff;
-            font-weight: 700;
-            animation: shake 0.5s;
+            display:none; margin-top:10px;
+            background:rgba(150,0,0,0.1);
+            border:1px solid rgba(150,0,0,0.3);
+            padding:10px 13px; border-radius:9px;
+            color:#ff6666; font-weight:600; font-size:0.8rem;
         }
 
-        .error-message.active {
-            display: block;
-        }
+        .error-message.active { display:block; animation:shake .4s ease; }
 
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
         }
 
-        /* EXAMPLES GRID */
-        .examples-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-            gap: 12px;
-            margin-top: 18px;
+        /* ===== EXAMPLE PILLS ===== */
+        .examples-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
-        .example-card {
-            background: rgba(255,255,255,0.06);
-            border-radius: 12px;
-            padding: 12px;
+        .ex-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 13px;
+            border-radius: 999px;
+            font-size: 0.73rem;
+            font-weight: 700;
+            background: rgba(100,0,0,0.15);
+            border: 1px solid rgba(180,0,0,0.3);
+            color: rgba(255,130,130,0.85);
             cursor: pointer;
-            transition: transform .12s ease, box-shadow .12s ease;
-            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.18s ease;
+            white-space: nowrap;
         }
-        .example-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-        }
-        .example-card h3 {
-            font-size: 1.05rem;
+
+        .ex-pill:hover {
+            background: rgba(160,0,0,0.3);
+            border-color: rgba(220,0,0,0.6);
             color: #fff;
-            margin-bottom: 6px;
-        }
-        .example-card p {
-            font-size: 0.92rem;
-            color: #ddd;
-            opacity: 0.95;
+            box-shadow: 0 0 16px rgba(180,0,0,0.35);
+            transform: translateY(-1px);
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 28px 16px;
-            }
+        /* ===== SETTINGS DROPDOWN ===== */
+        .settings-wrap {
+            margin-bottom: 12px;
+        }
 
-            .hero-headline {
-                font-size: 2.4rem;
-            }
+        .settings-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 14px;
+            background: rgba(80,0,0,0.15);
+            border: 1px solid rgba(150,0,0,0.3);
+            border-radius: 10px;
+            color: rgba(255,120,120,0.8);
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
 
-            .examples-grid {
-                grid-template-columns: 1fr;
-            }
+        .settings-toggle:hover {
+            background: rgba(120,0,0,0.25);
+            border-color: rgba(200,0,0,0.5);
+            color: #ff6666;
+        }
 
-            .action-buttons {
-                flex-direction: column;
-            }
+        .stg-arrow {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .stg-arrow.open { transform: rotate(180deg); }
+
+        .settings-panel {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            padding: 14px;
+            margin-top: 6px;
+            background: rgba(40,0,0,0.3);
+            border: 1px solid rgba(120,0,0,0.25);
+            border-radius: 10px;
+            animation: slideDown 0.25s ease;
+        }
+
+        .settings-panel.open { display: flex; }
+
+        @keyframes slideDown {
+            from { opacity:0; transform:translateY(-8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .stg-group { display: flex; flex-direction: column; gap: 8px; }
+
+        .stg-label {
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+            color: rgba(255,80,80,0.5);
+        }
+
+        /* ===== LANGUAGE PILLS ===== */
+        .lang-pills {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lpill {
+            flex: 1;
+            padding: 8px 6px;
+            border-radius: 8px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(100,0,0,0.3);
+            background: rgba(30,0,0,0.4);
+            color: rgba(255,100,100,0.45);
+            transition: all 0.2s;
+        }
+
+        .lpill:hover {
+            border-color: rgba(180,0,0,0.5);
+            color: rgba(255,150,150,0.8);
+        }
+
+        .lpill.active {
+            background: rgba(100,0,0,0.55);
+            border-color: #bb0000;
+            color: #ff4444;
+            box-shadow: 0 0 14px rgba(160,0,0,0.45);
+        }
+
+        /* ===== QUALITY LEVELS (inside dropdown) ===== */
+        .quality-levels {
+            display: flex;
+            gap: 5px;
+        }
+
+        .qlevel {
+            flex: 1;
+            padding: 7px 4px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(100,0,0,0.3);
+            background: rgba(30,0,0,0.4);
+            color: rgba(255,100,100,0.45);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .qlevel:hover {
+            border-color: rgba(200,0,0,0.5);
+            color: rgba(255,150,150,0.8);
+        }
+
+        /* Active state per level — each feels more intense */
+        .qlevel.active[data-q="1"] {
+            background: rgba(40,0,0,0.6);
+            border-color: #550000;
+            color: #ff8888;
+            box-shadow: 0 0 10px rgba(80,0,0,0.4);
+        }
+        .qlevel.active[data-q="2"] {
+            background: rgba(70,0,0,0.6);
+            border-color: #880000;
+            color: #ff6666;
+            box-shadow: 0 0 14px rgba(130,0,0,0.5);
+        }
+        .qlevel.active[data-q="3"] {
+            background: rgba(100,0,0,0.65);
+            border-color: #bb0000;
+            color: #ff4444;
+            box-shadow: 0 0 18px rgba(180,0,0,0.55);
+        }
+        .qlevel.active[data-q="4"] {
+            background: rgba(140,0,0,0.7);
+            border-color: #dd0000;
+            color: #ff2222;
+            box-shadow: 0 0 24px rgba(220,0,0,0.65);
+        }
+        .qlevel.active[data-q="5"] {
+            background: linear-gradient(135deg, rgba(160,0,0,0.8), rgba(80,0,0,0.9));
+            border-color: #ff0000;
+            color: #fff;
+            box-shadow: 0 0 30px rgba(255,0,0,0.7), 0 0 60px rgba(180,0,0,0.3);
+            text-shadow: 0 0 10px rgba(255,100,100,0.9);
+        }
+
+        /* ===== REVIEWS SECTION ===== */
+        .reviews-section {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 20px 50px;
+        }
+
+        .reviews-title {
+            font-size: 0.65rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: rgba(255,80,80,0.45);
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .review-card {
+            background: rgba(40,0,0,0.35);
+            border: 1px solid rgba(120,0,0,0.28);
+            border-radius: 14px;
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .review-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.3,0.64,1), border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .review-card:hover {
+            border-color: rgba(200,0,0,0.4);
+            box-shadow: 0 0 20px rgba(150,0,0,0.2);
+        }
+
+        .review-top {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .review-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(80,0,0,0.5);
+            border: 1.5px solid rgba(180,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .review-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .review-name {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: rgba(255,180,180,0.9);
+        }
+
+        .review-country {
+            font-size: 0.65rem;
+            color: rgba(255,100,100,0.5);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .review-quote {
+            font-size: 0.68rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.55);
+            font-style: italic;
+        }
+
+        .review-quote::before { content: '"'; color: rgba(200,0,0,0.6); font-style: normal; font-weight: 900; }
+        .review-quote::after  { content: '"'; color: rgba(200,0,0,0.6); font-style: normal; font-weight: 900; }
+
+        @media(max-width:380px){
+            .reviews-grid { grid-template-columns: 1fr; }
+            .stag-emoji{ font-size:.65rem; }
+            .stag-text { font-size:.35rem; }
+            .spike-tag { width:52px; }
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="nav-brand">
-            🔥 ROASTER
-        </div>
-        <div class="system-status">
-            <div class="status-dot"></div>
-            <span>System Online</span>
-        </div>
-    </nav>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Live Ticker -->
-        <div class="live-ticker">
-            <span class="ticker-icon">🔥</span>
-            <span id="egoCounter">14,203</span> Egos Destroyed Today
-        </div>
+<nav class="navbar">
+    <div class="nav-brand">
+        <img src="/static/logo.png" alt="Roaster AI" class="nav-logo">
+    </div>
+    <div class="system-status">
+        <div class="status-dot"></div>
+        <span>System Online</span>
+    </div>
+</nav>
 
-        <!-- Hero Section -->
-        <h1 class="hero-headline">
-            Silence Your <span class="accent">Ego.</span>
-        </h1>
-        <p class="hero-subtext">
-            The AI that humbles you. No Filters. Just Reality.
-        </p>
+<div class="hero">
+    <h1 class="hero-title">Silence Your <span class="accent">Ego.</span></h1>
+    <p class="hero-sub">The AI that humbles you. No Filters. Just Reality.</p>
 
-        <!-- Input Engine -->
-        <div class="input-engine">
-            <div class="command-line">
-                <span class="command-prefix">></span>
-                <input 
-                    type="text" 
-                    class="command-input" 
-                    id="topicInput"
-                    placeholder="Roast my Ex / Boss / Life..."
-                    maxlength="100"
-                >
-                <button class="execute-btn" id="executeBtn" onclick="executeRoast()">
-                    <svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18">
-                        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            </div>
+    <div class="hex-stage">
+        <canvas id="hexCanvas"></canvas>
 
-            <!-- Examples: clickable presets -->
-            <div class="examples-grid" id="examplesGrid">
-                <div class="example-card" onclick="setTopicAndRoast('My Best Friend')">
-                    <h3>My Best Friend</h3>
-                    <p>A warm snapshot of a lifelong friendship — small adventures and inside jokes.</p>
-                </div>
+        <!-- 6 spike tags -->
+        <div class="spike-tag st-0"><span class="stag-emoji">⚡️🤖</span><span class="stag-text">FAST AI</span></div>
+        <div class="spike-tag st-1"><span class="stag-emoji">🌍🗣️</span><span class="stag-text">MULTI-LANG</span></div>
+        <div class="spike-tag st-2"><span class="stag-emoji">🎭💥</span><span class="stag-text">MEME GEN</span></div>
+        <div class="spike-tag st-3"><span class="stag-emoji">🎯🔥</span><span class="stag-text">100% BRUTAL</span></div>
+        <div class="spike-tag st-4"><span class="stag-emoji">👊💢</span><span class="stag-text">EGO CRUSHER</span></div>
+        <div class="spike-tag st-5"><span class="stag-emoji">😈⚔️</span><span class="stag-text">NO MERCY</span></div>
+    </div>
+</div>
 
-                <div class="example-card" onclick="setTopicAndRoast('Engineering')">
-                    <h3>Engineering</h3>
-                    <p>Show off an engineering project or the quirks of life as an engineer.</p>
-                </div>
+<div class="input-section">
+    <div class="live-ticker">🩸 <span id="egoCounter">14,203</span> Egos Destroyed</div>
 
-                <div class="example-card" onclick="setTopicAndRoast('My Bank Balance')">
-                    <h3>My Bank Balance</h3>
-                    <p>Light-hearted finance reality check — the mood is money, or lack of it.</p>
-                </div>
-
-                <div class="example-card" onclick="setTopicAndRoast('My Ex')">
-                    <h3>My Ex</h3>
-                    <p>Reflective or savage — depends on the mood. Use responsibly.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Loading State -->
-        <div class="loading-container" id="loadingContainer">
-            <div class="loading-ring"></div>
-            <div class="loading-text" id="loadingText">Consulting with Satan...</div>
-        </div>
-
-        <!-- Result Card -->
-        <div class="result-card" id="resultCard">
-            <img src="" alt="Roasted" class="result-image" id="resultImage">
-            <div class="action-buttons">
-                <button class="whatsapp-btn" onclick="shareToWhatsApp()">
-                    📱 Share on WhatsApp
-                </button>
-                <button class="retry-btn" onclick="reset()">
-                    🔄 Roast Again
-                </button>
-            </div>
-        </div>
-
-        <!-- Error Message -->
-        <div class="error-message" id="errorMessage"></div>
+    <!-- Example pills -->
+    <div class="examples-row">
+        <span class="ex-pill" onclick="quickRoast('My Ex')">💔 My Ex</span>
+        <span class="ex-pill" onclick="quickRoast('My Bank Balance')">💸 Bank Balance</span>
+        <span class="ex-pill" onclick="quickRoast('Engineers')">🔧 Engineers</span>
+        <span class="ex-pill" onclick="quickRoast('My Boss')">😤 My Boss</span>
     </div>
 
-    <script>
-        // ===== MAIN APP LOGIC =====
-        const API_URL = "https://roaster-vwgb.onrender.com";
+    <!-- Settings dropdown -->
+    <div class="settings-wrap">
+        <button class="settings-toggle" onclick="toggleSettings()">
+            🎛️ Customize My Roast <span class="stg-arrow" id="stgArrow">▾</span>
+        </button>
+        <div class="settings-panel" id="settingsPanel">
 
-        let egoCount = 14203;
-        setInterval(() => {
-            egoCount += Math.floor(Math.random() * 3);
-            document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
-        }, 5000);
+            <!-- Intensity -->
+            <div class="stg-group">
+                <span class="stg-label">🔥 ROAST INTENSITY</span>
+                <div class="quality-levels">
+                    <div class="qlevel" data-q="1" onclick="setQuality(1)">✨ SPARK</div>
+                    <div class="qlevel" data-q="2" onclick="setQuality(2)">🔥 FLAME</div>
+                    <div class="qlevel active" data-q="3" onclick="setQuality(3)">🌋 INFERNO</div>
+                    <div class="qlevel" data-q="4" onclick="setQuality(4)">😈 HELLFIRE</div>
+                    <div class="qlevel" data-q="5" onclick="setQuality(5)">💀 APOCALYPSE</div>
+                </div>
+            </div>
 
-        const loadingMessages = [
-            "Consulting with Satan...",
-            "Analyzing your bad life choices...",
-            "Finding the ugliest meme template...",
-            "Calculating emotional damage...",
-            "Waking up the demons...",
-            "Preparing maximum destruction..."
-        ];
+            <!-- Language -->
+            <div class="stg-group">
+                <span class="stg-label">🌍 LANGUAGE</span>
+                <div class="lang-pills">
+                    <div class="lpill active" data-lang="hindi" onclick="setLang('hindi')">🇮🇳 Hindi</div>
+                    <div class="lpill" data-lang="english" onclick="setLang('english')">🇬🇧 English</div>
+                    <div class="lpill" data-lang="mix" onclick="setLang('mix')">🔀 Hinglish</div>
+                </div>
+            </div>
 
-        let loadingInterval;
-        let currentTopic = "";
+        </div>
+    </div>
+    <div class="command-line">
+        <span class="command-prefix">›</span>
+        <input type="text" class="command-input" id="topicInput"
+            placeholder="Enter topic to roast..." maxlength="100">
+        <button class="execute-btn" onclick="executeRoast()">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke="#fff" stroke-width="2.5"
+                    fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </div>
+    <div class="loading-container" id="loadingContainer">
+        <div class="loading-ring"></div>
+        <div class="loading-text" id="loadingText">Summoning dark forces...</div>
+    </div>
+    <div class="result-card" id="resultCard">
+        <img src="" alt="Roasted" class="result-image" id="resultImage">
+        <div class="action-buttons">
+            <button class="whatsapp-btn" onclick="shareToWhatsApp()">📱 Share on WhatsApp</button>
+            <button class="retry-btn" onclick="resetApp()">🔄 Roast Again</button>
+        </div>
+    </div>
+    <div class="error-message" id="errorMessage"></div>
+</div>
 
-        async function executeRoast() {
-            const topic = document.getElementById('topicInput').value.trim();
-            currentTopic = topic;
-            if (!topic) {
-                showError("Please enter a topic to roast.");
-                return;
-            }
+<script>
+// ============================================================
+// OCCULT HEXAGRAM — full blood red, inner circle + triangle
+// Geometry:
+//   Outer tips at R
+//   Inner hexagon vertices at R/√3 ≈ 0.577R
+//   Inscribed circle radius = R/2 (fits inside inner hexagon)
+//   Inner triangle circumradius = R/2 (inscribed in circle)
+//   ROAST KING text inside inner triangle
+// ============================================================
+const hexCanvas = document.getElementById('hexCanvas');
+const hCtx      = hexCanvas.getContext('2d');
 
-            document.getElementById('loadingContainer').style.display = 'block';
-            document.getElementById('loadingText').textContent = loadingMessages[Math.floor(Math.random()*loadingMessages.length)];
-            document.getElementById('resultCard').classList.remove('active');
-            document.getElementById('errorMessage').classList.remove('active');
+function resizeHex() {
+    const sz = hexCanvas.parentElement.offsetWidth;
+    hexCanvas.width  = sz;
+    hexCanvas.height = sz;
+    drawOccultHex();
+}
 
-            try {
-                // Call your roast endpoint; adapt if your backend expects a different path or method
-                const resp = await fetch(`${API_URL}/roast?topic=${encodeURIComponent(topic)}`);
-                if (!resp.ok) {
-                    const err = await resp.json().catch(()=>({error: 'unknown'}));
-                    throw new Error(err.error || 'Roast failed');
-                }
-                const blob = await resp.blob();
-                const url = URL.createObjectURL(blob);
+// 3 vertices of equilateral triangle with circumradius r, rotated rotDeg
+function triPts(cx, cy, r, rotDeg) {
+    return [0,1,2].map(i => {
+        const a = (i * 120 - 90 + rotDeg) * Math.PI / 180;
+        return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+    });
+}
 
-                const img = document.getElementById('resultImage');
-                img.src = url;
+// Draw stroke path from pts array (closed polygon)
+function strokePoly(pts, close=true) {
+    hCtx.beginPath();
+    hCtx.moveTo(pts[0].x, pts[0].y);
+    for(let i=1;i<pts.length;i++) hCtx.lineTo(pts[i].x, pts[i].y);
+    if(close) hCtx.closePath();
+    hCtx.stroke();
+}
 
-                document.getElementById('resultCard').classList.add('active');
-                document.getElementById('loadingContainer').style.display = 'none';
+// Multi-pass neon glow stroke — all blood red
+function neonStroke(pts, isCircle, circleR, circleCX, circleCY) {
+    const passes = [
+        { blur:90,  lw:50, a:0.035 },
+        { blur:70,  lw:38, a:0.06  },
+        { blur:50,  lw:28, a:0.10  },
+        { blur:35,  lw:20, a:0.16  },
+        { blur:22,  lw:13, a:0.25  },
+        { blur:13,  lw:7,  a:0.40  },
+        { blur:6,   lw:3.5,a:0.65  },
+        { blur:2,   lw:1.5,a:0.95  },
+    ];
 
-                // Save last blob for sharing (if needed)
-                lastImageBlob = blob;
-                lastImageBlobUrl = url;
-            } catch (e) {
-                document.getElementById('loadingContainer').style.display = 'none';
-                showError(e.message || 'Failed to roast. Try again.');
-            }
+    passes.forEach(({ blur, lw, a }) => {
+        hCtx.save();
+        hCtx.shadowBlur  = blur;
+        hCtx.shadowColor = '#cc0000';
+        hCtx.globalAlpha = a;
+        hCtx.strokeStyle = '#cc0000';
+        hCtx.lineWidth   = lw;
+        hCtx.lineJoin    = 'round';
+        hCtx.lineCap     = 'round';
+        if(isCircle) {
+            hCtx.beginPath();
+            hCtx.arc(circleCX, circleCY, circleR, 0, Math.PI*2);
+            hCtx.stroke();
+        } else {
+            strokePoly(pts);
         }
+        hCtx.restore();
+    });
 
-        // Helper used by the example cards
-        function setTopicAndRoast(text) {
-            document.getElementById('topicInput').value = text;
-            executeRoast();
-        }
+    // White-hot core
+    hCtx.save();
+    hCtx.shadowBlur  = 6;
+    hCtx.shadowColor = '#ff4444';
+    hCtx.globalAlpha = 0.6;
+    hCtx.strokeStyle = 'rgba(255,180,180,0.7)';
+    hCtx.lineWidth   = 0.7;
+    hCtx.lineJoin    = 'round';
+    hCtx.lineCap     = 'round';
+    if(isCircle) {
+        hCtx.beginPath();
+        hCtx.arc(circleCX, circleCY, circleR, 0, Math.PI*2);
+        hCtx.stroke();
+    } else {
+        strokePoly(pts);
+    }
+    hCtx.restore();
+}
 
-        // Minimal helpers used above; keep in sync with the app behaviour in the repo
-        let lastImageBlob = null;
-        let lastImageBlobUrl = null;
+function drawOccultHex() {
+    const sz = hexCanvas.width;
+    const cx = sz / 2, cy = sz / 2;
+    const R  = sz * 0.42;           // outer circumradius to tips
+    const Ri = R / Math.sqrt(3);    // inner hexagon circumradius ≈ 0.577R
+    const Rc = R / 2;               // inscribed circle radius = R/2
+    const Rt = R / 2;               // inner triangle circumradius = R/2
 
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.classList.add('active');
-            setTimeout(() => {
-                errorDiv.classList.remove('active');
-            }, 4000);
-        }
+    hCtx.clearRect(0, 0, sz, sz);
 
-        function reset() {
-            document.getElementById('topicInput').value = '';
-            document.getElementById('resultCard').classList.remove('active');
-            if (lastImageBlobUrl) {
-                try { URL.revokeObjectURL(lastImageBlobUrl); } catch (e) {}
-                lastImageBlobUrl = null;
-                lastImageBlob = null;
-            }
-            document.getElementById('topicInput').focus();
-        }
+    // Pure black base
+    hCtx.fillStyle = '#000';
+    hCtx.fillRect(0, 0, sz, sz);
 
-        document.getElementById('topicInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') executeRoast();
+    // Dark blood glow at center
+    const cg = hCtx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
+    cg.addColorStop(0,   'rgba(80,0,0,0.25)');
+    cg.addColorStop(0.5, 'rgba(40,0,0,0.12)');
+    cg.addColorStop(1,   'transparent');
+    hCtx.fillStyle = cg;
+    hCtx.fillRect(0, 0, sz, sz);
+
+    // ========= OUTER HEXAGRAM — two big triangles =========
+
+    // Triangle UP (fire — pointing up)
+    const upPts = triPts(cx, cy, R, 0);
+    neonStroke(upPts, false);
+
+    // Triangle DOWN (pointing down)
+    const downPts = triPts(cx, cy, R, 180);
+    neonStroke(downPts, false);
+
+    // ========= INNER HEXAGON (where two triangles overlap) =========
+    // Vertices of inner hexagon are at radius Ri, at 0°, 60°, 120°...
+    const hexPts = Array.from({length:6}, (_,i) => {
+        const a = (i * 60 - 90) * Math.PI / 180;
+        return { x: cx + Ri * Math.cos(a), y: cy + Ri * Math.sin(a) };
+    });
+    neonStroke(hexPts, false);
+
+    // ========= INSCRIBED CIRCLE inside inner hexagon =========
+    neonStroke(null, true, Rc, cx, cy);
+
+    // ========= INNER TRIANGLE inside the circle =========
+    // Pointing up — the sacred upward triangle (fire/spirit)
+    const innerTriPts = triPts(cx, cy, Rt, 0);
+    neonStroke(innerTriPts, false);
+
+    // ========= TIP SPARKLES at 6 outer tips =========
+    for(let i=0; i<6; i++) {
+        const a  = (i * 60 - 90) * Math.PI / 180;
+        const tx = cx + R * Math.cos(a);
+        const ty = cy + R * Math.sin(a);
+
+        // Outer bloom
+        hCtx.save();
+        hCtx.globalAlpha = 0.9;
+        hCtx.fillStyle   = '#cc0000';
+        hCtx.shadowBlur  = 40;
+        hCtx.shadowColor = '#ff0000';
+        hCtx.beginPath();
+        hCtx.arc(tx, ty, 6, 0, Math.PI*2);
+        hCtx.fill();
+        hCtx.restore();
+
+        // Mid
+        hCtx.save();
+        hCtx.globalAlpha = 0.8;
+        hCtx.fillStyle   = '#ff2222';
+        hCtx.shadowBlur  = 18;
+        hCtx.shadowColor = '#ff0000';
+        hCtx.beginPath();
+        hCtx.arc(tx, ty, 3.5, 0, Math.PI*2);
+        hCtx.fill();
+        hCtx.restore();
+
+        // White-hot center
+        hCtx.save();
+        hCtx.globalAlpha = 1.0;
+        hCtx.fillStyle   = '#fff';
+        hCtx.shadowBlur  = 10;
+        hCtx.shadowColor = '#ff4444';
+        hCtx.beginPath();
+        hCtx.arc(tx, ty, 1.8, 0, Math.PI*2);
+        hCtx.fill();
+        hCtx.restore();
+    }
+
+    // ========= INNER TRIANGLE TIP SPARKLES =========
+    innerTriPts.forEach(pt => {
+        hCtx.save();
+        hCtx.globalAlpha = 0.7;
+        hCtx.fillStyle   = '#880000';
+        hCtx.shadowBlur  = 20;
+        hCtx.shadowColor = '#cc0000';
+        hCtx.beginPath();
+        hCtx.arc(pt.x, pt.y, 4, 0, Math.PI*2);
+        hCtx.fill();
+        hCtx.restore();
+
+        hCtx.save();
+        hCtx.globalAlpha = 0.95;
+        hCtx.fillStyle   = '#ffaaaa';
+        hCtx.shadowBlur  = 6;
+        hCtx.shadowColor = '#ff4444';
+        hCtx.beginPath();
+        hCtx.arc(pt.x, pt.y, 1.4, 0, Math.PI*2);
+        hCtx.fill();
+        hCtx.restore();
+    });
+
+    // ========= ROAST KING TEXT inside inner triangle =========
+    const textCY = cy + Rt * 0.08; // slightly below center to visually center in triangle
+
+    // Crown emoji
+    hCtx.save();
+    const crownSz = Math.max(12, sz * 0.058);
+    hCtx.font      = `${crownSz}px serif`;
+    hCtx.textAlign = 'center';
+    hCtx.textBaseline = 'middle';
+    hCtx.shadowBlur  = 20;
+    hCtx.shadowColor = 'rgba(255,180,0,0.9)';
+    hCtx.globalAlpha = 0.95;
+    hCtx.fillText('👑', cx, textCY - crownSz * 1.1);
+    hCtx.restore();
+
+    // Skull emoji
+    hCtx.save();
+    const skullSz = Math.max(14, sz * 0.07);
+    hCtx.font      = `${skullSz}px serif`;
+    hCtx.textAlign = 'center';
+    hCtx.textBaseline = 'middle';
+    hCtx.shadowBlur  = 28;
+    hCtx.shadowColor = 'rgba(200,0,0,1)';
+    hCtx.globalAlpha = 1.0;
+    hCtx.fillText('💀', cx, textCY);
+    hCtx.restore();
+
+    // ROAST KING text
+    hCtx.save();
+    const txtSz = Math.max(7, sz * 0.038);
+    hCtx.font      = `900 ${txtSz}px Inter, sans-serif`;
+    hCtx.textAlign = 'center';
+    hCtx.textBaseline = 'middle';
+    hCtx.shadowBlur  = 18;
+    hCtx.shadowColor = 'rgba(255,255,255,0.8)';
+    hCtx.globalAlpha = 1.0;
+    hCtx.fillStyle = '#ffffff';
+    hCtx.letterSpacing = '2px';
+    hCtx.fillText('ROAST KING', cx, textCY + skullSz * 0.82);
+    hCtx.restore();
+}
+
+resizeHex();
+window.addEventListener('resize', resizeHex);
+
+// ============================================================
+// STAGGERED TAG ANIMATION
+// ============================================================
+window.addEventListener('load', () => {
+    document.querySelectorAll('.spike-tag').forEach((el, i) => {
+        setTimeout(() => el.classList.add('pop'), 500 + i * 180);
+    });
+    document.getElementById('topicInput').focus();
+});
+
+// ============================================================
+// APP LOGIC
+// ============================================================
+const API_URL = "https://roaster-vwgb.onrender.com";
+let egoCount = 14203;
+let currentQuality = 3;
+let currentLang = 'hindi';
+
+setInterval(() => {
+    egoCount += Math.floor(Math.random() * 3);
+    document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
+}, 5000);
+
+function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    const arrow = document.getElementById('stgArrow');
+    panel.classList.toggle('open');
+    arrow.classList.toggle('open');
+    gaEvent('settings_toggled', { state: panel.classList.contains('open') ? 'open' : 'closed' });
+}
+
+function setQuality(q) {
+    currentQuality = q;
+    document.querySelectorAll('.qlevel').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.qlevel[data-q="${q}"]`).classList.add('active');
+    // GA: track intensity selection
+    const names = {1:'Spark',2:'Flame',3:'Inferno',4:'Hellfire',5:'Apocalypse'};
+    gaEvent('set_roast_intensity', { intensity_level: q, intensity_name: names[q] });
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lpill').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.lpill[data-lang="${lang}"]`).classList.add('active');
+    // GA: track language selection
+    gaEvent('set_language', { language: lang });
+}
+
+function quickRoast(topic) {
+    document.getElementById('topicInput').value = topic;
+    // GA: track example chip click
+    gaEvent('example_clicked', { topic });
+    executeRoast();
+}
+
+function quickRoast(topic) {
+    document.getElementById('topicInput').value = topic;
+    executeRoast();
+}
+
+const MSGS = {
+    1: ["Warming up gently...","Preparing mild shade...","Crafting a soft jab..."],
+    2: ["Stoking the flames...","Heating things up...","Loading roast cannon..."],
+    3: ["Summoning dark forces...","Consulting with Satan...","Waking up the demons..."],
+    4: ["Calling the hellfire...","Unleashing the demon...","Preparing your funeral..."],
+    5: ["Initiating APOCALYPSE...","Signing your death warrant...","Erasing you from existence..."]
+};
+
+let lastBlob = null, lastUrl = null;
+
+async function executeRoast() {
+    const topic = document.getElementById('topicInput').value.trim();
+    if(!topic){ showError("Enter something to roast first!"); return; }
+
+    const msgs = MSGS[currentQuality];
+    document.getElementById('loadingContainer').style.display='block';
+    document.getElementById('loadingText').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+    document.getElementById('resultCard').classList.remove('active');
+    document.getElementById('errorMessage').classList.remove('active');
+
+    const startTime = Date.now();
+
+    // GA: roast initiated
+    gaEvent('roast_started', {
+        topic,
+        language: currentLang,
+        quality: currentQuality
+    });
+
+    try {
+        const resp = await fetch(
+            `${API_URL}/roast?topic=${encodeURIComponent(topic)}&quality=${currentQuality}&lang=${currentLang}&session_id=${window.SESSION_ID||''}`
+        );
+        if(!resp.ok){ const e=await resp.json().catch(()=>({error:'unknown'})); throw new Error(e.error||'Roast failed'); }
+        const blob = await resp.blob();
+        const url  = URL.createObjectURL(blob);
+        document.getElementById('resultImage').src = url;
+        document.getElementById('resultCard').classList.add('active');
+        document.getElementById('loadingContainer').style.display='none';
+        lastBlob=blob; lastUrl=url;
+
+        // GA: roast success
+        gaEvent('roast_generated', {
+            topic,
+            language: currentLang,
+            quality: currentQuality,
+            response_ms: Date.now() - startTime
         });
 
-        window.addEventListener('load', () => {
-            document.getElementById('topicInput').focus();
-        });
+    } catch(e) {
+        document.getElementById('loadingContainer').style.display='none';
+        showError(e.message||'Failed. Try again.');
+        // GA: roast failed
+        gaEvent('roast_failed', { topic, error: e.message });
+    }
+}
 
-        // Sharing helpers (stubs; keep your existing implementations if present)
-        async function shareToWhatsApp() {
-            if (!lastImageBlobUrl) {
-                showError('No image available to share.');
-                return;
-            }
-            const message = `My ego just got destroyed by AI 💀. Only legends can handle this. Try it: ${window.location.href}`;
-            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-        }
-    </script>
+function resetApp() {
+    document.getElementById('topicInput').value='';
+    document.getElementById('resultCard').classList.remove('active');
+    if(lastUrl){ try{URL.revokeObjectURL(lastUrl);}catch(e){} lastUrl=null; lastBlob=null; }
+    document.getElementById('topicInput').focus();
+    gaEvent('roast_reset');
+}
+
+function showError(msg) {
+    const el = document.getElementById('errorMessage');
+    el.textContent=msg; el.classList.add('active');
+    setTimeout(()=>el.classList.remove('active'),4000);
+}
+
+async function shareToWhatsApp() {
+    if(!lastUrl){ showError('No image yet.'); return; }
+    gaEvent('share_whatsapp', { language: currentLang, quality: currentQuality });
+    window.open(`https://wa.me/?text=${encodeURIComponent('My ego just got destroyed 💀 Try: '+window.location.href)}`, '_blank');
+}
+
+document.getElementById('topicInput').addEventListener('keypress', e => {
+    if(e.key==='Enter') executeRoast();
+});
+
+// Animate review cards — trigger on scroll OR immediately if already in view
+function animateReviews() {
+    document.querySelectorAll('.review-card').forEach((card, i) => {
+        setTimeout(() => card.classList.add('visible'), 200 + i * 130);
+    });
+}
+
+const reviewObserver = new IntersectionObserver((entries) => {
+    const anyVisible = entries.some(e => e.isIntersecting);
+    if(anyVisible) {
+        animateReviews();
+        reviewObserver.disconnect();
+    }
+}, { threshold: 0.05 });
+
+const reviewSection = document.querySelector('.reviews-section');
+if(reviewSection) reviewObserver.observe(reviewSection);
+
+// Fallback — if page is short enough that reviews are already visible
+setTimeout(() => {
+    const cards = document.querySelectorAll('.review-card');
+    const allHidden = [...cards].every(c => !c.classList.contains('visible'));
+    if(allHidden) animateReviews();
+}, 800);
+</script>
+<!-- Reviews Section -->
+<div class="reviews-section">
+    <p class="reviews-title">🩸 VICTIMS WORLDWIDE</p>
+    <div class="reviews-grid">
+
+        <div class="review-card">
+            <div class="review-top">
+                <div class="review-avatar">🧔🏻</div>
+                <div class="review-meta">
+                    <span class="review-name">Arjun S.</span>
+                    <span class="review-country">🇮🇳 India</span>
+                </div>
+            </div>
+            <p class="review-quote">Roasted my ex so hard she texted me asking what I said. Bhai this thing is dangerous 💀</p>
+        </div>
+
+        <div class="review-card">
+            <div class="review-top">
+                <div class="review-avatar">👩🏽</div>
+                <div class="review-meta">
+                    <span class="review-name">Priya K.</span>
+                    <span class="review-country">🇬🇧 UK</span>
+                </div>
+            </div>
+            <p class="review-quote">Set it to APOCALYPSE and roasted my boss. I had to close the tab. Too real 😭</p>
+        </div>
+
+        <div class="review-card">
+            <div class="review-top">
+                <div class="review-avatar">🧑🏾</div>
+                <div class="review-meta">
+                    <span class="review-name">Rahul M.</span>
+                    <span class="review-country">🇦🇪 Dubai</span>
+                </div>
+            </div>
+            <p class="review-quote">Roasted my engineering degree. My parents saw it and started crying. 10/10 🔥</p>
+        </div>
+
+        <div class="review-card">
+            <div class="review-top">
+                <div class="review-avatar">👩🏻</div>
+                <div class="review-meta">
+                    <span class="review-name">Sara T.</span>
+                    <span class="review-country">🇺🇸 USA</span>
+                </div>
+            </div>
+            <p class="review-quote">The Hinglish roast hit different. I don't even speak Hindi but I felt it in my soul 💀</p>
+        </div>
+
+    </div>
+</div>
+
 </body>
 </html>
+ 
