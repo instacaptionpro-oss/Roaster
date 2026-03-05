@@ -5,31 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roaster AI - Silence Your Ego</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
-    <!-- ===== GOOGLE ANALYTICS 4 =====
-         Replace GA_MEASUREMENT_ID with your real ID from:
-         analytics.google.com → Admin → Data Streams → Measurement ID (e.g. G-XXXXXXXXXX)
-    -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){ dataLayer.push(arguments); }
         gtag('js', new Date());
-        gtag('config', 'GA_MEASUREMENT_ID', {
-            send_page_view: true,
-            custom_map: {
-                'dimension1': 'roast_quality',
-                'dimension2': 'roast_language',
-                'dimension3': 'roast_topic'
-            }
-        });
-
-        // Helper: fire a GA4 event safely
-        function gaEvent(name, params) {
-            try { gtag('event', name, params || {}); } catch(e) {}
-        }
-
-        // Generate a session ID for backend correlation
+        gtag('config', 'GA_MEASUREMENT_ID');
+        function gaEvent(name, params) { try { gtag('event', name, params || {}); } catch(e) {} }
         window.SESSION_ID = (localStorage.getItem('rsid') || (() => {
             const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
             localStorage.setItem('rsid', id);
@@ -47,6 +29,7 @@
             overflow-x: hidden;
         }
 
+        /* ===== NAVBAR ===== */
         .navbar {
             position: relative;
             z-index: 10;
@@ -56,16 +39,13 @@
             padding: 18px 36px;
         }
 
-        .nav-brand {
-            display: flex;
-            align-items: center;
-        }
+        .nav-brand { display: flex; align-items: center; }
 
         .nav-logo {
             height: 48px;
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 0 8px rgba(200, 40, 10, 0.6));
+            filter: drop-shadow(0 0 8px rgba(200,40,10,0.6));
         }
 
         .system-status {
@@ -89,6 +69,7 @@
             50%      { box-shadow: 0 0 18px #ff0000, 0 0 30px #880000; }
         }
 
+        /* ===== HERO ===== */
         .hero {
             position: relative;
             z-index: 5;
@@ -123,26 +104,8 @@
             margin: 0 auto 18px;
         }
 
-        #hexCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+        #hexCanvas { width: 100%; height: 100%; display: block; }
 
-        /*
-          SPIKE TAG POSITIONS (centroid of each outer spike triangle)
-          Centroid of spike = (2/3)*R from center toward tip
-          R = 0.42 * stage → centroid = 0.28 * stage from center
-
-          Tip angles: -90°, -30°, 30°, 90°, 150°, 210°
-          As % of stage (center=50%):
-            top     (-90°): 50%, 22%
-            top-R   (-30°): 74.2%, 36%
-            bot-R   ( 30°): 74.2%, 64%
-            bottom  ( 90°): 50%, 78%
-            bot-L   (150°): 25.8%, 64%
-            top-L   (210°): 25.8%, 36%
-        */
         .spike-tag {
             position: absolute;
             display: flex;
@@ -192,14 +155,14 @@
             display: block;
         }
 
-        /* ===== INPUT ===== */
+        /* ===== INPUT SECTION ===== */
         .input-section {
             position: relative;
             z-index: 10;
             width: 100%;
             max-width: 480px;
             margin: 0 auto;
-            padding: 0 20px 44px;
+            padding: 0 20px 24px;
         }
 
         .live-ticker {
@@ -216,6 +179,147 @@
             color: rgba(255,100,100,0.7);
         }
 
+        .examples-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .ex-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 13px;
+            border-radius: 999px;
+            font-size: 0.73rem;
+            font-weight: 700;
+            background: rgba(100,0,0,0.15);
+            border: 1px solid rgba(180,0,0,0.3);
+            color: rgba(255,130,130,0.85);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .ex-pill:hover {
+            background: rgba(160,0,0,0.3);
+            border-color: rgba(220,0,0,0.6);
+            color: #fff;
+            box-shadow: 0 0 16px rgba(180,0,0,0.35);
+            transform: translateY(-1px);
+        }
+
+        /* ===== SETTINGS ===== */
+        .settings-wrap { margin-bottom: 12px; }
+
+        .settings-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 14px;
+            background: rgba(80,0,0,0.15);
+            border: 1px solid rgba(150,0,0,0.3);
+            border-radius: 10px;
+            color: rgba(255,120,120,0.8);
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .settings-toggle:hover {
+            background: rgba(120,0,0,0.25);
+            border-color: rgba(200,0,0,0.5);
+            color: #ff6666;
+        }
+
+        .stg-arrow { transition: transform 0.3s ease; display: inline-block; }
+        .stg-arrow.open { transform: rotate(180deg); }
+
+        .settings-panel {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            padding: 14px;
+            margin-top: 6px;
+            background: rgba(40,0,0,0.3);
+            border: 1px solid rgba(120,0,0,0.25);
+            border-radius: 10px;
+            animation: slideDown 0.25s ease;
+        }
+
+        .settings-panel.open { display: flex; }
+
+        @keyframes slideDown {
+            from { opacity:0; transform:translateY(-8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+
+        .stg-group { display: flex; flex-direction: column; gap: 8px; }
+
+        .stg-label {
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+            color: rgba(255,80,80,0.5);
+        }
+
+        .lang-pills { display: flex; gap: 8px; }
+
+        .lpill {
+            flex: 1;
+            padding: 8px 6px;
+            border-radius: 8px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(100,0,0,0.3);
+            background: rgba(30,0,0,0.4);
+            color: rgba(255,100,100,0.45);
+            transition: all 0.2s;
+        }
+
+        .lpill:hover { border-color: rgba(180,0,0,0.5); color: rgba(255,150,150,0.8); }
+
+        .lpill.active {
+            background: rgba(100,0,0,0.55);
+            border-color: #bb0000;
+            color: #ff4444;
+            box-shadow: 0 0 14px rgba(160,0,0,0.45);
+        }
+
+        .quality-levels { display: flex; gap: 5px; }
+
+        .qlevel {
+            flex: 1;
+            padding: 7px 4px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(100,0,0,0.3);
+            background: rgba(30,0,0,0.4);
+            color: rgba(255,100,100,0.45);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .qlevel:hover { border-color: rgba(200,0,0,0.5); color: rgba(255,150,150,0.8); }
+
+        .qlevel.active[data-q="1"] { background:rgba(40,0,0,0.6); border-color:#550000; color:#ff8888; box-shadow:0 0 10px rgba(80,0,0,0.4); }
+        .qlevel.active[data-q="2"] { background:rgba(70,0,0,0.6); border-color:#880000; color:#ff6666; box-shadow:0 0 14px rgba(130,0,0,0.5); }
+        .qlevel.active[data-q="3"] { background:rgba(100,0,0,0.65); border-color:#bb0000; color:#ff4444; box-shadow:0 0 18px rgba(180,0,0,0.55); }
+        .qlevel.active[data-q="4"] { background:rgba(140,0,0,0.7); border-color:#dd0000; color:#ff2222; box-shadow:0 0 24px rgba(220,0,0,0.65); }
+        .qlevel.active[data-q="5"] { background:linear-gradient(135deg,rgba(160,0,0,0.8),rgba(80,0,0,0.9)); border-color:#ff0000; color:#fff; box-shadow:0 0 30px rgba(255,0,0,0.7),0 0 60px rgba(180,0,0,0.3); text-shadow:0 0 10px rgba(255,100,100,0.9); }
+
+        /* ===== COMMAND LINE ===== */
         .command-line {
             display: flex;
             gap: 10px;
@@ -249,11 +353,9 @@
             transition: transform .15s, box-shadow .15s;
         }
 
-        .execute-btn:hover {
-            transform:scale(1.08);
-            box-shadow:0 0 30px rgba(200,0,0,0.7);
-        }
+        .execute-btn:hover { transform:scale(1.08); box-shadow:0 0 30px rgba(200,0,0,0.7); }
 
+        /* ===== LOADING ===== */
         .loading-container { display:none; text-align:center; padding:20px 0; }
 
         .loading-ring {
@@ -265,26 +367,6 @@
 
         @keyframes spin { to { transform:rotate(360deg); } }
         .loading-text { font-size:0.8rem; color:rgba(255,100,100,0.5); }
-
-        .result-card {
-            display:none; margin-top:14px;
-            background:rgba(20,0,0,0.8);
-            border:1px solid rgba(150,0,0,0.2);
-            padding:15px; border-radius:15px;
-        }
-
-        .result-card.active { display:block; }
-        .result-image { width:100%; border-radius:9px; margin-bottom:12px; display:block; }
-        .action-buttons { display:flex; gap:9px; }
-
-        .whatsapp-btn, .retry-btn {
-            flex:1; padding:10px; border:none; border-radius:9px;
-            cursor:pointer; font-weight:700; font-size:0.8rem; transition:transform .15s;
-        }
-
-        .whatsapp-btn { background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; }
-        .retry-btn    { background:rgba(150,0,0,0.15); color:#ff4444; border:1px solid rgba(150,0,0,0.3); }
-        .whatsapp-btn:hover,.retry-btn:hover { transform:translateY(-2px); }
 
         .error-message {
             display:none; margin-top:10px;
@@ -300,193 +382,42 @@
             0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
         }
 
-        /* ===== EXAMPLE PILLS ===== */
-        .examples-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .ex-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 6px 13px;
-            border-radius: 999px;
-            font-size: 0.73rem;
-            font-weight: 700;
-            background: rgba(100,0,0,0.15);
-            border: 1px solid rgba(180,0,0,0.3);
-            color: rgba(255,130,130,0.85);
-            cursor: pointer;
-            transition: all 0.18s ease;
-            white-space: nowrap;
-        }
-
-        .ex-pill:hover {
-            background: rgba(160,0,0,0.3);
-            border-color: rgba(220,0,0,0.6);
-            color: #fff;
-            box-shadow: 0 0 16px rgba(180,0,0,0.35);
-            transform: translateY(-1px);
-        }
-
-        /* ===== SETTINGS DROPDOWN ===== */
-        .settings-wrap {
-            margin-bottom: 12px;
-        }
-
-        .settings-toggle {
+        /* ===== RESULT SECTION (separate from input) ===== */
+        .result-section {
             width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 9px 14px;
-            background: rgba(80,0,0,0.15);
-            border: 1px solid rgba(150,0,0,0.3);
-            border-radius: 10px;
-            color: rgba(255,120,120,0.8);
-            font-size: 0.75rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .settings-toggle:hover {
-            background: rgba(120,0,0,0.25);
-            border-color: rgba(200,0,0,0.5);
-            color: #ff6666;
-        }
-
-        .stg-arrow {
-            transition: transform 0.3s ease;
-            display: inline-block;
-        }
-
-        .stg-arrow.open { transform: rotate(180deg); }
-
-        .settings-panel {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 20px 40px;
             display: none;
-            flex-direction: column;
-            gap: 14px;
-            padding: 14px;
-            margin-top: 6px;
-            background: rgba(40,0,0,0.3);
-            border: 1px solid rgba(120,0,0,0.25);
-            border-radius: 10px;
-            animation: slideDown 0.25s ease;
         }
 
-        .settings-panel.open { display: flex; }
+        .result-section.active { display: block; }
 
-        @keyframes slideDown {
-            from { opacity:0; transform:translateY(-8px); }
-            to   { opacity:1; transform:translateY(0); }
-        }
-
-        .stg-group { display: flex; flex-direction: column; gap: 8px; }
-
-        .stg-label {
-            font-size: 0.62rem;
-            font-weight: 800;
-            letter-spacing: 1.8px;
-            color: rgba(255,80,80,0.5);
+        .result-card {
+            background: rgba(20,0,0,0.8);
+            border: 1px solid rgba(150,0,0,0.2);
+            padding: 15px;
+            border-radius: 15px;
+            animation: cardPop 0.4s cubic-bezier(0.34,1.3,0.64,1);
         }
 
-        /* ===== LANGUAGE PILLS ===== */
-        .lang-pills {
-            display: flex;
-            gap: 8px;
+        @keyframes cardPop {
+            from { opacity:0; transform:scale(0.92); }
+            to   { opacity:1; transform:scale(1); }
         }
 
-        .lpill {
-            flex: 1;
-            padding: 8px 6px;
-            border-radius: 8px;
-            font-size: 0.68rem;
-            font-weight: 800;
-            text-align: center;
-            cursor: pointer;
-            border: 1px solid rgba(100,0,0,0.3);
-            background: rgba(30,0,0,0.4);
-            color: rgba(255,100,100,0.45);
-            transition: all 0.2s;
+        .result-image { width:100%; border-radius:9px; margin-bottom:12px; display:block; }
+
+        .action-buttons { display:flex; gap:9px; }
+
+        .whatsapp-btn, .retry-btn {
+            flex:1; padding:10px; border:none; border-radius:9px;
+            cursor:pointer; font-weight:700; font-size:0.8rem; transition:transform .15s;
         }
 
-        .lpill:hover {
-            border-color: rgba(180,0,0,0.5);
-            color: rgba(255,150,150,0.8);
-        }
-
-        .lpill.active {
-            background: rgba(100,0,0,0.55);
-            border-color: #bb0000;
-            color: #ff4444;
-            box-shadow: 0 0 14px rgba(160,0,0,0.45);
-        }
-
-        /* ===== QUALITY LEVELS (inside dropdown) ===== */
-        .quality-levels {
-            display: flex;
-            gap: 5px;
-        }
-
-        .qlevel {
-            flex: 1;
-            padding: 7px 4px;
-            border-radius: 8px;
-            font-size: 0.6rem;
-            font-weight: 800;
-            letter-spacing: 0.3px;
-            text-align: center;
-            cursor: pointer;
-            border: 1px solid rgba(100,0,0,0.3);
-            background: rgba(30,0,0,0.4);
-            color: rgba(255,100,100,0.45);
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .qlevel:hover {
-            border-color: rgba(200,0,0,0.5);
-            color: rgba(255,150,150,0.8);
-        }
-
-        /* Active state per level — each feels more intense */
-        .qlevel.active[data-q="1"] {
-            background: rgba(40,0,0,0.6);
-            border-color: #550000;
-            color: #ff8888;
-            box-shadow: 0 0 10px rgba(80,0,0,0.4);
-        }
-        .qlevel.active[data-q="2"] {
-            background: rgba(70,0,0,0.6);
-            border-color: #880000;
-            color: #ff6666;
-            box-shadow: 0 0 14px rgba(130,0,0,0.5);
-        }
-        .qlevel.active[data-q="3"] {
-            background: rgba(100,0,0,0.65);
-            border-color: #bb0000;
-            color: #ff4444;
-            box-shadow: 0 0 18px rgba(180,0,0,0.55);
-        }
-        .qlevel.active[data-q="4"] {
-            background: rgba(140,0,0,0.7);
-            border-color: #dd0000;
-            color: #ff2222;
-            box-shadow: 0 0 24px rgba(220,0,0,0.65);
-        }
-        .qlevel.active[data-q="5"] {
-            background: linear-gradient(135deg, rgba(160,0,0,0.8), rgba(80,0,0,0.9));
-            border-color: #ff0000;
-            color: #fff;
-            box-shadow: 0 0 30px rgba(255,0,0,0.7), 0 0 60px rgba(180,0,0,0.3);
-            text-shadow: 0 0 10px rgba(255,100,100,0.9);
-        }
+        .whatsapp-btn { background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; }
+        .retry-btn    { background:rgba(150,0,0,0.15); color:#ff4444; border:1px solid rgba(150,0,0,0.3); }
+        .whatsapp-btn:hover,.retry-btn:hover { transform:translateY(-2px); }
 
         /* ===== REVIEWS SECTION ===== */
         .reviews-section {
@@ -494,8 +425,15 @@
             z-index: 10;
             width: 100%;
             max-width: 480px;
-            margin: 0 auto;
-            padding: 0 20px 50px;
+            margin: 20px auto 0;
+            padding: 0 20px 60px;
+        }
+
+        .reviews-divider {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(150,0,0,0.15);
         }
 
         .reviews-title {
@@ -537,11 +475,7 @@
             box-shadow: 0 0 20px rgba(150,0,0,0.2);
         }
 
-        .review-top {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-        }
+        .review-top { display:flex; align-items:center; gap:9px; }
 
         .review-avatar {
             width: 36px; height: 36px;
@@ -555,17 +489,9 @@
             flex-shrink: 0;
         }
 
-        .review-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-        }
+        .review-meta { display:flex; flex-direction:column; gap:1px; }
 
-        .review-name {
-            font-size: 0.72rem;
-            font-weight: 800;
-            color: rgba(255,180,180,0.9);
-        }
+        .review-name { font-size:0.72rem; font-weight:800; color:rgba(255,180,180,0.9); }
 
         .review-country {
             font-size: 0.65rem;
@@ -582,14 +508,14 @@
             font-style: italic;
         }
 
-        .review-quote::before { content: '"'; color: rgba(200,0,0,0.6); font-style: normal; font-weight: 900; }
-        .review-quote::after  { content: '"'; color: rgba(200,0,0,0.6); font-style: normal; font-weight: 900; }
+        .review-quote::before { content: '"'; color:rgba(200,0,0,0.6); font-style:normal; font-weight:900; }
+        .review-quote::after  { content: '"'; color:rgba(200,0,0,0.6); font-style:normal; font-weight:900; }
 
         @media(max-width:380px){
             .reviews-grid { grid-template-columns: 1fr; }
-            .stag-emoji{ font-size:.65rem; }
-            .stag-text { font-size:.35rem; }
-            .spike-tag { width:52px; }
+            .stag-emoji { font-size:.65rem; }
+            .stag-text  { font-size:.35rem; }
+            .spike-tag  { width:52px; }
         }
     </style>
 </head>
@@ -611,8 +537,6 @@
 
     <div class="hex-stage">
         <canvas id="hexCanvas"></canvas>
-
-        <!-- 6 spike tags -->
         <div class="spike-tag st-0"><span class="stag-emoji">⚡️🤖</span><span class="stag-text">FAST AI</span></div>
         <div class="spike-tag st-1"><span class="stag-emoji">🌍🗣️</span><span class="stag-text">MULTI-LANG</span></div>
         <div class="spike-tag st-2"><span class="stag-emoji">🎭💥</span><span class="stag-text">MEME GEN</span></div>
@@ -622,10 +546,10 @@
     </div>
 </div>
 
+<!-- INPUT SECTION -->
 <div class="input-section">
     <div class="live-ticker">🩸 <span id="egoCounter">14,203</span> Egos Destroyed</div>
 
-    <!-- Example pills -->
     <div class="examples-row">
         <span class="ex-pill" onclick="quickRoast('My Ex')">💔 My Ex</span>
         <span class="ex-pill" onclick="quickRoast('My Bank Balance')">💸 Bank Balance</span>
@@ -633,14 +557,11 @@
         <span class="ex-pill" onclick="quickRoast('My Boss')">😤 My Boss</span>
     </div>
 
-    <!-- Settings dropdown -->
     <div class="settings-wrap">
         <button class="settings-toggle" onclick="toggleSettings()">
             🎛️ Customize My Roast <span class="stg-arrow" id="stgArrow">▾</span>
         </button>
         <div class="settings-panel" id="settingsPanel">
-
-            <!-- Intensity -->
             <div class="stg-group">
                 <span class="stg-label">🔥 ROAST INTENSITY</span>
                 <div class="quality-levels">
@@ -651,8 +572,6 @@
                     <div class="qlevel" data-q="5" onclick="setQuality(5)">💀 APOCALYPSE</div>
                 </div>
             </div>
-
-            <!-- Language -->
             <div class="stg-group">
                 <span class="stg-label">🌍 LANGUAGE</span>
                 <div class="lang-pills">
@@ -661,9 +580,9 @@
                     <div class="lpill" data-lang="mix" onclick="setLang('mix')">🔀 Hinglish</div>
                 </div>
             </div>
-
         </div>
     </div>
+
     <div class="command-line">
         <span class="command-prefix">›</span>
         <input type="text" class="command-input" id="topicInput"
@@ -675,433 +594,31 @@
             </svg>
         </button>
     </div>
+
     <div class="loading-container" id="loadingContainer">
         <div class="loading-ring"></div>
         <div class="loading-text" id="loadingText">Summoning dark forces...</div>
     </div>
-    <div class="result-card" id="resultCard">
+
+    <div class="error-message" id="errorMessage"></div>
+</div>
+
+<!-- RESULT CARD — separate section below input -->
+<div class="result-section" id="resultSection">
+    <div class="result-card">
         <img src="" alt="Roasted" class="result-image" id="resultImage">
         <div class="action-buttons">
             <button class="whatsapp-btn" onclick="shareToWhatsApp()">📱 Share on WhatsApp</button>
             <button class="retry-btn" onclick="resetApp()">🔄 Roast Again</button>
         </div>
     </div>
-    <div class="error-message" id="errorMessage"></div>
 </div>
 
-<script>
-// ============================================================
-// OCCULT HEXAGRAM — full blood red, inner circle + triangle
-// Geometry:
-//   Outer tips at R
-//   Inner hexagon vertices at R/√3 ≈ 0.577R
-//   Inscribed circle radius = R/2 (fits inside inner hexagon)
-//   Inner triangle circumradius = R/2 (inscribed in circle)
-//   ROAST KING text inside inner triangle
-// ============================================================
-const hexCanvas = document.getElementById('hexCanvas');
-const hCtx      = hexCanvas.getContext('2d');
-
-function resizeHex() {
-    const sz = hexCanvas.parentElement.offsetWidth;
-    hexCanvas.width  = sz;
-    hexCanvas.height = sz;
-    drawOccultHex();
-}
-
-// 3 vertices of equilateral triangle with circumradius r, rotated rotDeg
-function triPts(cx, cy, r, rotDeg) {
-    return [0,1,2].map(i => {
-        const a = (i * 120 - 90 + rotDeg) * Math.PI / 180;
-        return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
-    });
-}
-
-// Draw stroke path from pts array (closed polygon)
-function strokePoly(pts, close=true) {
-    hCtx.beginPath();
-    hCtx.moveTo(pts[0].x, pts[0].y);
-    for(let i=1;i<pts.length;i++) hCtx.lineTo(pts[i].x, pts[i].y);
-    if(close) hCtx.closePath();
-    hCtx.stroke();
-}
-
-// Multi-pass neon glow stroke — all blood red
-function neonStroke(pts, isCircle, circleR, circleCX, circleCY) {
-    const passes = [
-        { blur:90,  lw:50, a:0.035 },
-        { blur:70,  lw:38, a:0.06  },
-        { blur:50,  lw:28, a:0.10  },
-        { blur:35,  lw:20, a:0.16  },
-        { blur:22,  lw:13, a:0.25  },
-        { blur:13,  lw:7,  a:0.40  },
-        { blur:6,   lw:3.5,a:0.65  },
-        { blur:2,   lw:1.5,a:0.95  },
-    ];
-
-    passes.forEach(({ blur, lw, a }) => {
-        hCtx.save();
-        hCtx.shadowBlur  = blur;
-        hCtx.shadowColor = '#cc0000';
-        hCtx.globalAlpha = a;
-        hCtx.strokeStyle = '#cc0000';
-        hCtx.lineWidth   = lw;
-        hCtx.lineJoin    = 'round';
-        hCtx.lineCap     = 'round';
-        if(isCircle) {
-            hCtx.beginPath();
-            hCtx.arc(circleCX, circleCY, circleR, 0, Math.PI*2);
-            hCtx.stroke();
-        } else {
-            strokePoly(pts);
-        }
-        hCtx.restore();
-    });
-
-    // White-hot core
-    hCtx.save();
-    hCtx.shadowBlur  = 6;
-    hCtx.shadowColor = '#ff4444';
-    hCtx.globalAlpha = 0.6;
-    hCtx.strokeStyle = 'rgba(255,180,180,0.7)';
-    hCtx.lineWidth   = 0.7;
-    hCtx.lineJoin    = 'round';
-    hCtx.lineCap     = 'round';
-    if(isCircle) {
-        hCtx.beginPath();
-        hCtx.arc(circleCX, circleCY, circleR, 0, Math.PI*2);
-        hCtx.stroke();
-    } else {
-        strokePoly(pts);
-    }
-    hCtx.restore();
-}
-
-function drawOccultHex() {
-    const sz = hexCanvas.width;
-    const cx = sz / 2, cy = sz / 2;
-    const R  = sz * 0.42;           // outer circumradius to tips
-    const Ri = R / Math.sqrt(3);    // inner hexagon circumradius ≈ 0.577R
-    const Rc = R / 2;               // inscribed circle radius = R/2
-    const Rt = R / 2;               // inner triangle circumradius = R/2
-
-    hCtx.clearRect(0, 0, sz, sz);
-
-    // Pure black base
-    hCtx.fillStyle = '#000';
-    hCtx.fillRect(0, 0, sz, sz);
-
-    // Dark blood glow at center
-    const cg = hCtx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.55);
-    cg.addColorStop(0,   'rgba(80,0,0,0.25)');
-    cg.addColorStop(0.5, 'rgba(40,0,0,0.12)');
-    cg.addColorStop(1,   'transparent');
-    hCtx.fillStyle = cg;
-    hCtx.fillRect(0, 0, sz, sz);
-
-    // ========= OUTER HEXAGRAM — two big triangles =========
-
-    // Triangle UP (fire — pointing up)
-    const upPts = triPts(cx, cy, R, 0);
-    neonStroke(upPts, false);
-
-    // Triangle DOWN (pointing down)
-    const downPts = triPts(cx, cy, R, 180);
-    neonStroke(downPts, false);
-
-    // ========= INNER HEXAGON (where two triangles overlap) =========
-    // Vertices of inner hexagon are at radius Ri, at 0°, 60°, 120°...
-    const hexPts = Array.from({length:6}, (_,i) => {
-        const a = (i * 60 - 90) * Math.PI / 180;
-        return { x: cx + Ri * Math.cos(a), y: cy + Ri * Math.sin(a) };
-    });
-    neonStroke(hexPts, false);
-
-    // ========= INSCRIBED CIRCLE inside inner hexagon =========
-    neonStroke(null, true, Rc, cx, cy);
-
-    // ========= INNER TRIANGLE inside the circle =========
-    // Pointing up — the sacred upward triangle (fire/spirit)
-    const innerTriPts = triPts(cx, cy, Rt, 0);
-    neonStroke(innerTriPts, false);
-
-    // ========= TIP SPARKLES at 6 outer tips =========
-    for(let i=0; i<6; i++) {
-        const a  = (i * 60 - 90) * Math.PI / 180;
-        const tx = cx + R * Math.cos(a);
-        const ty = cy + R * Math.sin(a);
-
-        // Outer bloom
-        hCtx.save();
-        hCtx.globalAlpha = 0.9;
-        hCtx.fillStyle   = '#cc0000';
-        hCtx.shadowBlur  = 40;
-        hCtx.shadowColor = '#ff0000';
-        hCtx.beginPath();
-        hCtx.arc(tx, ty, 6, 0, Math.PI*2);
-        hCtx.fill();
-        hCtx.restore();
-
-        // Mid
-        hCtx.save();
-        hCtx.globalAlpha = 0.8;
-        hCtx.fillStyle   = '#ff2222';
-        hCtx.shadowBlur  = 18;
-        hCtx.shadowColor = '#ff0000';
-        hCtx.beginPath();
-        hCtx.arc(tx, ty, 3.5, 0, Math.PI*2);
-        hCtx.fill();
-        hCtx.restore();
-
-        // White-hot center
-        hCtx.save();
-        hCtx.globalAlpha = 1.0;
-        hCtx.fillStyle   = '#fff';
-        hCtx.shadowBlur  = 10;
-        hCtx.shadowColor = '#ff4444';
-        hCtx.beginPath();
-        hCtx.arc(tx, ty, 1.8, 0, Math.PI*2);
-        hCtx.fill();
-        hCtx.restore();
-    }
-
-    // ========= INNER TRIANGLE TIP SPARKLES =========
-    innerTriPts.forEach(pt => {
-        hCtx.save();
-        hCtx.globalAlpha = 0.7;
-        hCtx.fillStyle   = '#880000';
-        hCtx.shadowBlur  = 20;
-        hCtx.shadowColor = '#cc0000';
-        hCtx.beginPath();
-        hCtx.arc(pt.x, pt.y, 4, 0, Math.PI*2);
-        hCtx.fill();
-        hCtx.restore();
-
-        hCtx.save();
-        hCtx.globalAlpha = 0.95;
-        hCtx.fillStyle   = '#ffaaaa';
-        hCtx.shadowBlur  = 6;
-        hCtx.shadowColor = '#ff4444';
-        hCtx.beginPath();
-        hCtx.arc(pt.x, pt.y, 1.4, 0, Math.PI*2);
-        hCtx.fill();
-        hCtx.restore();
-    });
-
-    // ========= ROAST KING TEXT inside inner triangle =========
-    const textCY = cy + Rt * 0.08; // slightly below center to visually center in triangle
-
-    // Crown emoji
-    hCtx.save();
-    const crownSz = Math.max(12, sz * 0.058);
-    hCtx.font      = `${crownSz}px serif`;
-    hCtx.textAlign = 'center';
-    hCtx.textBaseline = 'middle';
-    hCtx.shadowBlur  = 20;
-    hCtx.shadowColor = 'rgba(255,180,0,0.9)';
-    hCtx.globalAlpha = 0.95;
-    hCtx.fillText('👑', cx, textCY - crownSz * 1.1);
-    hCtx.restore();
-
-    // Skull emoji
-    hCtx.save();
-    const skullSz = Math.max(14, sz * 0.07);
-    hCtx.font      = `${skullSz}px serif`;
-    hCtx.textAlign = 'center';
-    hCtx.textBaseline = 'middle';
-    hCtx.shadowBlur  = 28;
-    hCtx.shadowColor = 'rgba(200,0,0,1)';
-    hCtx.globalAlpha = 1.0;
-    hCtx.fillText('💀', cx, textCY);
-    hCtx.restore();
-
-    // ROAST KING text
-    hCtx.save();
-    const txtSz = Math.max(7, sz * 0.038);
-    hCtx.font      = `900 ${txtSz}px Inter, sans-serif`;
-    hCtx.textAlign = 'center';
-    hCtx.textBaseline = 'middle';
-    hCtx.shadowBlur  = 18;
-    hCtx.shadowColor = 'rgba(255,255,255,0.8)';
-    hCtx.globalAlpha = 1.0;
-    hCtx.fillStyle = '#ffffff';
-    hCtx.letterSpacing = '2px';
-    hCtx.fillText('ROAST KING', cx, textCY + skullSz * 0.82);
-    hCtx.restore();
-}
-
-resizeHex();
-window.addEventListener('resize', resizeHex);
-
-// ============================================================
-// STAGGERED TAG ANIMATION
-// ============================================================
-window.addEventListener('load', () => {
-    document.querySelectorAll('.spike-tag').forEach((el, i) => {
-        setTimeout(() => el.classList.add('pop'), 500 + i * 180);
-    });
-    document.getElementById('topicInput').focus();
-});
-
-// ============================================================
-// APP LOGIC
-// ============================================================
-const API_URL = "https://roaster-vwgb.onrender.com";
-let egoCount = 14203;
-let currentQuality = 3;
-let currentLang = 'hindi';
-
-setInterval(() => {
-    egoCount += Math.floor(Math.random() * 3);
-    document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
-}, 5000);
-
-function toggleSettings() {
-    const panel = document.getElementById('settingsPanel');
-    const arrow = document.getElementById('stgArrow');
-    panel.classList.toggle('open');
-    arrow.classList.toggle('open');
-    gaEvent('settings_toggled', { state: panel.classList.contains('open') ? 'open' : 'closed' });
-}
-
-function setQuality(q) {
-    currentQuality = q;
-    document.querySelectorAll('.qlevel').forEach(el => el.classList.remove('active'));
-    document.querySelector(`.qlevel[data-q="${q}"]`).classList.add('active');
-    // GA: track intensity selection
-    const names = {1:'Spark',2:'Flame',3:'Inferno',4:'Hellfire',5:'Apocalypse'};
-    gaEvent('set_roast_intensity', { intensity_level: q, intensity_name: names[q] });
-}
-
-function setLang(lang) {
-    currentLang = lang;
-    document.querySelectorAll('.lpill').forEach(el => el.classList.remove('active'));
-    document.querySelector(`.lpill[data-lang="${lang}"]`).classList.add('active');
-    // GA: track language selection
-    gaEvent('set_language', { language: lang });
-}
-
-function quickRoast(topic) {
-    document.getElementById('topicInput').value = topic;
-    // GA: track example chip click
-    gaEvent('example_clicked', { topic });
-    executeRoast();
-}
-
-function quickRoast(topic) {
-    document.getElementById('topicInput').value = topic;
-    executeRoast();
-}
-
-const MSGS = {
-    1: ["Warming up gently...","Preparing mild shade...","Crafting a soft jab..."],
-    2: ["Stoking the flames...","Heating things up...","Loading roast cannon..."],
-    3: ["Summoning dark forces...","Consulting with Satan...","Waking up the demons..."],
-    4: ["Calling the hellfire...","Unleashing the demon...","Preparing your funeral..."],
-    5: ["Initiating APOCALYPSE...","Signing your death warrant...","Erasing you from existence..."]
-};
-
-let lastBlob = null, lastUrl = null;
-
-async function executeRoast() {
-    const topic = document.getElementById('topicInput').value.trim();
-    if(!topic){ showError("Enter something to roast first!"); return; }
-
-    const msgs = MSGS[currentQuality];
-    document.getElementById('loadingContainer').style.display='block';
-    document.getElementById('loadingText').textContent = msgs[Math.floor(Math.random()*msgs.length)];
-    document.getElementById('resultCard').classList.remove('active');
-    document.getElementById('errorMessage').classList.remove('active');
-
-    const startTime = Date.now();
-
-    // GA: roast initiated
-    gaEvent('roast_started', {
-        topic,
-        language: currentLang,
-        quality: currentQuality
-    });
-
-    try {
-        const resp = await fetch(
-            `${API_URL}/roast?topic=${encodeURIComponent(topic)}&quality=${currentQuality}&lang=${currentLang}&session_id=${window.SESSION_ID||''}`
-        );
-        if(!resp.ok){ const e=await resp.json().catch(()=>({error:'unknown'})); throw new Error(e.error||'Roast failed'); }
-        const blob = await resp.blob();
-        const url  = URL.createObjectURL(blob);
-        document.getElementById('resultImage').src = url;
-        document.getElementById('resultCard').classList.add('active');
-        document.getElementById('loadingContainer').style.display='none';
-        lastBlob=blob; lastUrl=url;
-
-        // GA: roast success
-        gaEvent('roast_generated', {
-            topic,
-            language: currentLang,
-            quality: currentQuality,
-            response_ms: Date.now() - startTime
-        });
-
-    } catch(e) {
-        document.getElementById('loadingContainer').style.display='none';
-        showError(e.message||'Failed. Try again.');
-        // GA: roast failed
-        gaEvent('roast_failed', { topic, error: e.message });
-    }
-}
-
-function resetApp() {
-    document.getElementById('topicInput').value='';
-    document.getElementById('resultCard').classList.remove('active');
-    if(lastUrl){ try{URL.revokeObjectURL(lastUrl);}catch(e){} lastUrl=null; lastBlob=null; }
-    document.getElementById('topicInput').focus();
-    gaEvent('roast_reset');
-}
-
-function showError(msg) {
-    const el = document.getElementById('errorMessage');
-    el.textContent=msg; el.classList.add('active');
-    setTimeout(()=>el.classList.remove('active'),4000);
-}
-
-async function shareToWhatsApp() {
-    if(!lastUrl){ showError('No image yet.'); return; }
-    gaEvent('share_whatsapp', { language: currentLang, quality: currentQuality });
-    window.open(`https://wa.me/?text=${encodeURIComponent('My ego just got destroyed 💀 Try: '+window.location.href)}`, '_blank');
-}
-
-document.getElementById('topicInput').addEventListener('keypress', e => {
-    if(e.key==='Enter') executeRoast();
-});
-
-// Animate review cards — trigger on scroll OR immediately if already in view
-function animateReviews() {
-    document.querySelectorAll('.review-card').forEach((card, i) => {
-        setTimeout(() => card.classList.add('visible'), 200 + i * 130);
-    });
-}
-
-const reviewObserver = new IntersectionObserver((entries) => {
-    const anyVisible = entries.some(e => e.isIntersecting);
-    if(anyVisible) {
-        animateReviews();
-        reviewObserver.disconnect();
-    }
-}, { threshold: 0.05 });
-
-const reviewSection = document.querySelector('.reviews-section');
-if(reviewSection) reviewObserver.observe(reviewSection);
-
-// Fallback — if page is short enough that reviews are already visible
-setTimeout(() => {
-    const cards = document.querySelectorAll('.review-card');
-    const allHidden = [...cards].every(c => !c.classList.contains('visible'));
-    if(allHidden) animateReviews();
-}, 800);
-</script>
-<!-- Reviews Section -->
+<!-- REVIEWS — far below -->
 <div class="reviews-section">
-    <p class="reviews-title">🩸 VICTIMS WORLDWIDE</p>
+    <div class="reviews-divider">
+        <p class="reviews-title">🩸 VICTIMS WORLDWIDE</p>
+    </div>
     <div class="reviews-grid">
 
         <div class="review-card">
@@ -1151,6 +668,264 @@ setTimeout(() => {
     </div>
 </div>
 
+<script>
+// ============================================================
+// OCCULT HEXAGRAM
+// ============================================================
+const hexCanvas = document.getElementById('hexCanvas');
+const hCtx      = hexCanvas.getContext('2d');
+
+function resizeHex() {
+    const sz = hexCanvas.parentElement.offsetWidth;
+    hexCanvas.width  = sz;
+    hexCanvas.height = sz;
+    drawOccultHex();
+}
+
+function triPts(cx, cy, r, rotDeg) {
+    return [0,1,2].map(i => {
+        const a = (i * 120 - 90 + rotDeg) * Math.PI / 180;
+        return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+    });
+}
+
+function strokePoly(pts, close=true) {
+    hCtx.beginPath();
+    hCtx.moveTo(pts[0].x, pts[0].y);
+    for(let i=1;i<pts.length;i++) hCtx.lineTo(pts[i].x, pts[i].y);
+    if(close) hCtx.closePath();
+    hCtx.stroke();
+}
+
+function neonStroke(pts, isCircle, circleR, circleCX, circleCY) {
+    const passes = [
+        { blur:90, lw:50, a:0.035 },{ blur:70, lw:38, a:0.06 },
+        { blur:50, lw:28, a:0.10 }, { blur:35, lw:20, a:0.16 },
+        { blur:22, lw:13, a:0.25 }, { blur:13, lw:7,  a:0.40 },
+        { blur:6,  lw:3.5,a:0.65 }, { blur:2,  lw:1.5,a:0.95 },
+    ];
+    passes.forEach(({ blur, lw, a }) => {
+        hCtx.save();
+        hCtx.shadowBlur=blur; hCtx.shadowColor='#cc0000';
+        hCtx.globalAlpha=a; hCtx.strokeStyle='#cc0000';
+        hCtx.lineWidth=lw; hCtx.lineJoin='round'; hCtx.lineCap='round';
+        if(isCircle){
+            hCtx.beginPath(); hCtx.arc(circleCX,circleCY,circleR,0,Math.PI*2); hCtx.stroke();
+        } else { strokePoly(pts); }
+        hCtx.restore();
+    });
+    hCtx.save();
+    hCtx.shadowBlur=6; hCtx.shadowColor='#ff4444'; hCtx.globalAlpha=0.6;
+    hCtx.strokeStyle='rgba(255,180,180,0.7)'; hCtx.lineWidth=0.7;
+    hCtx.lineJoin='round'; hCtx.lineCap='round';
+    if(isCircle){
+        hCtx.beginPath(); hCtx.arc(circleCX,circleCY,circleR,0,Math.PI*2); hCtx.stroke();
+    } else { strokePoly(pts); }
+    hCtx.restore();
+}
+
+function drawOccultHex() {
+    const sz=hexCanvas.width, cx=sz/2, cy=sz/2;
+    const R=sz*0.42, Ri=R/Math.sqrt(3), Rc=R/2, Rt=R/2;
+    hCtx.clearRect(0,0,sz,sz);
+    hCtx.fillStyle='#000'; hCtx.fillRect(0,0,sz,sz);
+    const cg=hCtx.createRadialGradient(cx,cy,0,cx,cy,R*0.55);
+    cg.addColorStop(0,'rgba(80,0,0,0.25)'); cg.addColorStop(0.5,'rgba(40,0,0,0.12)'); cg.addColorStop(1,'transparent');
+    hCtx.fillStyle=cg; hCtx.fillRect(0,0,sz,sz);
+    neonStroke(triPts(cx,cy,R,0),false);
+    neonStroke(triPts(cx,cy,R,180),false);
+    const hexPts=Array.from({length:6},(_,i)=>{
+        const a=(i*60-90)*Math.PI/180;
+        return{x:cx+Ri*Math.cos(a),y:cy+Ri*Math.sin(a)};
+    });
+    neonStroke(hexPts,false);
+    neonStroke(null,true,Rc,cx,cy);
+    const innerTriPts=triPts(cx,cy,Rt,0);
+    neonStroke(innerTriPts,false);
+    for(let i=0;i<6;i++){
+        const a=(i*60-90)*Math.PI/180;
+        const tx=cx+R*Math.cos(a), ty=cy+R*Math.sin(a);
+        hCtx.save(); hCtx.globalAlpha=0.9; hCtx.fillStyle='#cc0000'; hCtx.shadowBlur=40; hCtx.shadowColor='#ff0000';
+        hCtx.beginPath(); hCtx.arc(tx,ty,6,0,Math.PI*2); hCtx.fill(); hCtx.restore();
+        hCtx.save(); hCtx.globalAlpha=0.8; hCtx.fillStyle='#ff2222'; hCtx.shadowBlur=18; hCtx.shadowColor='#ff0000';
+        hCtx.beginPath(); hCtx.arc(tx,ty,3.5,0,Math.PI*2); hCtx.fill(); hCtx.restore();
+        hCtx.save(); hCtx.globalAlpha=1.0; hCtx.fillStyle='#fff'; hCtx.shadowBlur=10; hCtx.shadowColor='#ff4444';
+        hCtx.beginPath(); hCtx.arc(tx,ty,1.8,0,Math.PI*2); hCtx.fill(); hCtx.restore();
+    }
+    innerTriPts.forEach(pt=>{
+        hCtx.save(); hCtx.globalAlpha=0.7; hCtx.fillStyle='#880000'; hCtx.shadowBlur=20; hCtx.shadowColor='#cc0000';
+        hCtx.beginPath(); hCtx.arc(pt.x,pt.y,4,0,Math.PI*2); hCtx.fill(); hCtx.restore();
+        hCtx.save(); hCtx.globalAlpha=0.95; hCtx.fillStyle='#ffaaaa'; hCtx.shadowBlur=6; hCtx.shadowColor='#ff4444';
+        hCtx.beginPath(); hCtx.arc(pt.x,pt.y,1.4,0,Math.PI*2); hCtx.fill(); hCtx.restore();
+    });
+    const textCY=cy+Rt*0.08;
+    const crownSz=Math.max(12,sz*0.058);
+    hCtx.save(); hCtx.font=`${crownSz}px serif`; hCtx.textAlign='center'; hCtx.textBaseline='middle';
+    hCtx.shadowBlur=20; hCtx.shadowColor='rgba(255,180,0,0.9)'; hCtx.globalAlpha=0.95;
+    hCtx.fillText('👑',cx,textCY-crownSz*1.1); hCtx.restore();
+    const skullSz=Math.max(14,sz*0.07);
+    hCtx.save(); hCtx.font=`${skullSz}px serif`; hCtx.textAlign='center'; hCtx.textBaseline='middle';
+    hCtx.shadowBlur=28; hCtx.shadowColor='rgba(200,0,0,1)'; hCtx.globalAlpha=1.0;
+    hCtx.fillText('💀',cx,textCY); hCtx.restore();
+    const txtSz=Math.max(7,sz*0.038);
+    hCtx.save(); hCtx.font=`900 ${txtSz}px Inter,sans-serif`; hCtx.textAlign='center'; hCtx.textBaseline='middle';
+    hCtx.shadowBlur=18; hCtx.shadowColor='rgba(255,255,255,0.8)'; hCtx.globalAlpha=1.0;
+    hCtx.fillStyle='#ffffff'; hCtx.fillText('ROAST KING',cx,textCY+skullSz*0.82); hCtx.restore();
+}
+
+resizeHex();
+window.addEventListener('resize', resizeHex);
+
+// ============================================================
+// SPIKE TAG ANIMATION
+// ============================================================
+window.addEventListener('load', () => {
+    document.querySelectorAll('.spike-tag').forEach((el, i) => {
+        setTimeout(() => el.classList.add('pop'), 500 + i * 180);
+    });
+    document.getElementById('topicInput').focus();
+});
+
+// ============================================================
+// APP LOGIC
+// ============================================================
+let egoCount = 14203;
+let currentQuality = 3;
+let currentLang = 'hindi';
+let lastUrl = null;
+
+setInterval(() => {
+    egoCount += Math.floor(Math.random() * 3);
+    document.getElementById('egoCounter').textContent = egoCount.toLocaleString();
+}, 5000);
+
+function toggleSettings() {
+    const panel = document.getElementById('settingsPanel');
+    const arrow = document.getElementById('stgArrow');
+    panel.classList.toggle('open');
+    arrow.classList.toggle('open');
+}
+
+function setQuality(q) {
+    currentQuality = q;
+    document.querySelectorAll('.qlevel').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.qlevel[data-q="${q}"]`).classList.add('active');
+    const names = {1:'Spark',2:'Flame',3:'Inferno',4:'Hellfire',5:'Apocalypse'};
+    gaEvent('set_roast_intensity', { intensity_level: q, intensity_name: names[q] });
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lpill').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.lpill[data-lang="${lang}"]`).classList.add('active');
+    gaEvent('set_language', { language: lang });
+}
+
+function quickRoast(topic) {
+    document.getElementById('topicInput').value = topic;
+    gaEvent('example_clicked', { topic });
+    executeRoast();
+}
+
+const MSGS = {
+    1: ["Warming up gently...","Preparing mild shade...","Crafting a soft jab..."],
+    2: ["Stoking the flames...","Heating things up...","Loading roast cannon..."],
+    3: ["Summoning dark forces...","Consulting with Satan...","Waking up the demons..."],
+    4: ["Calling the hellfire...","Unleashing the demon...","Preparing your funeral..."],
+    5: ["Initiating APOCALYPSE...","Signing your death warrant...","Erasing you from existence..."]
+};
+
+async function executeRoast() {
+    const topic = document.getElementById('topicInput').value.trim();
+    if(!topic){ showError("Enter something to roast first!"); return; }
+
+    const msgs = MSGS[currentQuality];
+    document.getElementById('loadingContainer').style.display = 'block';
+    document.getElementById('loadingText').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+    document.getElementById('resultSection').classList.remove('active');
+    document.getElementById('errorMessage').classList.remove('active');
+
+    const startTime = Date.now();
+    gaEvent('roast_started', { topic, language: currentLang, quality: currentQuality });
+
+    try {
+        const resp = await fetch(
+            `/roast?topic=${encodeURIComponent(topic)}&quality=${currentQuality}&lang=${currentLang}&session_id=${window.SESSION_ID||''}`
+        );
+        if(!resp.ok){
+            const e = await resp.json().catch(() => ({error:'unknown'}));
+            throw new Error(e.error || 'Roast failed');
+        }
+        const blob = await resp.blob();
+        if(lastUrl) URL.revokeObjectURL(lastUrl);
+        lastUrl = URL.createObjectURL(blob);
+        document.getElementById('resultImage').src = lastUrl;
+        document.getElementById('loadingContainer').style.display = 'none';
+        document.getElementById('resultSection').classList.add('active');
+
+        // Scroll to result card smoothly
+        document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        gaEvent('roast_generated', { topic, language: currentLang, quality: currentQuality, response_ms: Date.now()-startTime });
+
+    } catch(e) {
+        document.getElementById('loadingContainer').style.display = 'none';
+        showError(e.message || 'Failed. Try again.');
+        gaEvent('roast_failed', { topic, error: e.message });
+    }
+}
+
+function resetApp() {
+    document.getElementById('topicInput').value = '';
+    document.getElementById('resultSection').classList.remove('active');
+    if(lastUrl){ try{ URL.revokeObjectURL(lastUrl); }catch(e){} lastUrl = null; }
+    document.getElementById('topicInput').focus();
+    document.getElementById('topicInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    gaEvent('roast_reset');
+}
+
+function showError(msg) {
+    const el = document.getElementById('errorMessage');
+    el.textContent = msg;
+    el.classList.add('active');
+    setTimeout(() => el.classList.remove('active'), 4000);
+}
+
+async function shareToWhatsApp() {
+    if(!lastUrl){ showError('No image yet.'); return; }
+    gaEvent('share_whatsapp', { language: currentLang, quality: currentQuality });
+    window.open(`https://wa.me/?text=${encodeURIComponent('My ego just got destroyed 💀 Try: '+window.location.href)}`, '_blank');
+}
+
+document.getElementById('topicInput').addEventListener('keypress', e => {
+    if(e.key === 'Enter') executeRoast();
+});
+
+// ============================================================
+// REVIEW CARDS ANIMATION
+// ============================================================
+function animateReviews() {
+    document.querySelectorAll('.review-card').forEach((card, i) => {
+        setTimeout(() => card.classList.add('visible'), 200 + i * 130);
+    });
+}
+
+const reviewObserver = new IntersectionObserver((entries) => {
+    if(entries.some(e => e.isIntersecting)){
+        animateReviews();
+        reviewObserver.disconnect();
+    }
+}, { threshold: 0.05 });
+
+const reviewSection = document.querySelector('.reviews-section');
+if(reviewSection) reviewObserver.observe(reviewSection);
+
+setTimeout(() => {
+    const cards = document.querySelectorAll('.review-card');
+    const allHidden = [...cards].every(c => !c.classList.contains('visible'));
+    if(allHidden) animateReviews();
+}, 800);
+</script>
+
 </body>
 </html>
- 
