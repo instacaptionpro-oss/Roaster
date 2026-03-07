@@ -330,61 +330,134 @@ def add_text_to_image(image_path, label, roast_text):
 # =====================================================================
 # AI ROAST
 # =====================================================================
-QUALITY_INSTRUCTIONS = {
-    1: {'label':'SPARK',      'temp':0.8, 'words':10,
-        'instruction_hi': 'Thoda soft roast kar, zyada brutal mat ho. Friendly teasing style.',
-        'instruction_en': 'Keep it light and playful. Mild teasing, nothing too harsh.',
-        'instruction_mix':'Thoda soft reh, friendly roast kar.'},
-    2: {'label':'FLAME',      'temp':0.9, 'words':12,
-        'instruction_hi': 'Thoda spicy roast kar. Burn karo but zyada personal mat jao.',
-        'instruction_en': 'Make it sting a little. Clever burns, moderately savage.',
-        'instruction_mix':'Thoda spicy, medium brutal roast kar.'},
-    3: {'label':'INFERNO',    'temp':1.0, 'words':15,
-        'instruction_hi': 'Brutal roast kar bhai style mein. Savage bol, no mercy.',
-        'instruction_en': 'Be brutally savage. No holding back, destroy the topic.',
-        'instruction_mix':'Brutal aur savage roast kar, Hinglish mein.'},
-    4: {'label':'HELLFIRE',   'temp':1.0, 'words':18,
-        'instruction_hi': 'Maximum savage roast kar. Ekdum tatti kar de. Soul destroy kar de.',
-        'instruction_en': 'Absolutely destroy them. Pure hellfire, soul-crushing roast.',
-        'instruction_mix':'Maximum savage, soul destroy kar de roast mein.'},
-    5: {'label':'APOCALYPSE', 'temp':1.0, 'words':20,
-        'instruction_hi': 'APOCALYPSE level roast kar. Existence hi end kar de. Ancestors ko rula de. Koi mercy nahi.',
-        'instruction_en': 'APOCALYPSE mode. Obliterate their existence. Make their ancestors cry. Zero mercy, maximum destruction.',
-        'instruction_mix':'APOCALYPSE level — existence khatam kar de, ancestors rula de, zero mercy.'},
+# ── Roast angles for variety ─────────────────────────────────────────
+ANGLES_HI = [
+    "UPI fail ya PhonePe se payment bounce angle se",
+    "EMI aur loan ki tension angle se",
+    "Ghar mein parents ki expectation angle se",
+    "Zomato/Swiggy order cancel hone ke angle se",
+    "Chai peete peete zindagi sochne ke angle se",
+    "LinkedIn pe fake success post karne ke angle se",
+    "Auto/cab mein baith ke socho angle se",
+    "Exam result ke baad ki situation angle se",
+    "Rishtedar ki shaadi mein taunts ke angle se",
+    "Office mein appraisal nahi mili angle se",
+    "Gym join kiya but kabhi gaya nahi angle se",
+    "Netflix dekh ke raat bhar jaagna angle se",
+]
+
+ANGLES_EN = [
+    "from the angle of embarrassing bank notifications",
+    "from the perspective of failed dreams and Sunday regrets",
+    "through the lens of that one thing everyone avoids",
+    "comparing it to something hilariously worse",
+    "using an unexpected scientific or historical comparison",
+    "like a disappointed father giving life advice",
+    "as if a LinkedIn influencer wrote it badly",
+    "from the angle of midnight existential crisis",
+    "like a savage friend who knows too much",
+    "through the lens of rock-bottom motivation",
+]
+
+LEVEL_CFG = {
+    1: {'label':'SPARK',      'temp':0.85, 'wmin':12, 'wmax':16,
+        'hi': 'Funny aur light roast, friendly teasing — thoda sting kare but smile bhi aaye.',
+        'en': 'Witty and playful roast. Light sting with a smile.',
+        'mx': 'Light funny Hinglish roast. Soft burn with a laugh.'},
+    2: {'label':'FLAME',      'temp':0.9,  'wmin':15, 'wmax':20,
+        'hi': 'Spicy roast. Clever punchline end mein — setup se unexpected twist.',
+        'en': 'Sharp roast. Build up then land a clever unexpected punchline.',
+        'mx': 'Spicy Hinglish roast. Mid-level burn with witty punchline.'},
+    3: {'label':'INFERNO',    'temp':1.0,  'wmin':18, 'wmax':24,
+        'hi': 'Savage brutal roast. Tanmay Bhat style — specific detail + crushing punchline. No generic lines.',
+        'en': 'Savage roast. Be brutally specific, use facts, end with soul-crushing punchline.',
+        'mx': 'Brutal Hinglish roast. Savage specific burn, Samay Raina style punchline.'},
+    4: {'label':'HELLFIRE',   'temp':1.0,  'wmin':20, 'wmax':26,
+        'hi': 'Ekdum tatti kar de. Maximum savage, existence question kara de. Ancestors ko involve kar punchline mein.',
+        'en': 'Absolutely obliterate. Destroy their self-worth with surgical precision and dark humor.',
+        'mx': 'Zero mercy. Soul destroy karo, Hinglish mein maximum damage.'},
+    5: {'label':'APOCALYPSE', 'temp':1.0,  'wmin':22, 'wmax':28,
+        'hi': 'APOCALYPSE mode. Teri existence hi end kar de. Teen generation tak yaad rahe aisa punchline. God-level savage.',
+        'en': 'APOCALYPSE. Erase their existence. Make ancestors cry. The most vicious, specific, creative roast possible.',
+        'mx': 'APOCALYPSE — Universe ko batao iske baare mein. Zero mercy, maximum creative destruction.'},
 }
 
 
 def get_roast(topic, language='hindi', quality=3):
-    quality  = max(1, min(5, int(quality)))
-    q        = QUALITY_INSTRUCTIONS[quality]
-    context  = ""
+    import random as _r
+    quality = max(1, min(5, int(quality)))
+    cfg     = LEVEL_CFG[quality]
+    lbl     = cfg['label']
+    wmin, wmax = cfg['wmin'], cfg['wmax']
+
+    # ── Gather rich context via search ───────────────────────────────
+    ctx_block = ""
     if SEARCH_ENABLED:
         try:
             data    = get_smart_context(topic, language)
-            context = data.get('topic_info', '')[:400]
+            context = data.get('topic_info', '')[:500]
+            trending = data.get('trending', '')[:200]
+            if context:
+                ctx_block += f"REAL FACTS about '{topic}' (use for specific burns):\n{context}\n"
+            if trending:
+                ctx_block += f"TRENDING ANGLE: {trending}\n"
+            ctx_block += "\n"
         except: pass
-    ctx_line = f'Context: {context}\n\n' if context else ''
-    w        = q['words']
-    prompts  = {
-        'hindi':   f"Tu India ka sabse brutal roaster hai.\n{q['instruction_hi']}\n\n{ctx_line}Topic: {topic}\n\nLABEL: 2 word funny title\nROAST: {w}-{w+4} words, {q['label']} level, natural Hindi",
-        'english': f"You are a roaster at {q['label']} intensity level.\n{q['instruction_en']}\n\n{ctx_line}Topic: {topic}\n\nLABEL: 2 word funny title\nROAST: {w}-{w+4} words, {q['label']} level, natural English",
-        'mix':     f"Tu {q['label']} level ka roaster hai.\n{q['instruction_mix']}\n\n{ctx_line}Topic: {topic}\n\nLABEL: 2 word funny title\nROAST: {w}-{w+4} words, {q['label']} level, Hinglish"
+
+    # ── Pick random angle for variety ────────────────────────────────
+    angle = _r.choice(ANGLES_HI if language == 'hindi' else ANGLES_EN)
+
+    # ── System — forces comedian behaviour ───────────────────────────
+    SYSTEM = (
+        "You are India's most savage AI roast comedian — a mix of Tanmay Bhat, "
+        "Samay Raina, and Kenny Sebastian.\n"
+        "Your roasts are SPECIFIC, WITTY, and always have a killer punchline at the end.\n\n"
+        "STRICT RULES:\n"
+        "1. NEVER use generic lines like 'hawa hai bank mein' or 'tere paas kuch nahi'\n"
+        "2. ALWAYS use a specific angle or unexpected comparison\n"
+        "3. Structure: Setup -> Twist -> PUNCHLINE (the kill shot at the end)\n"
+        "4. Use real Indian refs: UPI, Zomato, EMI, UPSC, LinkedIn, Blinkit, PhonePe etc.\n"
+        "5. LABEL = creative 2-3 word savage title — NOT just the topic repeated\n"
+        "6. Output ONLY:\nLABEL: <title>\nROAST: <roast>"
+    )
+
+    # ── User prompt per language ──────────────────────────────────────
+    lang_inst = {
+        'hindi':   f"{cfg['hi']} Angle: {angle}. Natural Hindi, {wmin}-{wmax} words.",
+        'english': f"{cfg['en']} Angle: {angle}. Natural English, {wmin}-{wmax} words.",
+        'mix':     f"{cfg['mx']} Angle: {angle}. Hinglish mix, {wmin}-{wmax} words.",
     }
+
+    user_msg = (
+        f"{ctx_block}"
+        f"TOPIC: {topic}\n"
+        f"INSTRUCTION: {lang_inst.get(language, lang_inst['hindi'])}\n"
+        f"LABEL: creative title\nROAST: the roast"
+    )
+
     for model in AI_MODELS:
         try:
             res  = groq_client.chat.completions.create(
-                messages=[{"role": "user", "content": prompts.get(language, prompts['hindi'])}],
-                model=model, temperature=q['temp'], max_tokens=100)
-            text = res.choices[0].message.content.strip()
+                messages=[
+                    {"role": "system", "content": SYSTEM},
+                    {"role": "user",   "content": user_msg}
+                ],
+                model=model, temperature=cfg['temp'], max_tokens=150)
+            text  = res.choices[0].message.content.strip()
             label, roast = "", ""
             for line in text.split('\n'):
-                if 'LABEL:' in line.upper(): label = line.split(':', 1)[1].strip().strip('"*').upper()
-                elif 'ROAST:' in line.upper(): roast = line.split(':', 1)[1].strip().strip('"*')
-            if not label: label = f"{q['label']} ROAST"
-            if not roast: roast = text[:100].replace('*', '')
+                l = line.strip()
+                if l.upper().startswith('LABEL:'):   label = l.split(':',1)[1].strip().strip('"*').upper()
+                elif l.upper().startswith('ROAST:'): roast = l.split(':',1)[1].strip().strip('"*')
+            if not roast:
+                lines = [l for l in text.split('\n') if l.strip()]
+                roast = lines[-1].strip().strip('"*') if lines else text[:120]
+            if not label:
+                label = f"{lbl} ROAST"
             return label, roast
         except: continue
-    return (f"{q['label']} ROAST", "AI thak gaya tujhe roast karte karte")
+    return (f"{lbl} ROAST", "AI ne bhi tujhe roast karna band kar diya — itna boring hai tu")
+
 
 
 # =====================================================================
