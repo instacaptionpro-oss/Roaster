@@ -410,14 +410,57 @@
 
         .action-buttons { display:flex; gap:9px; }
 
-        .whatsapp-btn, .retry-btn {
-            flex:1; padding:10px; border:none; border-radius:9px;
-            cursor:pointer; font-weight:700; font-size:0.8rem; transition:transform .15s;
-        }
+        .action-row { display:flex; gap:8px; margin-bottom:8px; }
+        .action-row-2 { display:flex; gap:8px; }
 
-        .whatsapp-btn { background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; }
-        .retry-btn    { background:rgba(150,0,0,0.15); color:#ff4444; border:1px solid rgba(150,0,0,0.3); }
-        .whatsapp-btn:hover,.retry-btn:hover { transform:translateY(-2px); }
+        .share-btn {
+            flex:1; padding:10px 6px; border:none; border-radius:9px;
+            cursor:pointer; font-weight:700; font-size:0.75rem;
+            transition:transform .15s, box-shadow .15s;
+            display:flex; align-items:center; justify-content:center; gap:5px;
+        }
+        .share-btn:hover { transform:translateY(-2px); box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+
+        .btn-whatsapp  { background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; }
+        .btn-download  { background:linear-gradient(135deg,#cc0000,#880000); color:#fff; }
+        .btn-twitter   { background:linear-gradient(135deg,#1da1f2,#0d7fc7); color:#fff; }
+        .btn-instagram { background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af); color:#fff; }
+        .btn-reddit    { background:linear-gradient(135deg,#ff4500,#cc3700); color:#fff; }
+        .btn-retry     { background:rgba(150,0,0,0.15); color:#ff4444; border:1px solid rgba(150,0,0,0.3); }
+        .btn-more      { background:rgba(40,40,40,0.8); color:#aaa; border:1px solid rgba(100,100,100,0.3); }
+
+        /* Share popup */
+        .share-popup {
+            display:none; position:fixed; bottom:0; left:0; right:0;
+            background:#111; border-top:2px solid #cc0000;
+            border-radius:20px 20px 0 0; padding:24px 20px;
+            z-index:1000; animation:slideUp 0.3s ease;
+        }
+        .share-popup.active { display:block; }
+        @keyframes slideUp {
+            from { transform:translateY(100%); }
+            to   { transform:translateY(0); }
+        }
+        .share-popup h3 { font-size:0.85rem; color:#ff4444; margin-bottom:16px; letter-spacing:1px; }
+        .popup-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+        .popup-item {
+            display:flex; flex-direction:column; align-items:center; gap:6px;
+            cursor:pointer; padding:10px 6px; border-radius:10px;
+            background:rgba(30,0,0,0.3); border:1px solid rgba(100,0,0,0.2);
+            transition:all 0.2s;
+        }
+        .popup-item:hover { background:rgba(80,0,0,0.4); border-color:#cc0000; }
+        .popup-icon { font-size:1.6rem; }
+        .popup-label { font-size:0.6rem; font-weight:800; color:#aaa; letter-spacing:0.5px; }
+        .popup-close {
+            width:100%; padding:10px; background:rgba(80,0,0,0.2);
+            border:1px solid rgba(150,0,0,0.3); border-radius:9px;
+            color:#ff4444; font-weight:700; cursor:pointer; font-family:inherit;
+        }
+        .popup-overlay {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999;
+        }
+        .popup-overlay.active { display:block; }
 
         /* ===== REVIEWS SECTION ===== */
         .reviews-section {
@@ -607,9 +650,30 @@
 <div class="result-section" id="resultSection">
     <div class="result-card">
         <img src="" alt="Roasted" class="result-image" id="resultImage">
-        <div class="action-buttons">
-            <button class="whatsapp-btn" onclick="shareToWhatsApp()">📱 Share on WhatsApp</button>
-            <button class="retry-btn" onclick="resetApp()">🔄 Roast Again</button>
+        <div class="action-row">
+            <button class="share-btn btn-whatsapp" onclick="shareToWhatsApp()">
+                <span>📱</span> WhatsApp
+            </button>
+            <button class="share-btn btn-download" onclick="downloadImage()">
+                <span>⬇️</span> Download
+            </button>
+            <button class="share-btn btn-retry" onclick="resetApp()">
+                <span>🔄</span> Again
+            </button>
+        </div>
+        <div class="action-row-2">
+            <button class="share-btn btn-twitter" onclick="shareToTwitter()">
+                <span>🐦</span> Twitter
+            </button>
+            <button class="share-btn btn-instagram" onclick="shareToInstagram()">
+                <span>📸</span> Instagram
+            </button>
+            <button class="share-btn btn-reddit" onclick="shareToReddit()">
+                <span>👽</span> Reddit
+            </button>
+            <button class="share-btn btn-more" onclick="openSharePopup()">
+                <span>⋯</span> More
+            </button>
         </div>
     </div>
 </div>
@@ -891,10 +955,83 @@ function showError(msg) {
     setTimeout(() => el.classList.remove('active'), 4000);
 }
 
-async function shareToWhatsApp() {
-    if(!lastUrl){ showError('No image yet.'); return; }
-    gaEvent('share_whatsapp', { language: currentLang, quality: currentQuality });
-    window.open(`https://wa.me/?text=${encodeURIComponent('My ego just got destroyed 💀 Try: '+window.location.href)}`, '_blank');
+async function downloadImage() {
+    if(!lastUrl){ showError('Generate a roast first!'); return; }
+    const a = document.createElement('a');
+    a.href = lastUrl;
+    a.download = 'roaster-ai-' + Date.now() + '.jpg';
+    a.click();
+    gaEvent('download_image', { quality: currentQuality, language: currentLang });
+}
+
+function shareToWhatsApp() {
+    const txt = encodeURIComponent('Bhai meri ego toot gayi 💀 Tu bhi try kar: ' + window.location.href);
+    window.open('https://wa.me/?text=' + txt, '_blank');
+    gaEvent('share_whatsapp');
+}
+
+function shareToTwitter() {
+    const txt = encodeURIComponent('Just got brutally roasted by AI 💀🔥 My ego is destroyed. Try it: ' + window.location.href + ' #RoasterAI #Roasted');
+    window.open('https://twitter.com/intent/tweet?text=' + txt, '_blank');
+    gaEvent('share_twitter');
+}
+
+function shareToInstagram() {
+    // Instagram doesn't support direct URL sharing — download then open
+    downloadImage();
+    setTimeout(() => {
+        alert('Image downloaded! 📸 Now open Instagram and post it as a story or reel.');
+        window.open('https://www.instagram.com/', '_blank');
+    }, 800);
+    gaEvent('share_instagram');
+}
+
+function shareToReddit() {
+    const title = encodeURIComponent('This AI roasted me into oblivion 💀🔥');
+    const url   = encodeURIComponent(window.location.href);
+    window.open('https://reddit.com/submit?url=' + url + '&title=' + title, '_blank');
+    gaEvent('share_reddit');
+}
+
+function shareToTelegram() {
+    const txt = encodeURIComponent('Mujhe AI ne roast kar diya 💀 Tu bhi try kar: ' + window.location.href);
+    window.open('https://t.me/share/url?url=' + encodeURIComponent(window.location.href) + '&text=' + txt, '_blank');
+    gaEvent('share_telegram');
+}
+
+async function copyLink() {
+    try {
+        await navigator.clipboard.writeText(window.location.href);
+        showError('Link copied! 🔗');
+    } catch(e) {
+        showError('Copy this: ' + window.location.href);
+    }
+    gaEvent('copy_link');
+}
+
+async function nativeShare() {
+    if(navigator.share && lastUrl) {
+        try {
+            const blob = await fetch(lastUrl).then(r => r.blob());
+            const file = new File([blob], 'roast.jpg', { type: 'image/jpeg' });
+            await navigator.share({ title: 'Roaster AI 🔥', text: 'My ego got destroyed!', files: [file] });
+        } catch(e) {
+            shareToWhatsApp();
+        }
+    } else {
+        shareToWhatsApp();
+    }
+    gaEvent('native_share');
+}
+
+function openSharePopup() {
+    document.getElementById('sharePopup').classList.add('active');
+    document.getElementById('popupOverlay').classList.add('active');
+}
+
+function closeSharePopup() {
+    document.getElementById('sharePopup').classList.remove('active');
+    document.getElementById('popupOverlay').classList.remove('active');
 }
 
 document.getElementById('topicInput').addEventListener('keypress', e => {
@@ -926,6 +1063,48 @@ setTimeout(() => {
     if(allHidden) animateReviews();
 }, 800);
 </script>
+
+
+<!-- Share Popup Overlay -->
+<div class="popup-overlay" id="popupOverlay" onclick="closeSharePopup()"></div>
+<div class="share-popup" id="sharePopup">
+    <h3>🔥 SHARE YOUR ROAST</h3>
+    <div class="popup-grid">
+        <div class="popup-item" onclick="shareToWhatsApp()">
+            <span class="popup-icon">📱</span>
+            <span class="popup-label">WHATSAPP</span>
+        </div>
+        <div class="popup-item" onclick="shareToTwitter()">
+            <span class="popup-icon">🐦</span>
+            <span class="popup-label">TWITTER</span>
+        </div>
+        <div class="popup-item" onclick="shareToInstagram()">
+            <span class="popup-icon">📸</span>
+            <span class="popup-label">INSTAGRAM</span>
+        </div>
+        <div class="popup-item" onclick="shareToReddit()">
+            <span class="popup-icon">👽</span>
+            <span class="popup-label">REDDIT</span>
+        </div>
+        <div class="popup-item" onclick="shareToTelegram()">
+            <span class="popup-icon">✈️</span>
+            <span class="popup-label">TELEGRAM</span>
+        </div>
+        <div class="popup-item" onclick="copyLink()">
+            <span class="popup-icon">🔗</span>
+            <span class="popup-label">COPY LINK</span>
+        </div>
+        <div class="popup-item" onclick="downloadImage()">
+            <span class="popup-icon">⬇️</span>
+            <span class="popup-label">DOWNLOAD</span>
+        </div>
+        <div class="popup-item" onclick="nativeShare()">
+            <span class="popup-icon">📤</span>
+            <span class="popup-label">MORE</span>
+        </div>
+    </div>
+    <button class="popup-close" onclick="closeSharePopup()">Close</button>
+</div>
 
 </body>
 </html>
